@@ -1,0 +1,10 @@
+{
+  "description": "Provides step-by-step guidance to help users complete tasks efficiently, ensuring clarity and ease for professionals and beginners alike.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
