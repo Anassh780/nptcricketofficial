@@ -15,9 +15,11 @@ type LeaguePlayer = {
 export default function PlayersScreen({
   user,
   onLogin,
+  isAdmin,
 }: {
   user: FirebaseUser | null
   onLogin: () => void
+  isAdmin: boolean
 }) {
   const [players, setPlayers] = useState<LeaguePlayer[]>([])
   const [name, setName] = useState("")
@@ -38,7 +40,7 @@ export default function PlayersScreen({
 
   const addPlayer = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!user) return onLogin()
+    if (!isAdmin || !user) return onLogin()
     if (!name.trim() || !city.trim() || !photo) {
       setMessage("Add the player name, city and profile picture.")
       return
@@ -64,6 +66,16 @@ export default function PlayersScreen({
       setBusy(false)
     }
   }
+  const deletePlayer = async (id: string) => {
+    if (!isAdmin || !window.confirm("Delete this player from the DPL 6 gallery?")) return
+    const next = players.filter((player) => player.id !== id)
+    setPlayers(next)
+    try {
+      await saveCloudData("players", next)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not delete this player.")
+    }
+  }
 
   return (
     <main className="dpl-players-page">
@@ -73,7 +85,7 @@ export default function PlayersScreen({
         <p>One online player directory for match setup, team selection and tournament records.</p>
       </header>
 
-      <section className="player-registration-card">
+      {isAdmin && <section className="player-registration-card">
         <div>
           <small>PLAYER REGISTRATION</small>
           <h2>Add the next league player</h2>
@@ -86,7 +98,7 @@ export default function PlayersScreen({
           <button disabled={busy}>{busy ? "Uploading…" : user ? "Add player →" : "Sign in to add"}</button>
         </form>
         {message && <div className="player-form-message">{message}</div>}
-      </section>
+      </section>}
 
       <section className="players-gallery-shell">
         <div className="gallery-heading"><div><span>ONLINE ROSTER</span><h2>Player gallery</h2></div><b>{ordered.length.toString().padStart(2, "0")} PLAYERS</b></div>
@@ -94,7 +106,7 @@ export default function PlayersScreen({
           {ordered.map((player, index) => (
             <article className="league-player-card" key={player.id}>
               <div className="player-portrait"><img src={player.photo} alt={player.name} /><span>#{String(index + 1).padStart(2, "0")}</span></div>
-              <div><small>DPL 6 PLAYER</small><h3>{player.name}</h3><p>⌖ {player.city}</p></div>
+              <div><small>DPL 6 PLAYER</small><h3>{player.name}</h3><p>⌖ {player.city}</p>{isAdmin && <button className="delete-gallery-item" onClick={() => void deletePlayer(player.id)}>Delete player</button>}</div>
             </article>
           ))}
           {!ordered.length && <div className="empty-player-gallery">No players published yet. Add the first DPL 6 player above.</div>}

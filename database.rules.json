@@ -2,7 +2,7 @@
   "rules": {
     "dpl6": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token.email == 'ghhhbbbhjn3@gmail.com'"
     },
     ".read": false,
     ".write": false

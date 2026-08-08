@@ -1,3 +1,5 @@
+import { auth, isLeagueAdmin, saveCloudData, subscribeCloudData } from "../lib/firebase"
+
 export type SharedPlayerProfile = { id: string; name: string; photo: string }
 export type SharedTeamProfile = {
   id: string
@@ -23,7 +25,7 @@ export function loadTeamProfiles(fallback: SharedTeamProfile[]): SharedTeamProfi
 export function saveTeamProfiles(teams: SharedTeamProfile[]) {
   localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(teams))
   window.dispatchEvent(new CustomEvent(TEAM_UPDATE_EVENT, { detail: teams }))
-  if (auth.currentUser) void saveCloudData("teams", teams)
+  if (isLeagueAdmin(auth.currentUser)) void saveCloudData("teams", teams).catch(() => undefined)
 }
 
 export function subscribeTeamProfiles(
@@ -35,4 +37,3 @@ export function subscribeTeamProfiles(
     callback(teams)
   })
 }
-import { auth, saveCloudData, subscribeCloudData } from "../lib/firebase"

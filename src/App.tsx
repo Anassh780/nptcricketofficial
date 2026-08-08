@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
-import { loadTeamProfiles, saveTeamProfiles, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
-import { loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
+import { loadTeamProfiles, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
+import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
@@ -444,12 +444,14 @@ function Header({
   user,
   onLogin,
   onLogout,
+  isAdmin,
 }: {
   screen: Screen
   onNavigate: (screen: Screen) => void
   user: FirebaseUser | null
   onLogin: () => void
   onLogout: () => void
+  isAdmin: boolean
 }) {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   return (
@@ -486,7 +488,7 @@ function Header({
         <button onClick={() => onNavigate("players")} className={screen === "players" ? "active" : ""}>
           Players
         </button>
-        <div className="advanced-nav">
+        {isAdmin && <div className="advanced-nav">
           <button
             className={screen === "scoring" || screen === "points" ? "active" : ""}
             onClick={() => setAdvancedOpen(!advancedOpen)}
@@ -520,7 +522,7 @@ function Header({
               </button>
             </div>
           )}
-        </div>
+        </div>}
       </nav>
       <div className="head-tools">
         <button aria-label="Search">⌕</button>
@@ -536,15 +538,15 @@ function Header({
           <option value="series">Series</option>
           <option value="teams">Teams</option>
           <option value="players">Players</option>
-          <option value="scoring">Live scorer</option>
+          {isAdmin && <option value="scoring">Live scorer</option>}
           <option value="points">Points table</option>
         </select>
-        <button className="watch" onClick={() => onNavigate("scoring")}>
+        {isAdmin && <button className="watch" onClick={() => onNavigate("scoring")}>
           ▶ Score Live
-        </button>
-        <button className="google-login" onClick={user ? onLogout : onLogin} title={user?.email || "Sign in with Google"}>
+        </button>}
+        <button className={`google-login ${isAdmin ? "admin-authenticated" : ""}`} onClick={user ? onLogout : onLogin} title={user?.email || "Sign in with Google"}>
           {user?.photoURL ? <img src={user.photoURL} alt="" /> : <span>G</span>}
-          <b>{user ? user.displayName?.split(" ")[0] || "Account" : "Google Login"}</b>
+          <b>{isAdmin ? "ADMIN" : user ? user.displayName?.split(" ")[0] || "Account" : "Admin Login"}</b>
         </button>
       </div>
       <div className="match-center">
@@ -1701,6 +1703,7 @@ function BracketSlot({
   placeholder,
   options,
   teams,
+  disabled = false,
   tone = "green",
   onChange,
 }: {
@@ -1709,6 +1712,7 @@ function BracketSlot({
   placeholder: string
   options: string[]
   teams: Team[]
+  disabled?: boolean
   tone?: "red" | "orange" | "green"
   onChange: (val: string) => void
 }) {
@@ -1729,6 +1733,7 @@ function BracketSlot({
       </span>
       <div className="tb-name-wrap">
         <select
+          disabled={disabled}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="tb-select"
@@ -1762,10 +1767,12 @@ function SeriesScreen({
   table,
   teams,
   result,
+  isAdmin,
 }: {
   table: Standing[]
   teams: Team[]
   result: string
+  isAdmin: boolean
 }) {
   const allTeamNames = useMemo(() => {
     const fromTable = table.map((t) => t.team)
@@ -1805,13 +1812,18 @@ function SeriesScreen({
     }
   })
 
+  useEffect(() => subscribeCloudData<TournamentSelections>("series", (online) => {
+    if (online?.groups) setSelections(online)
+  }), [])
+
   useEffect(() => {
     setSelections((current) => {
       const cleanValue = (value: string) => allTeamNames.includes(value) ? value : ""
-      const groups = [0, 1].map((groupIndex) =>
+      const groupCount = Math.max(2, current.groups?.length || 0)
+      const groups = Array.from({ length: groupCount }, (_, groupIndex) =>
         Array.from({ length: 4 }, (_, slotIndex) =>
           cleanValue(current.groups?.[groupIndex]?.[slotIndex] || "") ||
-          initialSelections.groups[groupIndex][slotIndex],
+          initialSelections.groups[groupIndex]?.[slotIndex] || "",
         ),
       )
       const cleaned = {
@@ -1831,7 +1843,8 @@ function SeriesScreen({
 
   useEffect(() => {
     localStorage.setItem("cricvault-series-selections", JSON.stringify(selections))
-  }, [selections])
+    if (isAdmin) void saveCloudData("series", selections).catch(() => undefined)
+  }, [selections, isAdmin])
 
   const updateSelection = (key: keyof Omit<TournamentSelections, "groups">, val: string) => {
     setSelections((prev) => ({ ...prev, [key]: val }))
@@ -1849,12 +1862,22 @@ function SeriesScreen({
   const resetSelections = () => {
     setSelections(initialSelections)
   }
+  const addGroup = () => setSelections((current) => ({
+    ...current,
+    groups: [...current.groups, ["", "", "", ""]],
+  }))
+  const deleteGroup = (groupIndex: number) => setSelections((current) => ({
+    ...current,
+    groups: current.groups.length > 2
+      ? current.groups.filter((_, index) => index !== groupIndex)
+      : current.groups,
+  }))
 
   const sf1Options = useMemo(() => Array.from(new Set([selections.qf1, selections.qf2, ...allTeamNames].filter(Boolean))), [selections.qf1, selections.qf2, allTeamNames])
   const sf2Options = useMemo(() => Array.from(new Set([selections.qf3, selections.qf4, ...allTeamNames].filter(Boolean))), [selections.qf3, selections.qf4, allTeamNames])
   const finalOptions = useMemo(() => Array.from(new Set([selections.sf1, selections.sf2, ...allTeamNames].filter(Boolean))), [selections.sf1, selections.sf2, allTeamNames])
 
-  const groupLabels = ["GROUP A", "GROUP B"]
+  const groupLabels = selections.groups.map((_, index) => `GROUP ${String.fromCharCode(65 + index)}`)
 
   return (
     <main className="tb-page">
@@ -1878,9 +1901,10 @@ function SeriesScreen({
         {/* ── Editor Toolbar ── */}
         <div className="tb-toolbar">
           <span>🎯 INTERACTIVE BRACKET & GROUP TEAM SELECTOR</span>
-          <button onClick={resetSelections} className="tb-reset-btn">
-            Reset to Standings
-          </button>
+          {isAdmin && <div className="tb-admin-actions">
+            <button onClick={addGroup} className="tb-reset-btn">+ Add group</button>
+            <button onClick={resetSelections} className="tb-reset-btn">Reset to Standings</button>
+          </div>}
         </div>
         {result && <div className="global-result-strip">LATEST RESULT · {result}</div>}
 
@@ -1926,6 +1950,7 @@ function SeriesScreen({
               placeholder="TOURNAMENT CHAMPION"
               options={finalOptions}
               teams={teams}
+              disabled={!isAdmin}
               tone="red"
               onChange={(val) => updateSelection("final", val)}
             />
@@ -1940,6 +1965,7 @@ function SeriesScreen({
                 placeholder="SEMI-FINAL 1"
                 options={sf1Options}
                 teams={teams}
+                disabled={!isAdmin}
                 tone="orange"
                 onChange={(val) => updateSelection("sf1", val)}
               />
@@ -1951,6 +1977,7 @@ function SeriesScreen({
                 placeholder="SEMI-FINAL 2"
                 options={sf2Options}
                 teams={teams}
+                disabled={!isAdmin}
                 tone="orange"
                 onChange={(val) => updateSelection("sf2", val)}
               />
@@ -1965,6 +1992,7 @@ function SeriesScreen({
               placeholder="QUARTER-FINAL 1"
               options={allTeamNames}
               teams={teams}
+              disabled={!isAdmin}
               tone="green"
               onChange={(val) => updateSelection("qf1", val)}
             />
@@ -1974,6 +2002,7 @@ function SeriesScreen({
               placeholder="QUARTER-FINAL 2"
               options={allTeamNames}
               teams={teams}
+              disabled={!isAdmin}
               tone="green"
               onChange={(val) => updateSelection("qf2", val)}
             />
@@ -1983,6 +2012,7 @@ function SeriesScreen({
               placeholder="QUARTER-FINAL 3"
               options={allTeamNames}
               teams={teams}
+              disabled={!isAdmin}
               tone="green"
               onChange={(val) => updateSelection("qf3", val)}
             />
@@ -1992,6 +2022,7 @@ function SeriesScreen({
               placeholder="QUARTER-FINAL 4"
               options={allTeamNames}
               teams={teams}
+              disabled={!isAdmin}
               tone="green"
               onChange={(val) => updateSelection("qf4", val)}
             />
@@ -2004,7 +2035,7 @@ function SeriesScreen({
             const groupTeams = selections.groups[gi] || ["", "", "", ""]
             return (
               <article className="tb-group" key={label}>
-                <h2 className="tb-group-title">{label}</h2>
+                <h2 className="tb-group-title">{label}{isAdmin && selections.groups.length > 2 && <button onClick={() => deleteGroup(gi)} aria-label={`Delete ${label}`}>×</button>}</h2>
                 <div className="tb-group-list">
                   {groupTeams.map((teamName, ti) => {
                     const selectedTeam = teams.find((team) => team.name === teamName)
@@ -2032,6 +2063,7 @@ function SeriesScreen({
                       </span>
                       <div className="tb-row-select-wrap">
                         <select
+                          disabled={!isAdmin}
                           value={teamName}
                           onChange={(e) => updateGroupTeam(gi, ti, e.target.value)}
                           className="tb-row-select"
@@ -2220,16 +2252,27 @@ function LegacyPointsScreen({
   )
 }
 
-function PointsScreen({ table, teams, result, onNavigate }: { table: Standing[]; teams: Team[]; result: string; onNavigate: (screen: Screen) => void }) {
+function PointsScreen({ table, teams, result, isAdmin, onNavigate, onChangeTable }: { table: Standing[]; teams: Team[]; result: string; isAdmin: boolean; onNavigate: (screen: Screen) => void; onChangeTable: (table: Standing[]) => void }) {
+  const [editing, setEditing] = useState(false)
   const runRate = (row: Standing) => row.forBalls ? row.forRuns / (row.forBalls / 6) : 0
   const ranked = [...table].sort((a, b) => b.w - a.w || runRate(b) - runRate(a))
+  const editStanding = (teamName: string, field: "p" | "w" | "l" | "rr", value: number) => {
+    onChangeTable(table.map((row) => {
+      if (row.team !== teamName) return row
+      if (field === "rr") {
+        const balls = row.forBalls || 6
+        return { ...row, forBalls: balls, forRuns: Math.max(0, value) * (balls / 6) }
+      }
+      return { ...row, [field]: Math.max(0, Math.round(value || 0)) }
+    }))
+  }
   return <main className="points-page imported-points-page">
     {result && <div className="global-result-strip points-result-strip">LATEST RESULT · {result}</div>}
-    <section className="points-utility"><div><span>TOURNAMENT CENTER</span><strong>Live standings from the scoring engine</strong></div><div className="points-actions"><button onClick={() => onNavigate("scoring")}>Open live scorer →</button><button onClick={() => onNavigate("home")}>← Home</button></div></section>
+    <section className="points-utility"><div><span>TOURNAMENT CENTER</span><strong>Live standings from the scoring engine</strong></div><div className="points-actions">{isAdmin && <button onClick={() => setEditing((value) => !value)}>{editing ? "Finish editing" : "Edit standings"}</button>}<button onClick={() => onNavigate("home")}>← Home</button></div></section>
     <section className="imported-points-board">
       <div className="import-board-title"><h1>Points Table</h1><h2>Diamond Premier League 6</h2></div>
       <div className="imported-table"><div className="imported-table-head"><span>Team</span><span>M</span><span>W</span><span>L</span><span>RR</span></div><div className="imported-table-rows">
-        {ranked.map((row,index) => { const rr=runRate(row); const team=teams.find((item)=>item.name===row.team); const initials=row.team.split(" ").map(word=>word[0]).join(""); return <div className="imported-row" key={row.team}><div className="imported-team" style={{"--team-color":team?.color || TABLE_COLORS[index%TABLE_COLORS.length]} as React.CSSProperties}><i/><div className="logo-capsule">{team?.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <span>{team?.code || initials}</span>}</div><strong>{row.team}</strong></div><b>{row.p}</b><b>{row.w}</b><b>{row.l}</b><b>{rr.toFixed(2)}</b></div> })}
+        {ranked.map((row,index) => { const rr=runRate(row); const team=teams.find((item)=>item.name===row.team); const initials=row.team.split(" ").map(word=>word[0]).join(""); const cell=(field:"p"|"w"|"l"|"rr",value:number)=><b>{editing&&isAdmin?<input className="standing-editor" type="number" min="0" step={field==="rr"?"0.01":"1"} value={field==="rr"?value.toFixed(2):value} onChange={(event)=>editStanding(row.team,field,Number(event.target.value))}/>:field==="rr"?value.toFixed(2):value}</b>; return <div className={`imported-row ${editing&&isAdmin?"editing":""}`} key={row.team}><div className="imported-team" style={{"--team-color":team?.color || TABLE_COLORS[index%TABLE_COLORS.length]} as React.CSSProperties}><i/><div className="logo-capsule">{team?.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <span>{team?.code || initials}</span>}</div><strong>{row.team}</strong></div>{cell("p",row.p)}{cell("w",row.w)}{cell("l",row.l)}{cell("rr",rr)}</div> })}
       </div></div>
       <div className="import-board-foot"><span>◉ CricVault Match Center</span><span><i/> AUTO-UPDATED · TOP 4 QUALIFY</span></div>
     </section>
@@ -2261,6 +2304,7 @@ function ChoiceModal({
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home")
   const [user, setUser] = useState<FirebaseUser | null>(null)
+  const admin = isLeagueAdmin(user)
   const [overs, setOvers] = useState(20)
   const [teamProfiles, setTeamProfiles] = useState<SharedTeamProfile[]>(() =>
     loadTeamProfiles(DEFAULT_TEAM_PROFILES),
@@ -2342,8 +2386,6 @@ export default function App() {
   ), [])
 
   useEffect(() => {
-    if (!user) return
-    saveTeamProfiles(teamProfiles)
     const stopTeams = subscribeTeamProfiles(setTeamProfiles)
     const stopStandings = subscribeCloudData<Standing[]>("standings", (onlineTable) => {
       if (!Array.isArray(onlineTable)) return
@@ -2353,7 +2395,7 @@ export default function App() {
       stopTeams()
       stopStandings()
     }
-  }, [user])
+  }, [admin])
 
   useEffect(() => {
     const syncTeams = (event: Event) => {
@@ -2408,15 +2450,15 @@ export default function App() {
     localStorage.setItem("cricvault-score", JSON.stringify(state))
   }, [state])
   useEffect(() => {
-    if (!user) return
+    if (!admin) return
     const timer = window.setTimeout(() => {
       void saveCloudData("liveScore", state).catch(() => undefined)
       void saveCloudData("standings", state.table).catch(() => undefined)
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [state, user])
+  }, [state, admin])
   useEffect(() => {
-    if (!user || !state.result || !state.matchId) return
+    if (!admin || !state.result || !state.matchId) return
     void saveCloudData(`results/${state.matchId}`, {
       id: state.matchId,
       result: state.result,
@@ -2441,7 +2483,7 @@ export default function App() {
       setScheduledMatches(updated)
       void saveCloudData("matches", updated).catch(() => undefined)
     }
-  }, [state.result, state.matchId, user])
+  }, [state.result, state.matchId, admin])
   useEffect(() => {
     localStorage.setItem("cricvault-match-ready", String(matchReady))
   }, [matchReady])
@@ -2781,28 +2823,38 @@ export default function App() {
   }
   return (
     <div className={`scoring-app screen-${screen}`}>
-      <Header screen={screen} onNavigate={navigate} user={user} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
+      <Header screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
       {screen === "home" && <HomeScreen onNavigate={navigate} />}
       {screen === "matches" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 match center…</main>}>
-          <LazyMatchesScreen teams={teamProfiles} user={user} onLogin={handleGoogleLogin} />
+          <LazyMatchesScreen teams={teamProfiles} user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
         </Suspense>
       )}
-      {screen === "series" && <SeriesScreen table={state.table} teams={scoringTeams} result={state.result} />}
+      {screen === "series" && <SeriesScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} />}
       {screen === "teams" && (
         <Suspense fallback={<main className="teams-loading">Loading team center…</main>}>
-          <LazyTeamsScreen />
+          <LazyTeamsScreen isAdmin={admin} />
         </Suspense>
       )}
       {screen === "players" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 players…</main>}>
-          <LazyPlayersScreen user={user} onLogin={handleGoogleLogin} />
+          <LazyPlayersScreen user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
         </Suspense>
       )}
       {screen === "points" && (
-        <PointsScreen table={state.table} teams={scoringTeams} result={state.result} onNavigate={navigate} />
+        <PointsScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} onNavigate={navigate} onChangeTable={(table) => setState((current) => ({ ...current, table }))} />
       )}
-      {screen === "scoring" && !matchReady && (
+      {screen === "scoring" && !admin && (
+        <main className="admin-access-page">
+          <section>
+            <span>RESTRICTED CONTROL ROOM</span>
+            <h1>Administrator access only</h1>
+            <p>Live scoring and match controls are protected. Public visitors can view teams, players, fixtures, Series and the points table.</p>
+            <button onClick={handleGoogleLogin}>Sign in as DPL 6 administrator</button>
+          </section>
+        </main>
+      )}
+      {screen === "scoring" && admin && !matchReady && (
         <main className="guided-flow-page">
           <section className="guided-intro">
             <span>GUIDED MATCH SETUP</span>
@@ -2812,7 +2864,7 @@ export default function App() {
           <SetupPanel onStart={startMatch} teams={scoringTeams} />
         </main>
       )}
-      {screen === "scoring" && matchReady && (
+      {screen === "scoring" && admin && matchReady && (
         <>
           <main className="dashboard scoring-focus-dashboard">
             <aside className="scorecards-left">
@@ -2864,7 +2916,7 @@ export default function App() {
           </footer>
         </>
       )}
-      {screen === "scoring" && extraPrompt && (
+      {screen === "scoring" && admin && extraPrompt && (
         <ChoiceModal
           title={`${extraPrompt.toUpperCase()} — select ${
             extraPrompt === "wd" || extraPrompt === "nb"
@@ -2890,7 +2942,7 @@ export default function App() {
           </p>
         </ChoiceModal>
       )}
-      {screen === "scoring" && wicketPrompt && (
+      {screen === "scoring" && admin && wicketPrompt && (
         <ChoiceModal
           title={state.freeHit ? "Free-hit dismissal" : "Record wicket"}
           onClose={() => setWicketPrompt(false)}
@@ -2951,7 +3003,7 @@ export default function App() {
           </button>
         </ChoiceModal>
       )}
-      {screen === "scoring" && state.needsBowler && (
+      {screen === "scoring" && admin && state.needsBowler && (
         <ChoiceModal
           title={`Over ${Math.floor(state.balls / 6)} complete — choose bowler`}
         >

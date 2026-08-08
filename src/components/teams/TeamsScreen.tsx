@@ -57,10 +57,14 @@ function TeamCard({
   team,
   onUpdate,
   onMessage,
+  isAdmin,
+  onDelete,
 }: {
   team: TeamProfile
   onUpdate: (team: TeamProfile) => void
   onMessage: (message: string) => void
+  isAdmin: boolean
+  onDelete: () => void
 }) {
   const [flipped, setFlipped] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
@@ -116,17 +120,17 @@ function TeamCard({
         <section className="team-card-face team-card-front">
           <div className="team-logo-stage">
             {team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <div className="team-logo-placeholder">{initials}</div>}
-            <label className="team-front-upload">
+            {isAdmin && <label className="team-front-upload">
               <input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0])} />
               {team.logo ? "Change team picture" : "Upload team picture"}
-            </label>
+            </label>}
           </div>
           <div className="team-card-summary">
             <span className="team-card-kicker">CRICVAULT OFFICIAL TEAM</span>
             <div className="team-summary-title">
               <div><h3>{team.name || "Unnamed Team"}</h3><small>{team.code} · 11 registered players</small></div>
             </div>
-            <p>Hover to edit the team name, team picture, player names and player photos.</p>
+            <p>{isAdmin ? "Hover to edit the team name, team picture, player names and player photos." : "Open the card to view the complete registered squad."}</p>
           </div>
         </section>
 
@@ -134,12 +138,13 @@ function TeamCard({
           <header className="team-roster-head">
             <div className="team-back-title">
               <small>EDIT TEAM</small>
-              <input className="team-name-editor" value={team.name} onChange={(event) => onUpdate({ ...team, name: event.target.value })} aria-label="Team name" />
+              <input disabled={!isAdmin} className="team-name-editor" value={team.name} onChange={(event) => onUpdate({ ...team, name: event.target.value })} aria-label="Team name" />
             </div>
-            <label className="team-image-action">
+            {isAdmin && <label className="team-image-action">
               <input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0])} />
               Replace image
-            </label>
+            </label>}
+            {isAdmin && <button className="team-delete-action" onClick={onDelete}>Delete</button>}
           </header>
           <div className="team-player-list">
             {team.players.map((player, index) => (
@@ -152,11 +157,11 @@ function TeamCard({
                   transitionDelay: `${index * 38 + 120}ms`,
                 }}
               >
-                <label className="player-photo-control" title="Upload player photo">
-                  <input type="file" accept="image/*" onChange={(event) => uploadPlayer(index, event.target.files?.[0])} />
+                <label className={`player-photo-control ${!isAdmin ? "read-only" : ""}`} title={isAdmin ? "Upload player photo" : "Player photo"}>
+                  {isAdmin && <input type="file" accept="image/*" onChange={(event) => uploadPlayer(index, event.target.files?.[0])} />}
                   {player.photo ? <img src={player.photo} alt="" /> : <span>{player.name.charAt(0) || "P"}</span>}
                 </label>
-                <input value={player.name} onChange={(event) => updatePlayer(index, { name: event.target.value })} aria-label={`Player ${index + 1} name`} />
+                <input disabled={!isAdmin} value={player.name} onChange={(event) => updatePlayer(index, { name: event.target.value })} aria-label={`Player ${index + 1} name`} />
               </div>
             ))}
           </div>
@@ -166,7 +171,7 @@ function TeamCard({
   )
 }
 
-export default function TeamsScreen() {
+export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
   const [teams, setTeams] = useState<TeamProfile[]>(() => {
     try {
       return normalizeStoredTeams(loadTeamProfiles(INITIAL_TEAMS))
@@ -178,12 +183,13 @@ export default function TeamsScreen() {
   const [message, setMessage] = useState("Ready to manage tournament squads.")
 
   useEffect(() => {
+    if (!isAdmin) return
     try {
       saveTeamProfiles(teams)
     } catch {
       setMessage("Storage is full. Remove some large photos before continuing.")
     }
-  }, [teams])
+  }, [teams, isAdmin])
 
   const visibleTeams = useMemo(
     () => teams.filter((team) => `${team.name} ${team.code}`.toLowerCase().includes(query.toLowerCase())),
@@ -199,13 +205,18 @@ export default function TeamsScreen() {
     }])
     setMessage("New team added. Edit its name, logo and players directly on the card.")
   }
+  const deleteTeam = (teamId: string) => {
+    if (!window.confirm("Delete this team and its squad?")) return
+    setTeams((current) => current.filter((team) => team.id !== teamId))
+    setMessage("Team deleted from DPL 6.")
+  }
 
   return (
     <main className="teams-hub-page">
       <section className="teams-hub-shell">
         <header className="teams-hub-hero">
-          <div><span>CRICVAULT TEAM CENTER</span><h1>Teams &amp; Players</h1><p>Interactive squad cards with editable names, logos and player portraits.</p></div>
-          <button onClick={addTeam}>+ Add team</button>
+          <div><span>DPL 6 TEAM CENTER</span><h1>Teams &amp; Players</h1><p>{isAdmin ? "Administrator controls for names, logos and player portraits." : "Official Diamond Premier League 6 squads and player rosters."}</p></div>
+          {isAdmin && <button onClick={addTeam}>+ Add team</button>}
         </header>
         <div className="teams-hub-tools">
           <label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search teams..." /></label>
@@ -214,7 +225,7 @@ export default function TeamsScreen() {
         </div>
         <section className="teams-card-grid" aria-label="Tournament teams">
           {visibleTeams.map((team) => (
-            <TeamCard key={team.id} team={team} onUpdate={updateTeam} onMessage={setMessage} />
+            <TeamCard key={team.id} team={team} onUpdate={updateTeam} onMessage={setMessage} isAdmin={isAdmin} onDelete={() => deleteTeam(team.id)} />
           ))}
         </section>
       </section>

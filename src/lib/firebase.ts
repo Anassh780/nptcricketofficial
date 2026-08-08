@@ -25,6 +25,9 @@ export const auth = getAuth(app)
 export const database = getDatabase(app)
 export const storage = getStorage(app)
 export type FirebaseUser = User
+export const ADMIN_EMAIL = "ghhhbbbhjn3@gmail.com"
+export const isLeagueAdmin = (user: User | null | undefined) =>
+  user?.email?.toLowerCase() === ADMIN_EMAIL
 
 const cleanForFirebase = <T,>(value: T): T =>
   JSON.parse(JSON.stringify(value)) as T
@@ -38,7 +41,7 @@ export const observeFirebaseUser = (callback: (user: User | null) => void) =>
   onAuthStateChanged(auth, callback)
 
 export const saveCloudData = async (path: string, value: unknown) => {
-  if (!auth.currentUser) throw new Error("Sign in with Google to save online.")
+  if (!isLeagueAdmin(auth.currentUser)) throw new Error("DPL 6 administrator access is required.")
   await set(ref(database, `dpl6/${path}`), cleanForFirebase(value))
 }
 
@@ -55,7 +58,7 @@ export const subscribeCloudData = <T,>(
 
 export const uploadLeagueImage = async (file: File, folder: string) => {
   const user = auth.currentUser
-  if (!user) throw new Error("Sign in with Google before uploading a picture.")
+  if (!isLeagueAdmin(user)) throw new Error("DPL 6 administrator access is required.")
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
   const destination = storageRef(
     storage,

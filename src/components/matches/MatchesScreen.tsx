@@ -25,10 +25,12 @@ export default function MatchesScreen({
   teams,
   user,
   onLogin,
+  isAdmin,
 }: {
   teams: SharedTeamProfile[]
   user: FirebaseUser | null
   onLogin: () => void
+  isAdmin: boolean
 }) {
   const [matches, setMatches] = useState<LeagueMatch[]>([])
   const [teamA, setTeamA] = useState(teams[0]?.id || "")
@@ -62,7 +64,7 @@ export default function MatchesScreen({
 
   const createMatch = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!user) return onLogin()
+    if (!isAdmin || !user) return onLogin()
     if (!teamA || !teamB || teamA === teamB || !date || !time) {
       setMessage("Choose two different teams and add the match date and time.")
       return
@@ -85,13 +87,23 @@ export default function MatchesScreen({
       setBusy(false)
     }
   }
+  const deleteMatch = async (id: string) => {
+    if (!isAdmin || !window.confirm("Delete this DPL 6 fixture?")) return
+    const next = matches.filter((match) => match.id !== id)
+    setMatches(next)
+    try {
+      await saveCloudData("matches", next)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not delete this fixture.")
+    }
+  }
 
   const team = (id: string) => teams.find((item) => item.id === id)
 
   return (
     <main className="dpl-matches-page">
       <header className="dpl-section-hero match-hero"><span>DIAMOND PREMIER LEAGUE · SEASON 6</span><h1>Match Center</h1><p>Publish fixtures once. Team names and logos are fetched directly from the online team registry.</p></header>
-      <section className="match-publisher">
+      {isAdmin && <section className="match-publisher">
         <div><small>CREATE FIXTURE</small><h2>Schedule a DPL 6 match</h2><p>The system automatically moves fixtures from upcoming to live and ended.</p></div>
         <form onSubmit={createMatch}>
           <label>Home team<select value={teamA} onChange={(event) => setTeamA(event.target.value)}>{teams.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
@@ -102,7 +114,7 @@ export default function MatchesScreen({
           <button disabled={busy}>{busy ? "Publishing…" : user ? "Publish match →" : "Sign in to publish"}</button>
         </form>
         {message && <div className="match-message">{message}</div>}
-      </section>
+      </section>}
 
       <section className="fixture-feed">
         <div className="fixture-feed-head"><div><span>AUTO-TRACKED SCHEDULE</span><h2>DPL 6 Fixtures</h2></div><b>{ordered.length} MATCHES</b></div>
@@ -118,7 +130,7 @@ export default function MatchesScreen({
                 <span className="versus-mark"><small>DPL 6</small>VS</span>
                 <div className="fixture-team"><div>{second?.logo ? <img src={second.logo} alt={`${second.name} logo`} /> : <b>{second?.code || "B"}</b>}</div><strong>{second?.name || "Opponent"}</strong></div>
               </div>
-              <div className="fixture-bottom"><span>⌖ {match.venue}</span>{match.result && <strong>{match.result}</strong>}</div>
+              <div className="fixture-bottom"><span>⌖ {match.venue}</span>{match.result && <strong>{match.result}</strong>}{isAdmin && <button className="delete-fixture" onClick={() => void deleteMatch(match.id)}>Delete</button>}</div>
             </article>
           })}
           {!ordered.length && <div className="empty-fixtures">No fixtures published yet.</div>}
