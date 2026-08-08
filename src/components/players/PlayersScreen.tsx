@@ -54,8 +54,8 @@ export default function PlayersScreen({
         ...players,
         { id, name: name.trim(), city: city.trim(), photo: photoUrl, createdAt: Date.now(), createdBy: user.uid },
       ]
-      await saveCloudData("players", next)
       setPlayers(next)
+      await saveCloudData("players", next)
       setName("")
       setCity("")
       setPhoto(null)

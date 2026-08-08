@@ -74,7 +74,7 @@ function TeamCard({
     if (!file) return
     try {
       onUpdate({ ...team, logo: await uploadLeagueImage(file, `teams/${team.id}`) })
-      onMessage("Team logo uploaded and synced online.")
+      onMessage("Team logo ready. Saving online…")
     } catch (error) {
       onMessage(error instanceof Error ? error.message : "Logo upload failed.")
     }
@@ -90,7 +90,7 @@ function TeamCard({
     if (!file) return
     try {
       updatePlayer(index, { photo: await uploadLeagueImage(file, `teams/${team.id}/players`) })
-      onMessage(`${team.players[index].name || `Player ${index + 1}`} photo uploaded and synced.`)
+      onMessage(`${team.players[index].name || `Player ${index + 1}`} photo ready. Saving online…`)
     } catch (error) {
       onMessage(error instanceof Error ? error.message : "Player upload failed.")
     }
@@ -184,11 +184,14 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
 
   useEffect(() => {
     if (!isAdmin) return
-    try {
-      saveTeamProfiles(teams)
-    } catch {
-      setMessage("Storage is full. Remove some large photos before continuing.")
-    }
+    const timer = window.setTimeout(() => {
+      void saveTeamProfiles(teams)
+        .then(() => setMessage("All team changes are synced online."))
+        .catch((error) => {
+          setMessage(error instanceof Error ? error.message : "Online team sync failed.")
+        })
+    }, 400)
+    return () => window.clearTimeout(timer)
   }, [teams, isAdmin])
 
   const visibleTeams = useMemo(

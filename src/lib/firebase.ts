@@ -9,6 +9,7 @@ import {
 } from "firebase/auth"
 import { getDatabase, onValue, ref, set } from "firebase/database"
 import { getDownloadURL, getStorage, ref as storageRef, uploadBytes } from "firebase/storage"
+import { optimizeUploadedImage } from "../components/teams/imageUpload"
 
 const firebaseConfig = {
   apiKey: "AIzaSyD0Xe5iE0tSZZOWwsm5on6T5HViRFqVv2s",
@@ -42,7 +43,11 @@ export const observeFirebaseUser = (callback: (user: User | null) => void) =>
 
 export const saveCloudData = async (path: string, value: unknown) => {
   if (!isLeagueAdmin(auth.currentUser)) throw new Error("DPL 6 administrator access is required.")
-  await set(ref(database, `dpl6/${path}`), cleanForFirebase(value))
+  try {
+    await set(ref(database, `dpl6/${path}`), cleanForFirebase(value))
+  } catch {
+    throw new Error("Online save failed. Re-enable Firebase Realtime Database and deploy the DPL 6 rules.")
+  }
 }
 
 export const subscribeCloudData = <T,>(
@@ -64,6 +69,12 @@ export const uploadLeagueImage = async (file: File, folder: string) => {
     storage,
     `dpl6/${folder}/${user.uid}/${crypto.randomUUID()}-${safeName}`,
   )
-  await uploadBytes(destination, file, { contentType: file.type })
-  return getDownloadURL(destination)
+  try {
+    await uploadBytes(destination, file, { contentType: file.type })
+    return await getDownloadURL(destination)
+  } catch {
+    // Firebase Storage is optional: a compressed data URL is saved inside the
+    // authenticated Realtime Database record when a bucket is not provisioned.
+    return optimizeUploadedImage(file, folder.includes("players") ? 420 : 720)
+  }
 }

@@ -25,7 +25,9 @@ export function loadTeamProfiles(fallback: SharedTeamProfile[]): SharedTeamProfi
 export function saveTeamProfiles(teams: SharedTeamProfile[]) {
   localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(teams))
   window.dispatchEvent(new CustomEvent(TEAM_UPDATE_EVENT, { detail: teams }))
-  if (isLeagueAdmin(auth.currentUser)) void saveCloudData("teams", teams).catch(() => undefined)
+  return isLeagueAdmin(auth.currentUser)
+    ? saveCloudData("teams", teams)
+    : Promise.resolve()
 }
 
 export function subscribeTeamProfiles(

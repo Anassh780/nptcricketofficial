@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { loadTeamProfiles, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
+import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
@@ -1652,7 +1653,7 @@ function TournamentCanvas({
     }
 
     stadium.onload = draw
-    stadium.src = "/images/tournament-stadium.png"
+    stadium.src = tournamentStadiumUrl
     if (stadium.complete) draw()
     const observer = new ResizeObserver(draw)
     observer.observe(holder)
