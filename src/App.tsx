@@ -2,10 +2,10 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
+import CricVaultNav, { type NavScreen as Screen } from "./components/navigation/CricVaultNav"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
-import "./components/navigation/floating-nav.css"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
@@ -224,166 +224,6 @@ const INITIAL: ScoreState = {
   result: "",
   needsBowler: false,
   table: INITIAL_TABLE,
-}
-
-function Brand() {
-  return (
-    <div className="dash-brand">
-      <span className="shield">V</span>
-      <span className="brand-copy">
-        <strong>
-          CRIC<span>VAULT</span>
-        </strong>
-        <small>DIAMOND PREMIER LEAGUE</small>
-      </span>
-    </div>
-  )
-}
-
-type Screen = "home" | "matches" | "series" | "teams" | "players" | "scoring" | "points"
-
-function Header({
-  screen,
-  onNavigate,
-  user,
-  onLogin,
-  onLogout,
-  isAdmin,
-}: {
-  screen: Screen
-  onNavigate: (screen: Screen) => void
-  user: FirebaseUser | null
-  onLogin: () => void
-  onLogout: () => void
-  isAdmin: boolean
-}) {
-  const [advancedOpen, setAdvancedOpen] = useState(false)
-  return (
-    <header className="dash-header">
-      <button
-        className="brand-button"
-        onClick={() => onNavigate("home")}
-        aria-label="Open Home"
-      >
-        <Brand />
-      </button>
-      <nav>
-        <button
-          onClick={() => onNavigate("home")}
-          className={screen === "home" ? "active" : ""}
-        >
-          Home
-        </button>
-        <button onClick={() => onNavigate("matches")} className={screen === "matches" ? "active" : ""}>
-          Matches
-        </button>
-        <button
-          onClick={() => onNavigate("series")}
-          className={screen === "series" ? "active" : ""}
-        >
-          Series
-        </button>
-        <button
-          onClick={() => onNavigate("teams")}
-          className={screen === "teams" ? "active" : ""}
-        >
-          Teams
-        </button>
-        <button onClick={() => onNavigate("players")} className={screen === "players" ? "active" : ""}>
-          Players
-        </button>
-        {isAdmin && <div className="advanced-nav">
-          <button
-            className={screen === "scoring" || screen === "points" ? "active" : ""}
-            onClick={() => setAdvancedOpen(!advancedOpen)}
-            aria-expanded={advancedOpen}
-          >
-            Advanced Scoring <span className="nav-chevron" aria-hidden="true">⌄</span>
-          </button>
-          {advancedOpen && (
-            <div className="advanced-menu">
-              <button
-                className="advanced-menu-live"
-                onClick={() => {
-                  onNavigate("scoring")
-                  setAdvancedOpen(false)
-                }}
-              >
-                <b>01</b>
-                <span>
-                  Live scorer<small>Ball-by-ball control room</small>
-                </span>
-              </button>
-              <button
-                className="advanced-menu-points"
-                onClick={() => {
-                  onNavigate("points")
-                  setAdvancedOpen(false)
-                }}
-              >
-                <b>02</b>
-                <span>
-                  Points table<small>DPL 6 standings and run rate</small>
-                </span>
-              </button>
-              <button
-                className="advanced-menu-results"
-                onClick={() => {
-                  onNavigate("matches")
-                  setAdvancedOpen(false)
-                }}
-              >
-                <b>03</b>
-                <span>
-                  Match records<small>Fixtures, winners and full scorecards</small>
-                </span>
-              </button>
-              <div className="advanced-menu-foot">
-                <span><i /> DPL 6 scoring systems online</span>
-                <button onClick={() => { onNavigate("scoring"); setAdvancedOpen(false) }}>Open control room →</button>
-              </div>
-            </div>
-          )}
-        </div>}
-      </nav>
-      <div className="head-tools">
-        <button aria-label="Search">⌕</button>
-        <button aria-label="Theme">☼</button>
-        <select
-          className="mobile-switcher"
-          value={screen}
-          onChange={(e) => onNavigate(e.target.value as Screen)}
-          aria-label="Open CricVault section"
-        >
-          <option value="home">Website</option>
-          <option value="matches">Matches</option>
-          <option value="series">Series</option>
-          <option value="teams">Teams</option>
-          <option value="players">Players</option>
-          {isAdmin && <option value="scoring">Live scorer</option>}
-          <option value="points">Points table</option>
-        </select>
-        {isAdmin && <button className="watch" onClick={() => onNavigate("scoring")}>
-          <span aria-hidden="true">▶</span> Score Live
-        </button>}
-        <button className={`google-login ${isAdmin ? "admin-authenticated" : ""}`} onClick={user ? onLogout : onLogin} title={user?.email || "Sign in with Google"}>
-          {user?.photoURL ? <img src={user.photoURL} alt="" /> : <span>G</span>}
-          <b>{isAdmin ? "ADMIN" : user ? user.displayName?.split(" ")[0] || "Account" : "Admin Login"}</b>
-        </button>
-      </div>
-      <div className="match-center">
-        <small>MATCH CENTER</small>
-        <strong>Advanced Scoring System</strong>
-      </div>
-      <div className="operator">
-        <span>CV</span>
-        <div>
-          <small>OPERATOR</small>
-          <strong>CricVault Ops</strong>
-        </div>
-      </div>
-    </header>
-  )
 }
 
 function SetupPanel({
@@ -2716,7 +2556,7 @@ export default function App() {
   }
   return (
     <div className={`scoring-app screen-${screen}`}>
-      <Header screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
+      <CricVaultNav screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
       {screen === "home" && <HomeScreen onNavigate={navigate} />}
       {screen === "matches" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 match center…</main>}>
