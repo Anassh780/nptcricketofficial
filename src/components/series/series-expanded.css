@@ -1,10 +1,11 @@
-.tb-wires-svg { height: 310px; }
-.tb-tier-qf { margin-bottom: 60px; }
+.tb-bracket .tb-wires-svg { height: 310px; }
+.tb-tier-qf { gap: 0; margin-bottom: 60px; }
 
-.tb-tier-qualifiers {
+.tb-tier.tb-tier-qualifiers {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  width: 100%;
+  gap: 0;
   margin-bottom: 58px;
 }
 
@@ -12,20 +13,23 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-items: center;
-  gap: 5px;
+  gap: 0;
 }
 
-.tb-qualifier-pair .tb-slot { width: 100%; min-width: 0; }
+.tb-qualifier-pair .tb-slot { width: calc(100% - 24px); min-width: 0; justify-self: center; }
 .tb-qualifier-pair .tb-flag { width: 34px; flex-basis: 34px; }
 .tb-qualifier-pair .tb-select { padding-left: 5px; font-size: 6.5px; }
 
 @media (max-width: 600px) {
-  .tb-wires-svg { height: 264px; }
+  .tb-bracket .tb-wires-svg { height: 264px; }
   .tb-wires-svg .tb-qualifier-wire { display: none; }
-  .tb-tier-qf { grid-template-columns: repeat(4, 1fr); margin-bottom: 25px; }
-  .tb-tier-qualifiers { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 38px; }
-  .tb-qualifier-pair { position: relative; grid-template-columns: 1fr; gap: 5px; padding-top: 14px; }
-  .tb-qualifier-pair::before { content: ""; position: absolute; left: 50%; top: -25px; width: 1px; height: 39px; background: rgba(160,230,255,.95); box-shadow: 0 0 6px rgba(80,210,255,.9); }
+  .tb-bracket .tb-tier-qf { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-bottom: 25px; }
+  .tb-tier-qf .tb-slot { width: calc(100% - 12px); min-width: 0; }
+  .tb-tier-qf .tb-flag { width: 22px; flex-basis: 22px; font-size: 4px; }
+  .tb-tier-qf .tb-select { padding: 0 8px 0 3px; font-size: 5px; }
+  .tb-tier.tb-tier-qualifiers { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-bottom: 38px; }
+  .tb-qualifier-pair { position: relative; grid-template-columns: 1fr; gap: 10px; padding-top: 14px; }
+  .tb-qualifier-pair::before { content: ""; position: absolute; z-index: 0; left: 50%; top: -25px; width: 1px; height: calc(100% + 25px); background: rgba(160,230,255,.95); box-shadow: 0 0 6px rgba(80,210,255,.9); }
   .tb-qualifier-pair .tb-slot { height: 29px; }
   .tb-qualifier-pair .tb-flag { width: 22px; flex-basis: 22px; font-size: 4px; }
   .tb-qualifier-pair .tb-select { padding: 0 8px 0 3px; font-size: 5px; }

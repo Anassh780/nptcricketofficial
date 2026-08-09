@@ -73,3 +73,19 @@
   .innings-result-stats { grid-template-columns: repeat(2, 1fr); }
   .innings-result-chase { flex-direction: column; }
 }
+
+.setup-roster-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 177, 55, .45);
+  border-radius: 7px;
+  background: rgba(255, 151, 35, .09);
+  color: #d7e2e5;
+}
+
+.setup-roster-alert strong { color: #ffc45f; font: 800 10px Rajdhani; text-transform: uppercase; letter-spacing: .08em; }
+.setup-roster-alert span { color: #91a4ab; font-size: 8px; line-height: 1.5; }
+.setup-actions .lime:disabled { cursor: not-allowed; filter: grayscale(.65); opacity: .55; }

@@ -379,14 +379,15 @@ function SetupPanel({
   const bowlingName = battingName === teamA ? teamB : teamA
   const battingTeam = teamByName(battingName, teams)
   const bowlingTeam = teamByName(bowlingName, teams)
-  const [striker, setStriker] = useState(teams[0].players[0])
-  const [nonStriker, setNonStriker] = useState(teams[0].players[1])
-  const [openingBowler, setOpeningBowler] = useState(teams[1].players[0])
+  const [striker, setStriker] = useState(teams[0].players[0] || "")
+  const [nonStriker, setNonStriker] = useState(teams[0].players[1] || "")
+  const [openingBowler, setOpeningBowler] = useState(teams[1].players[0] || "")
   useEffect(() => {
-    setStriker(battingTeam.players[0])
-    setNonStriker(battingTeam.players[1])
-    setOpeningBowler(bowlingTeam.players[0])
+    setStriker(battingTeam.players[0] || "")
+    setNonStriker(battingTeam.players[1] || "")
+    setOpeningBowler(bowlingTeam.players[0] || "")
   }, [battingName, bowlingName])
+  const rostersReady = battingTeam.players.length >= 2 && bowlingTeam.players.length >= 1
   const next = () => setStep((value) => Math.min(5, value + 1))
   return (
     <section className="panel setup-panel">
@@ -541,6 +542,7 @@ function SetupPanel({
             </select>
           </label>
           <p className="helper">These players will be active immediately when the scorer opens.</p>
+          {!rostersReady && <div className="setup-roster-alert"><strong>Squad names required</strong><span>Add at least two named players to the batting team and one named player to the bowling team in Team Center.</span></div>}
         </div>
       )}
       {step === 5 && (
@@ -573,9 +575,10 @@ function SetupPanel({
         ) : (
           <button
             className="lime"
+            disabled={!rostersReady || !striker || !nonStriker || !openingBowler}
             onClick={() => onStart({ teamA, teamB, overs, toss, decision, striker, nonStriker, bowler: openingBowler })}
           >
-            Start scoring →
+            {rostersReady ? "Start scoring →" : "Add squad names first"}
           </button>
         )}
       </div>
@@ -2206,6 +2209,14 @@ export default function App() {
   const [inningsResultOpen, setInningsResultOpen] = useState(false)
   const previousInnings = useRef(state.innings)
   const previousProfiles = useRef<SharedTeamProfile[]>(DEFAULT_TEAM_PROFILES)
+  const liveScoreReady = Boolean(
+    state.striker &&
+    state.nonStriker &&
+    state.bowler &&
+    state.batters?.[state.striker] &&
+    state.batters?.[state.nonStriker] &&
+    state.bowlers?.[state.bowler],
+  )
 
   useEffect(() => observeFirebaseUser(setUser), [])
 
@@ -2725,7 +2736,7 @@ export default function App() {
           </section>
         </main>
       )}
-      {screen === "scoring" && admin && scoringTeams.length >= 2 && !matchReady && (
+      {screen === "scoring" && admin && scoringTeams.length >= 2 && (!matchReady || !liveScoreReady) && (
         <main className="guided-flow-page">
           <section className="guided-intro">
             <span>GUIDED MATCH SETUP</span>
@@ -2735,7 +2746,7 @@ export default function App() {
           <SetupPanel onStart={startMatch} teams={scoringTeams} />
         </main>
       )}
-      {screen === "scoring" && admin && scoringTeams.length >= 2 && matchReady && (
+      {screen === "scoring" && admin && scoringTeams.length >= 2 && matchReady && liveScoreReady && (
         <>
           <main className="dashboard scoring-focus-dashboard">
             <aside className="scorecards-left">
