@@ -1,0 +1,106 @@
+/* Premium floating navigation inspired by the supplied reference. */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+.scoring-app.scoring-app>.dash-header {
+  position: relative;
+  z-index: 90;
+  width: min(1180px, calc(100% - 32px));
+  height: 66px;
+  margin: 16px auto 10px;
+  padding: 0 12px 0 16px;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) auto;
+  gap: 12px;
+  border: 1px solid rgba(112, 152, 166, .28);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(10,31,39,.92), rgba(3,15,21,.95));
+  backdrop-filter: blur(24px) saturate(1.25);
+  box-shadow: 0 18px 55px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.055);
+}
+
+.scoring-app.scoring-app>.dash-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle at 8% 0, rgba(145,229,33,.09), transparent 27%);
+  pointer-events: none;
+}
+
+.scoring-app>.dash-header nav {
+  justify-self: center;
+  height: 46px;
+  padding: 4px;
+  gap: 2px;
+  overflow: visible;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(0,0,0,.16);
+}
+
+.scoring-app>.dash-header nav>button,
+.scoring-app>.dash-header .advanced-nav>button {
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #9eafb5;
+  font: 700 9px Rajdhani;
+  transition: color .18s, background .18s, box-shadow .18s;
+}
+
+.scoring-app>.dash-header nav>button:hover,
+.scoring-app>.dash-header .advanced-nav>button:hover { color: #fff; background: rgba(255,255,255,.045); }
+.scoring-app>.dash-header nav>button.active,
+.scoring-app>.dash-header .advanced-nav>button.active { color: #f4ffeb; background: rgba(145,229,33,.1); box-shadow: inset 0 0 0 1px rgba(145,229,33,.16); }
+.scoring-app>.dash-header .head-tools { justify-self: end; }
+.scoring-app>.dash-header .head-tools>button:not(.watch):not(.google-login) { display: none; }
+.scoring-app>.dash-header .watch { height: 38px; border-radius: 12px; box-shadow: 0 8px 22px rgba(145,229,33,.17); }
+.scoring-app>.dash-header .google-login { height: 38px; border-radius: 12px; }
+.scoring-app>.dash-header .match-center,.scoring-app>.dash-header .operator { display: none; }
+
+.scoring-app>.dash-header .advanced-menu {
+  top: 53px;
+  left: 50%;
+  right: auto;
+  width: min(680px, 78vw);
+  padding: 7px;
+  display: grid;
+  grid-template-columns: 1.08fr .92fr;
+  grid-template-rows: 112px 112px 52px;
+  gap: 1px;
+  overflow: hidden;
+  transform: translateX(-58%);
+  border: 1px solid rgba(108,151,166,.32);
+  border-radius: 18px;
+  background: #0a1d25;
+  box-shadow: 0 34px 90px rgba(0,0,0,.65), inset 0 1px rgba(255,255,255,.05);
+}
+
+.scoring-app>.dash-header .advanced-menu>button { min-height: 0; padding: 18px; grid-template-columns: 38px 1fr; border: 0; border-radius: 0; background: linear-gradient(145deg,#09202a,#06171e); }
+.scoring-app>.dash-header .advanced-menu>button:hover { background: radial-gradient(circle at 80% 0,rgba(145,229,33,.12),transparent 42%),#0a232c; }
+.scoring-app>.dash-header .advanced-menu-live { grid-row: 1 / 3; }
+.scoring-app>.dash-header .advanced-menu-results { grid-column: 2; }
+.scoring-app>.dash-header .advanced-menu b { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(145,229,33,.35); border-radius: 50%; background: rgba(145,229,33,.07); }
+.scoring-app>.dash-header .advanced-menu span { font: 800 14px Rajdhani; }
+.scoring-app>.dash-header .advanced-menu small { max-width: 210px; margin-top: 6px; color: #728992; font: 500 9px/1.5 Inter; }
+.scoring-app>.dash-header .advanced-menu-foot { grid-column: 1 / -1; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; background: #07171e; }
+.scoring-app>.dash-header .advanced-menu-foot>span { display: flex; flex-direction: row; align-items: center; gap: 7px; color: #789099; font: 700 7px Rajdhani; letter-spacing: .08em; }
+.scoring-app>.dash-header .advanced-menu-foot i { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+.scoring-app>.dash-header .advanced-menu-foot>button { width: auto; min-height: 32px; padding: 0 12px; display: block; border: 1px solid #294651; border-radius: 9px; background: #0b232c; color: #dce9eb; font: 800 8px Rajdhani; }
+
+@media (max-width: 980px) {
+  .scoring-app.scoring-app>.dash-header { width: calc(100% - 16px); height: 60px; margin: 8px auto; grid-template-columns: 1fr auto; border-radius: 18px; }
+  .scoring-app>.dash-header nav { display: none; }
+  .scoring-app>.dash-header .mobile-switcher { display: block; max-width: 112px; border-radius: 10px; }
+  .scoring-app>.dash-header .head-tools { display: flex; }
+}
+
+@media (max-width: 520px) {
+  .scoring-app.scoring-app>.dash-header { padding-inline: 11px; }
+  .scoring-app>.dash-header .dash-brand strong { font-size: 16px; }
+  .scoring-app>.dash-header .shield { width: 25px; height: 29px; }
+}

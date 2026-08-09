@@ -68,7 +68,11 @@
   border-radius: 20px;
   background: radial-gradient(circle at 50% 0, rgba(145, 229, 33, .12), transparent 34%), linear-gradient(145deg, #0a2029, #041219 72%);
   box-shadow: 0 38px 120px #000;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.match-result-modal::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 .result-modal-close {
   position: absolute;
@@ -125,6 +129,32 @@
 .result-event-list p { margin: 0; min-height: 28px; display: grid; grid-template-columns: 40px 28px 1fr; align-items: center; border-top: 1px solid rgba(255,255,255,.055); color: #9cafb6; font-size: 8px; }
 .result-event-list p b { color: #6f858e; }
 .result-event-list p i { width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%; background: #29410f; color: #cfff98; font-style: normal; }
+.result-performance-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+.result-scorecard { overflow: hidden; border: 1px solid #284955; border-radius: 14px; background: linear-gradient(145deg,rgba(5,24,32,.94),rgba(3,15,21,.94)); }
+.result-scorecard>header { min-height: 65px; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid #203d48; background: radial-gradient(circle at 90% 0,rgba(145,229,33,.09),transparent 38%); }
+.result-scorecard>header small { color: var(--lime); font: 800 7px Rajdhani; letter-spacing: .14em; }
+.result-scorecard>header h3 { margin: 4px 0 0; font: 800 17px Rajdhani; }
+.result-scorecard>header>strong { color: #eff7f2; font: 800 27px Rajdhani; white-space: nowrap; }
+.result-scorecard>header>strong span { color: #81969e; font-size: 9px; }
+.result-scorecard-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1px; background: #203d48; }
+.result-stat-table { min-width: 0; overflow-x: auto; background: #04141b; scrollbar-width: none; }
+.result-stat-table::-webkit-scrollbar { display: none; }
+.result-table-title { height: 38px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; color: #dfe9eb; }
+.result-table-title span { font: 800 11px Rajdhani; text-transform: uppercase; }
+.result-table-title small { color: #647b84; font: 700 6px Rajdhani; letter-spacing: .08em; }
+.result-stat-table table { min-width: 360px; }
+.result-stat-table th { height: 27px; padding: 0 8px; color: #66808a; background: #061920; font-size: 6px; }
+.result-stat-table td { height: 39px; padding: 0 8px; color: #b8c8cd; font-size: 8px; }
+.result-stat-table td:not(:first-child),.result-stat-table th:not(:first-child) { text-align: center; }
+.result-stat-table td:first-child strong,.result-stat-table td:first-child small { display: block; }
+.result-stat-table td:first-child strong { color: #edf5f6; font: 700 9px Rajdhani; }
+.result-stat-table td:first-child small { max-width: 145px; margin-top: 2px; overflow: hidden; color: #6f858e; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+.result-bowling-table table { min-width: 290px; }
+.result-scorecard>footer { min-height: 38px; padding: 0 13px; display: flex; align-items: center; gap: 9px; border-top: 1px solid #203d48; color: #78909a; }
+.result-scorecard>footer span { color: var(--lime); font: 800 7px Rajdhani; letter-spacing: .1em; }
+.result-scorecard>footer b { color: #fff; font: 800 14px Rajdhani; }
+.result-scorecard>footer small { font-size: 7px; }
+.result-empty-stat { height: 52px!important; color: #68808a!important; text-align: center!important; }
 .match-result-modal>footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; color: #718892; font-size: 8px; }
 
 @media (max-width: 600px) {
@@ -133,6 +163,9 @@
   .result-team-logo { width: 68px; height: 68px; }
   .result-matchup { grid-template-columns: 1fr 50px 1fr; }
   .result-innings-grid { grid-template-columns: 1fr; }
+  .result-scorecard-grid { grid-template-columns: 1fr; }
+  .result-scorecard>header { align-items: flex-start; }
+  .result-table-title small { display: none; }
   .match-result-modal>footer { flex-direction: column; }
   .fixture-team img { padding: 5px; }
 }

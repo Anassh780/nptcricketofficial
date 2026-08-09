@@ -5,6 +5,7 @@ import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
+import "./components/navigation/floating-nav.css"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
@@ -49,6 +50,9 @@ type InningsSummary = {
   runs: number
   wickets: number
   balls: number
+  batting?: Batter[]
+  bowling?: Bowler[]
+  extras?: { wd: number; nb: number; b: number; lb: number }
 }
 type Standing = {
   team: string
@@ -89,6 +93,16 @@ type ScoreState = {
   needsBowler: boolean
   table: Standing[]
 }
+
+const inningsSnapshot = (state: ScoreState): InningsSummary => ({
+  team: state.batting,
+  runs: state.runs,
+  wickets: state.wickets,
+  balls: state.balls,
+  batting: Object.values(state.batters).filter((player) => player.balls || player.runs || player.out),
+  bowling: Object.values(state.bowlers).filter((player) => player.balls || player.runs || player.wickets),
+  extras: { ...state.extras },
+})
 
 const EMPTY_TEAM: Team = { code: "--", name: "", color: "#91e521", players: [] }
 const DEFAULT_TEAM_PROFILES: SharedTeamProfile[] = []
@@ -286,6 +300,7 @@ function Header({
           {advancedOpen && (
             <div className="advanced-menu">
               <button
+                className="advanced-menu-live"
                 onClick={() => {
                   onNavigate("scoring")
                   setAdvancedOpen(false)
@@ -297,6 +312,7 @@ function Header({
                 </span>
               </button>
               <button
+                className="advanced-menu-points"
                 onClick={() => {
                   onNavigate("points")
                   setAdvancedOpen(false)
@@ -307,6 +323,22 @@ function Header({
                   Points table<small>DPL 6 standings and run rate</small>
                 </span>
               </button>
+              <button
+                className="advanced-menu-results"
+                onClick={() => {
+                  onNavigate("matches")
+                  setAdvancedOpen(false)
+                }}
+              >
+                <b>03</b>
+                <span>
+                  Match records<small>Fixtures, winners and full scorecards</small>
+                </span>
+              </button>
+              <div className="advanced-menu-foot">
+                <span><i /> DPL 6 scoring systems online</span>
+                <button onClick={() => { onNavigate("scoring"); setAdvancedOpen(false) }}>Open control room →</button>
+              </div>
             </div>
           )}
         </div>}
@@ -2415,12 +2447,7 @@ export default function App() {
         draft.runs >= draft.target)
     if (inningsOver) {
       if (draft.innings === 1) {
-        draft.summaries.push({
-          team: draft.batting,
-          runs: draft.runs,
-          wickets: draft.wickets,
-          balls: draft.balls,
-        })
+        draft.summaries.push(inningsSnapshot(draft))
         const oldBatting = draft.batting
         draft.innings = 2
         draft.batting = draft.bowling
@@ -2449,12 +2476,7 @@ export default function App() {
         else if (draft.runs === first.runs) draft.result = "Match tied"
         else
           draft.result = `${draft.bowling} won by ${first.runs - draft.runs} runs`
-        const second: InningsSummary = {
-          team: draft.batting,
-          runs: draft.runs,
-          wickets: draft.wickets,
-          balls: draft.balls,
-        }
+        const second = inningsSnapshot(draft)
         const winner = draft.result.includes(" won by ")
           ? draft.result.startsWith(draft.batting)
             ? draft.batting
@@ -2647,12 +2669,7 @@ export default function App() {
       const draft = clone(current)
       if (draft.innings === 2 && draft.summaries[0]) {
         const first = draft.summaries[0]
-        const second: InningsSummary = {
-          team: draft.batting,
-          runs: draft.runs,
-          wickets: draft.wickets,
-          balls: draft.balls,
-        }
+        const second = inningsSnapshot(draft)
         let winner = ""
         if (second.runs > first.runs) {
           winner = second.team
@@ -2671,6 +2688,7 @@ export default function App() {
           winner,
         )
       } else {
+        if (!draft.summaries.length) draft.summaries.push(inningsSnapshot(draft))
         draft.result = `No result · ${draft.batting} ${draft.runs}/${draft.wickets} (${oversText(draft.balls)})`
         draft.table = draft.table.map((row) =>
           row.team === draft.batting || row.team === draft.bowling

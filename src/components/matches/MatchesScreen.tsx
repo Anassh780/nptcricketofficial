@@ -15,15 +15,61 @@ export type LeagueMatch = {
   winnerId?: string
   record?: {
     result: string
-    innings: Array<{ team: string; runs: number; wickets: number; balls: number }>
+    innings: Array<{
+      team: string
+      runs: number
+      wickets: number
+      balls: number
+      batting?: Array<{ name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean; dismissal: string }>
+      bowling?: Array<{ name: string; balls: number; runs: number; wickets: number; maidens: number }>
+      extras?: { wd: number; nb: number; b: number; lb: number }
+    }>
     target?: number | null
     completedAt: number
-    events?: Array<{ id: number; innings: number; over: string; mark: string; text: string }>
+    events?: Array<{ id: number; innings: number; over: string; mark: string; text: string; legal?: boolean; runs?: number }>
   }
   createdBy: string
 }
 
 const oversText = (balls = 0) => `${Math.floor(balls / 6)}.${balls % 6}`
+
+type BattingLine = { name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean; dismissal: string }
+type BowlingLine = { name: string; balls: number; runs: number; wickets: number; maidens: number }
+
+const deriveScorecards = (inningsNumber: number, events: NonNullable<LeagueMatch["record"]>["events"] = []) => {
+  const batting = new Map<string, BattingLine>()
+  const bowling = new Map<string, BowlingLine>()
+  ;[...events].filter((event) => event.innings === inningsNumber).reverse().forEach((event) => {
+    const delivery = event.text.match(/^(.+?) to (.+?),/)
+    if (!delivery) return
+    const [, bowlerName, batterName] = delivery
+    const batter = batting.get(batterName) || { name: batterName, runs: 0, balls: 0, fours: 0, sixes: 0, out: false, dismissal: "not out" }
+    const bowler = bowling.get(bowlerName) || { name: bowlerName, balls: 0, runs: 0, wickets: 0, maidens: 0 }
+    const legal = event.legal ?? !/^(WD|NB)/.test(event.mark)
+    const eventRuns = Number(event.runs ?? event.mark.match(/^\d+$/)?.[0] ?? 0)
+    if (legal) { batter.balls += 1; bowler.balls += 1 }
+    if (/^\d+$/.test(event.mark)) {
+      batter.runs += eventRuns
+      bowler.runs += eventRuns
+      if (eventRuns === 4) batter.fours += 1
+      if (eventRuns === 6) batter.sixes += 1
+    } else if (/^NB/.test(event.mark)) {
+      const batRuns = Math.max(0, eventRuns - 1)
+      batter.runs += batRuns
+      bowler.runs += eventRuns
+      if (batRuns === 4) batter.fours += 1
+      if (batRuns === 6) batter.sixes += 1
+    } else if (/^WD/.test(event.mark)) bowler.runs += eventRuns
+    if (event.mark === "W") {
+      batter.out = true
+      batter.dismissal = event.text.split(/OUT\s*[—-]\s*/)[1]?.replace(/\.$/, "") || "out"
+      if (!/run out/i.test(event.text)) bowler.wickets += 1
+    }
+    batting.set(batterName, batter)
+    bowling.set(bowlerName, bowler)
+  })
+  return { batting: [...batting.values()], bowling: [...bowling.values()] }
+}
 
 const matchStatus = (match: LeagueMatch) => {
   const now = Date.now()
@@ -178,7 +224,33 @@ export default function MatchesScreen({
               {innings.map((item, index) => <article key={`${item.team}-${index}`}><small>{index === 0 ? "FIRST INNINGS" : "SECOND INNINGS"}</small><h3>{item.team}</h3><strong>{item.runs}/{item.wickets}</strong><span>{oversText(item.balls)} overs</span></article>)}
               {!innings.length && <p className="legacy-result-note">The result is available, but this older fixture has no detailed score record.</p>}
             </div>
-            {selectedMatch.record?.events?.length ? <div className="result-event-list"><h3>Match timeline</h3>{selectedMatch.record.events.slice(0, 12).map((event) => <p key={event.id}><b>{event.over}</b><i>{event.mark}</i><span>{event.text}</span></p>)}</div> : null}
+            <div className="result-performance-stack">
+              {innings.map((item, index) => {
+                const derived = deriveScorecards(index + 1, selectedMatch.record?.events)
+                const batting = item.batting?.length ? item.batting : derived.batting
+                const bowling = item.bowling?.length ? item.bowling : derived.bowling
+                return <section className="result-scorecard" key={`scorecard-${item.team}-${index}`}>
+                  <header><div><small>{index === 0 ? "FIRST INNINGS" : "SECOND INNINGS"}</small><h3>{item.team} performance</h3></div><strong>{item.runs}/{item.wickets} <span>{oversText(item.balls)} ov</span></strong></header>
+                  <div className="result-scorecard-grid">
+                    <div className="result-stat-table result-batting-table">
+                      <div className="result-table-title"><span>Batting</span><small>RUNS · BALLS · BOUNDARIES</small></div>
+                      <table><thead><tr><th>BATTER</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead><tbody>
+                        {batting.map((player) => <tr key={player.name}><td><strong>{player.name}</strong><small>{player.out ? player.dismissal || "out" : "not out"}</small></td><td>{player.runs}</td><td>{player.balls}</td><td>{player.fours}</td><td>{player.sixes}</td><td>{player.balls ? ((player.runs / player.balls) * 100).toFixed(1) : "—"}</td></tr>)}
+                        {!batting.length && <tr><td colSpan={6} className="result-empty-stat">No batting deliveries recorded.</td></tr>}
+                      </tbody></table>
+                    </div>
+                    <div className="result-stat-table result-bowling-table">
+                      <div className="result-table-title"><span>Bowling</span><small>OVERS · RUNS · WICKETS</small></div>
+                      <table><thead><tr><th>BOWLER</th><th>O</th><th>R</th><th>W</th><th>ECON</th></tr></thead><tbody>
+                        {bowling.map((player) => <tr key={player.name}><td><strong>{player.name}</strong></td><td>{oversText(player.balls)}</td><td>{player.runs}</td><td>{player.wickets}</td><td>{player.balls ? (player.runs / (player.balls / 6)).toFixed(2) : "0.00"}</td></tr>)}
+                        {!bowling.length && <tr><td colSpan={5} className="result-empty-stat">No bowling figures recorded.</td></tr>}
+                      </tbody></table>
+                    </div>
+                  </div>
+                  {item.extras && <footer><span>EXTRAS</span><b>{Object.values(item.extras).reduce((total, value) => total + value, 0)}</b><small>WD {item.extras.wd} · NB {item.extras.nb} · B {item.extras.b} · LB {item.extras.lb}</small></footer>}
+                </section>
+              })}
+            </div>
             <footer><span>⌖ {selectedMatch.venue}</span>{selectedMatch.record?.completedAt ? <time>Completed {new Date(selectedMatch.record.completedAt).toLocaleString()}</time> : null}</footer>
           </section>
         </div>
