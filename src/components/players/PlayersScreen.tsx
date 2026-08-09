@@ -12,6 +12,25 @@ type LeaguePlayer = {
   createdBy: string
 }
 
+const PLAYER_STORAGE_KEY = "dpl6-player-gallery-v1"
+
+const loadCachedPlayers = (): LeaguePlayer[] => {
+  try {
+    const cached = localStorage.getItem(PLAYER_STORAGE_KEY)
+    return cached ? JSON.parse(cached) : []
+  } catch {
+    return []
+  }
+}
+
+const cachePlayers = (players: LeaguePlayer[]) => {
+  try {
+    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(players))
+  } catch (error) {
+    console.warn("Could not cache the player gallery locally", error)
+  }
+}
+
 export default function PlayersScreen({
   user,
   onLogin,
@@ -21,7 +40,7 @@ export default function PlayersScreen({
   onLogin: () => void
   isAdmin: boolean
 }) {
-  const [players, setPlayers] = useState<LeaguePlayer[]>([])
+  const [players, setPlayers] = useState<LeaguePlayer[]>(loadCachedPlayers)
   const [name, setName] = useState("")
   const [city, setCity] = useState("")
   const [photo, setPhoto] = useState<File | null>(null)
@@ -30,7 +49,11 @@ export default function PlayersScreen({
 
   useEffect(() => subscribeCloudData<LeaguePlayer[] | Record<string, LeaguePlayer>>(
     "players",
-    (value) => setPlayers(Array.isArray(value) ? value.filter(Boolean) : Object.values(value || {})),
+    (value) => {
+      const onlinePlayers = Array.isArray(value) ? value.filter(Boolean) : Object.values(value || {})
+      setPlayers(onlinePlayers)
+      cachePlayers(onlinePlayers)
+    },
   ), [])
 
   const ordered = useMemo(
@@ -55,6 +78,7 @@ export default function PlayersScreen({
         { id, name: name.trim(), city: city.trim(), photo: photoUrl, createdAt: Date.now(), createdBy: user.uid },
       ]
       setPlayers(next)
+      cachePlayers(next)
       await saveCloudData("players", next)
       setName("")
       setCity("")
@@ -70,6 +94,7 @@ export default function PlayersScreen({
     if (!isAdmin || !window.confirm("Delete this player from the DPL 6 gallery?")) return
     const next = players.filter((player) => player.id !== id)
     setPlayers(next)
+    cachePlayers(next)
     try {
       await saveCloudData("players", next)
     } catch (error) {

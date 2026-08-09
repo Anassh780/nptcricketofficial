@@ -1,6 +1,7 @@
 export async function optimizeUploadedImage(
   file: File,
   maxSize = 420,
+  quality = 0.78,
 ): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("Choose an image file.")
   if (file.size > 10 * 1024 * 1024) throw new Error("Image must be under 10 MB.")
@@ -17,7 +18,7 @@ export async function optimizeUploadedImage(
     const context = canvas.getContext("2d")
     if (!context) throw new Error("Image processing is unavailable.")
     context.drawImage(image, 0, 0, canvas.width, canvas.height)
-    return canvas.toDataURL("image/webp", 0.78)
+    return canvas.toDataURL("image/webp", quality)
   } finally {
     URL.revokeObjectURL(source)
   }

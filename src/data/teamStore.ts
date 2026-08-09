@@ -23,7 +23,11 @@ export function loadTeamProfiles(fallback: SharedTeamProfile[]): SharedTeamProfi
 }
 
 export function saveTeamProfiles(teams: SharedTeamProfile[]) {
-  localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(teams))
+  try {
+    localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(teams))
+  } catch (error) {
+    console.warn("Could not cache team profiles locally", error)
+  }
   window.dispatchEvent(new CustomEvent(TEAM_UPDATE_EVENT, { detail: teams }))
   return isLeagueAdmin(auth.currentUser)
     ? saveCloudData("teams", teams)

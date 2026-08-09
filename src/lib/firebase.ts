@@ -8,7 +8,6 @@ import {
   type User,
 } from "firebase/auth"
 import { getDatabase, onValue, ref, set } from "firebase/database"
-import { getDownloadURL, getStorage, ref as storageRef, uploadBytes } from "firebase/storage"
 import { optimizeUploadedImage } from "../components/teams/imageUpload"
 
 const firebaseConfig = {
@@ -24,7 +23,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const database = getDatabase(app)
-export const storage = getStorage(app)
 export type FirebaseUser = User
 export const ADMIN_EMAIL = "ghhhbbbhjn3@gmail.com"
 export const isLeagueAdmin = (user: User | null | undefined) =>
@@ -45,8 +43,9 @@ export const saveCloudData = async (path: string, value: unknown) => {
   if (!isLeagueAdmin(auth.currentUser)) throw new Error("DPL 6 administrator access is required.")
   try {
     await set(ref(database, `dpl6/${path}`), cleanForFirebase(value))
-  } catch {
-    throw new Error("Online save failed. Re-enable Firebase Realtime Database and deploy the DPL 6 rules.")
+  } catch (error) {
+    console.error("Firebase Realtime Database save failed", error)
+    throw new Error("Firebase Database is offline or deactivated. Enable Realtime Database in the Firebase Console, then try again.")
   }
 }
 
@@ -64,17 +63,8 @@ export const subscribeCloudData = <T,>(
 export const uploadLeagueImage = async (file: File, folder: string) => {
   const user = auth.currentUser
   if (!isLeagueAdmin(user)) throw new Error("DPL 6 administrator access is required.")
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
-  const destination = storageRef(
-    storage,
-    `dpl6/${folder}/${user.uid}/${crypto.randomUUID()}-${safeName}`,
-  )
-  try {
-    await uploadBytes(destination, file, { contentType: file.type })
-    return await getDownloadURL(destination)
-  } catch {
-    // Firebase Storage is optional: a compressed data URL is saved inside the
-    // authenticated Realtime Database record when a bucket is not provisioned.
-    return optimizeUploadedImage(file, folder.includes("players") ? 420 : 720)
-  }
+  // This Firebase project does not currently have a working Storage bucket.
+  // Keep profile images small and save them with their Realtime Database record
+  // so team logos and player portraits remain available everywhere in the app.
+  return optimizeUploadedImage(file, folder.includes("players") ? 300 : 480, 0.72)
 }
