@@ -1,5 +1,6 @@
 .navbar-surface { --nav-motion: cubic-bezier(.2,.8,.2,1); }
 .cv-dropdown {
+  pointer-events: auto;
   animation: cv-dropdown-enter .22s var(--nav-motion) both;
   transform-origin: top center;
 }

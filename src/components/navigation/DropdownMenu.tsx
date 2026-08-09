@@ -95,7 +95,7 @@ export default function DropdownMenu({
 }) {
   const content = menuContent[type]
   return (
-    <div className="cv-dropdown absolute top-full left-1/2 z-50 mt-3 w-[600px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#08151b]/95 p-4 text-left shadow-[0_28px_70px_rgba(0,0,0,0.78)] backdrop-blur-2xl">
+    <div className="cv-dropdown pointer-events-auto absolute top-full left-1/2 z-50 mt-3 w-[600px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#08151b]/95 p-4 text-left shadow-[0_28px_70px_rgba(0,0,0,0.78)] backdrop-blur-2xl">
       <div className="pointer-events-none absolute -right-20 -top-24 h-52 w-52 rounded-full bg-[#91e521]/8 blur-3xl" />
       <div className="relative z-10 grid grid-cols-12 gap-4">
         <div className="col-span-8 space-y-1">
