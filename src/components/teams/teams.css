@@ -32,3 +32,4 @@
 @media(max-width:600px){.team-logo-stage>img{padding:0}.team-card-summary{min-height:84px;padding:14px 18px}.team-front-upload{top:12px;right:12px;bottom:auto}.team-front-edit{top:12px;left:12px}.team-front-upload,.team-front-edit{height:30px;padding-inline:10px;font-size:7px}}
 .team-front-name{display:block;width:100%;min-width:0;padding:0 0 3px;border:0;border-bottom:1px solid color-mix(in srgb,var(--team-color) 50%,transparent);outline:0;background:transparent;color:#fff;font:800 29px/1 Rajdhani}.team-front-name::placeholder{color:#819198}.team-front-name:focus{border-color:var(--team-color)}
 @media(max-width:600px){.team-front-name{font-size:24px}}
+.team-front-name,.team-name-editor,.team-front-name:focus,.team-name-editor:focus{border:0!important;box-shadow:none!important}

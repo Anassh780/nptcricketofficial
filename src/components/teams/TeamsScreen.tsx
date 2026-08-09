@@ -20,13 +20,16 @@ const ensureEleven = (players: PlayerProfile[] = []) =>
 
 function normalizeStoredTeams(value: unknown): TeamProfile[] {
   if (!Array.isArray(value)) return []
-  return value.map((raw: any, index) => ({
-    id: raw.id || `${raw.code || "team"}-${index}`,
-    name: raw.name || `Team ${index + 1}`,
-    code: raw.code || `T${index + 1}`,
-    color: raw.color || "#9df22f",
-    logo: raw.logo || raw.logoUrl || "",
-    players: ensureEleven(
+  return value.map((raw: any, index) => {
+    const storedName = typeof raw.name === "string" ? raw.name : ""
+    const name = /^(?:new\s+)?team\s+\d+$/i.test(storedName.trim()) ? "" : storedName
+    return {
+      id: raw.id || `${raw.code || "team"}-${index}`,
+      name,
+      code: typeof raw.code === "string" ? raw.code : "",
+      color: raw.color || "#9df22f",
+      logo: raw.logo || raw.logoUrl || "",
+      players: ensureEleven(
       (raw.playerDetails || raw.players || []).map((player: any, playerIndex: number) =>
         typeof player === "string"
           ? { id: crypto.randomUUID(), name: player, photo: "" }
@@ -36,8 +39,9 @@ function normalizeStoredTeams(value: unknown): TeamProfile[] {
               photo: player.photo || player.avatarUrl || "",
             },
       ),
-    ),
-  }))
+      ),
+    }
+  })
 }
 
 function TeamCard({
@@ -226,7 +230,7 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
   const addTeam = () => {
     const number = teams.length + 1
     setTeams((current) => [...current, {
-      id: crypto.randomUUID(), name: `New Team ${number}`, code: `T${number}`,
+      id: crypto.randomUUID(), name: "", code: `T${number}`,
       color: "#9df22f", logo: "", players: makePlayers(),
     }])
     setMessage("New team added. Edit its name, logo and players directly on the card.")
