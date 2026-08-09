@@ -230,9 +230,12 @@ function Brand() {
   return (
     <div className="dash-brand">
       <span className="shield">V</span>
-      <strong>
-        CRIC<span>VAULT</span>
-      </strong>
+      <span className="brand-copy">
+        <strong>
+          CRIC<span>VAULT</span>
+        </strong>
+        <small>DIAMOND PREMIER LEAGUE</small>
+      </span>
     </div>
   )
 }
@@ -295,7 +298,7 @@ function Header({
             onClick={() => setAdvancedOpen(!advancedOpen)}
             aria-expanded={advancedOpen}
           >
-            Advanced Scoring <span>⌄</span>
+            Advanced Scoring <span className="nav-chevron" aria-hidden="true">⌄</span>
           </button>
           {advancedOpen && (
             <div className="advanced-menu">
@@ -361,7 +364,7 @@ function Header({
           <option value="points">Points table</option>
         </select>
         {isAdmin && <button className="watch" onClick={() => onNavigate("scoring")}>
-          ▶ Score Live
+          <span aria-hidden="true">▶</span> Score Live
         </button>}
         <button className={`google-login ${isAdmin ? "admin-authenticated" : ""}`} onClick={user ? onLogout : onLogin} title={user?.email || "Sign in with Google"}>
           {user?.photoURL ? <img src={user.photoURL} alt="" /> : <span>G</span>}
