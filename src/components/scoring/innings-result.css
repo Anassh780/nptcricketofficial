@@ -1,0 +1,75 @@
+.innings-result-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 7, 10, .84);
+  backdrop-filter: blur(10px);
+}
+
+.innings-result-modal {
+  position: relative;
+  width: min(560px, 100%);
+  overflow: hidden;
+  padding: 30px;
+  border: 1px solid #31515c;
+  border-radius: 22px;
+  background: radial-gradient(circle at 90% 0, rgba(145, 229, 33, .18), transparent 36%), linear-gradient(145deg, #0a222b, #041219 72%);
+  box-shadow: 0 38px 120px #000, inset 0 1px rgba(255,255,255,.05);
+}
+
+.innings-result-modal::after {
+  content: "1";
+  position: absolute;
+  right: -8px;
+  bottom: -55px;
+  color: rgba(145,229,33,.04);
+  font: 900 230px Rajdhani;
+  pointer-events: none;
+}
+
+.innings-result-close {
+  position: absolute;
+  z-index: 2;
+  right: 18px;
+  top: 18px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #34535e;
+  border-radius: 50%;
+  background: #07161d;
+  color: #a8bbc2;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.innings-result-kicker { color: var(--lime); font: 800 8px Rajdhani; letter-spacing: .18em; }
+.innings-result-kicker i { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 10px var(--lime); }
+.innings-result-team { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; margin-top: 22px; }
+.innings-result-team>span { width: 68px; height: 68px; flex: 0 0 68px; display: grid; place-items: center; overflow: hidden; border: 1px solid #395965; border-radius: 50%; background: #f5f7f7; color: #102730; font: 800 18px Rajdhani; }
+.innings-result-team img { display: block; width: 100%; height: 100%; padding: 6px; border-radius: 50%; object-fit: contain; }
+.innings-result-team small { color: #78909a; font: 700 7px Rajdhani; letter-spacing: .14em; }
+.innings-result-team h2 { margin: 3px 0 0; font: 800 27px Rajdhani; }
+.innings-result-score { position: relative; z-index: 1; display: flex; align-items: end; gap: 11px; margin: 20px 0 16px; }
+.innings-result-score strong { font: 800 72px/.85 Rajdhani; letter-spacing: -.03em; }
+.innings-result-score strong em { color: var(--lime); font-size: 36px; font-style: normal; }
+.innings-result-score>span { margin-bottom: 4px; color: #91a4ac; font: 700 8px Rajdhani; letter-spacing: .11em; }
+.innings-result-stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.innings-result-stats article { padding: 12px 10px; border: 1px solid #24444f; border-radius: 9px; background: rgba(3,15,21,.65); }
+.innings-result-stats small,.innings-result-stats b { display: block; }
+.innings-result-stats small { color: #71858d; font: 700 6px Rajdhani; letter-spacing: .08em; }
+.innings-result-stats b { margin-top: 5px; font: 800 18px Rajdhani; }
+.innings-result-chase { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 13px; border: 1px solid rgba(145,229,33,.3); border-radius: 9px; background: rgba(145,229,33,.075); }
+.innings-result-chase span { color: #e8f5ec; font-weight: 700; }
+.innings-result-chase strong { color: var(--lime); font: 800 10px Rajdhani; text-transform: uppercase; }
+.continue-chase-button { position: relative; z-index: 1; width: 100%; height: 46px; margin-top: 12px; border: 0; border-radius: 9px; background: linear-gradient(180deg, var(--lime2), #70bc12); color: #071006; font-weight: 800; cursor: pointer; }
+
+@media (max-width: 560px) {
+  .innings-result-backdrop { align-items: end; padding: 0; }
+  .innings-result-modal { padding: 25px 15px 18px; border-radius: 22px 22px 0 0; }
+  .innings-result-score strong { font-size: 58px; }
+  .innings-result-stats { grid-template-columns: repeat(2, 1fr); }
+  .innings-result-chase { flex-direction: column; }
+}

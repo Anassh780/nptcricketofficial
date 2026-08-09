@@ -5,3 +5,8 @@
 @media(min-width:761px){.league-player-card{height:350px;min-height:0}}
 @media(max-width:760px){.league-player-card{height:310px;min-height:0}.player-portrait{height:auto}}
 @media(max-width:480px){.league-player-card{height:270px;min-height:0}}
+
+/* Keep the uploaded portrait visible beneath the complete card content. */
+.league-player-card>div:last-child{background:transparent;border-top:0;text-shadow:0 2px 8px #000,0 1px 2px #000}
+.league-player-card h3,.league-player-card p,.league-player-card small{filter:drop-shadow(0 2px 3px #000)}
+.player-portrait img{display:block;border-radius:inherit}

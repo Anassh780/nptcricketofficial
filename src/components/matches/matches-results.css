@@ -1,0 +1,118 @@
+.fixture-team>div {
+  overflow: hidden;
+}
+
+.fixture-team img,
+.result-team-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 7px;
+  border-radius: 50%;
+  object-fit: contain;
+  box-sizing: border-box;
+  background: #f5f7f7;
+}
+
+.vs-fixture.is-result-link {
+  cursor: pointer;
+  transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+
+.vs-fixture.is-result-link:hover,
+.vs-fixture.is-result-link:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(145, 229, 33, .6);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, .38), 0 0 0 1px rgba(145, 229, 33, .12);
+  outline: 0;
+}
+
+.match-result-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 7, 11, .82);
+  backdrop-filter: blur(9px);
+}
+
+.match-result-modal {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: min(820px, 92vh);
+  overflow: auto;
+  padding: 28px;
+  border: 1px solid #2b4b57;
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 0, rgba(145, 229, 33, .12), transparent 34%), linear-gradient(145deg, #0a2029, #041219 72%);
+  box-shadow: 0 38px 120px #000;
+}
+
+.result-modal-close {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #31505b;
+  border-radius: 50%;
+  background: #07161d;
+  color: #b7c8ce;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.match-result-modal>header { text-align: center; }
+.match-result-modal>header small { color: var(--lime); font: 800 8px Rajdhani; letter-spacing: .2em; }
+.match-result-modal>header h2 { margin: 8px 0 3px; font: 800 34px Rajdhani; text-transform: uppercase; }
+.match-result-modal>header time { color: #78909a; font-size: 9px; }
+
+.result-matchup {
+  display: grid;
+  grid-template-columns: 1fr 66px 1fr;
+  align-items: center;
+  margin: 25px 0 18px;
+}
+
+.result-matchup>div { display: flex; flex-direction: column; align-items: center; gap: 9px; min-width: 0; }
+.result-matchup>div>strong { font: 800 19px Rajdhani; text-align: center; }
+.result-matchup em { width: 54px; height: 54px; display: grid; place-items: center; margin: auto; border: 1px solid rgba(145,229,33,.55); border-radius: 50%; color: #fff; font: 800 18px Rajdhani; font-style: normal; }
+
+.result-team-logo {
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #395863;
+  border-radius: 50%;
+  background: #f5f7f7;
+}
+
+.result-team-logo b { color: #102630; font: 800 23px Rajdhani; }
+.result-verdict { padding: 12px 16px; border: 1px solid rgba(145,229,33,.35); border-radius: 10px; background: rgba(145,229,33,.1); color: #ddffb4; text-align: center; font: 800 17px Rajdhani; }
+.result-innings-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+.result-innings-grid article { padding: 17px; border: 1px solid #24434e; border-radius: 12px; background: rgba(3,15,21,.72); }
+.result-innings-grid small { color: var(--lime); font: 800 7px Rajdhani; letter-spacing: .14em; }
+.result-innings-grid h3 { margin: 6px 0 10px; font: 700 15px Rajdhani; }
+.result-innings-grid article>strong { display: inline-block; font: 800 31px Rajdhani; }
+.result-innings-grid article>span { margin-left: 9px; color: #81959d; font-size: 9px; }
+.legacy-result-note { grid-column: 1 / -1; margin: 0; padding: 24px; border: 1px dashed #294854; border-radius: 10px; color: #81959d; text-align: center; }
+.result-event-list { margin-top: 12px; padding: 13px; border: 1px solid #24434e; border-radius: 12px; background: rgba(3,15,21,.6); }
+.result-event-list h3 { margin: 0 0 8px; font: 700 13px Rajdhani; }
+.result-event-list p { margin: 0; min-height: 28px; display: grid; grid-template-columns: 40px 28px 1fr; align-items: center; border-top: 1px solid rgba(255,255,255,.055); color: #9cafb6; font-size: 8px; }
+.result-event-list p b { color: #6f858e; }
+.result-event-list p i { width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%; background: #29410f; color: #cfff98; font-style: normal; }
+.match-result-modal>footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; color: #718892; font-size: 8px; }
+
+@media (max-width: 600px) {
+  .match-result-backdrop { align-items: end; padding: 0; }
+  .match-result-modal { max-height: 92vh; padding: 23px 15px; border-radius: 20px 20px 0 0; }
+  .result-team-logo { width: 68px; height: 68px; }
+  .result-matchup { grid-template-columns: 1fr 50px 1fr; }
+  .result-innings-grid { grid-template-columns: 1fr; }
+  .match-result-modal>footer { flex-direction: column; }
+  .fixture-team img { padding: 5px; }
+}

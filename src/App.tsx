@@ -3,6 +3,7 @@ import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
+import "./components/scoring/innings-result.css"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
@@ -2155,6 +2156,8 @@ export default function App() {
   const [wicketType, setWicketType] = useState("Bowled")
   const [nextBatter, setNextBatter] = useState("")
   const [fielder, setFielder] = useState("")
+  const [inningsResultOpen, setInningsResultOpen] = useState(false)
+  const previousInnings = useRef(state.innings)
   const previousProfiles = useRef<SharedTeamProfile[]>(DEFAULT_TEAM_PROFILES)
 
   useEffect(() => observeFirebaseUser(setUser), [])
@@ -2242,6 +2245,12 @@ export default function App() {
     localStorage.setItem("cricvault-score", JSON.stringify(state))
   }, [state])
   useEffect(() => {
+    if (previousInnings.current === 1 && state.innings === 2 && state.summaries[0]) {
+      setInningsResultOpen(true)
+    }
+    previousInnings.current = state.innings
+  }, [state.innings, state.matchId, state.summaries.length])
+  useEffect(() => {
     if (teamsLoaded && scoringTeams.length < 2) setMatchReady(false)
   }, [teamsLoaded, scoringTeams.length])
   useEffect(() => {
@@ -2260,6 +2269,8 @@ export default function App() {
       batting: state.batting,
       bowling: state.bowling,
       innings: state.summaries,
+      target: state.target,
+      events: state.events,
       standings: state.table,
       completedAt: Date.now(),
     }).catch(() => undefined)
@@ -2272,8 +2283,15 @@ export default function App() {
         (match.teamA === bowlingId && match.teamB === battingId)),
     )
     if (scheduled) {
+      const record = {
+        result: state.result,
+        innings: state.summaries,
+        target: state.target,
+        events: state.events,
+        completedAt: Date.now(),
+      }
       const updated = scheduledMatches.map((match) =>
-        match.id === scheduled.id ? { ...match, result: state.result } : match,
+        match.id === scheduled.id ? { ...match, result: state.result, record } : match,
       )
       setScheduledMatches(updated)
       void saveCloudData("matches", updated).catch(() => undefined)
@@ -2721,6 +2739,30 @@ export default function App() {
           </footer>
         </>
       )}
+      {screen === "scoring" && admin && inningsResultOpen && state.summaries[0] && (() => {
+        const summary = state.summaries[0]
+        const inningsTeam = teamByName(summary.team, scoringTeams)
+        const runRate = summary.balls ? (summary.runs / (summary.balls / 6)).toFixed(2) : "0.00"
+        return <div className="innings-result-backdrop">
+          <section className="innings-result-modal" role="dialog" aria-modal="true" aria-label="First innings result">
+            <button className="innings-result-close" onClick={() => setInningsResultOpen(false)} aria-label="Close first innings result">×</button>
+            <div className="innings-result-kicker"><i /> FIRST INNINGS COMPLETE</div>
+            <div className="innings-result-team">
+              <span>{inningsTeam.logo ? <img src={inningsTeam.logo} alt={`${summary.team} logo`} /> : inningsTeam.code}</span>
+              <div><small>DPL 6 INNINGS REPORT</small><h2>{summary.team}</h2></div>
+            </div>
+            <div className="innings-result-score"><strong>{summary.runs}<em>/{summary.wickets}</em></strong><span>{oversText(summary.balls)} OVERS</span></div>
+            <div className="innings-result-stats">
+              <article><small>RUN RATE</small><b>{runRate}</b></article>
+              <article><small>WICKETS</small><b>{summary.wickets}</b></article>
+              <article><small>DELIVERIES</small><b>{summary.balls}</b></article>
+              <article><small>CHASE TARGET</small><b>{state.target || summary.runs + 1}</b></article>
+            </div>
+            <div className="innings-result-chase"><span>{state.batting}</span><strong>need {state.target || summary.runs + 1} runs to win</strong></div>
+            <button className="continue-chase-button" onClick={() => setInningsResultOpen(false)}>Continue to second innings →</button>
+          </section>
+        </div>
+      })()}
       {screen === "scoring" && admin && extraPrompt && (
         <ChoiceModal
           title={`${extraPrompt.toUpperCase()} — select ${

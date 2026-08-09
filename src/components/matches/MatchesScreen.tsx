@@ -3,6 +3,7 @@ import type { SharedTeamProfile } from "../../data/teamStore"
 import type { FirebaseUser } from "../../lib/firebase"
 import { saveCloudData, subscribeCloudData } from "../../lib/firebase"
 import "./matches.css"
+import "./matches-results.css"
 
 export type LeagueMatch = {
   id: string
@@ -11,8 +12,17 @@ export type LeagueMatch = {
   startsAt: number
   venue: string
   result?: string
+  record?: {
+    result: string
+    innings: Array<{ team: string; runs: number; wickets: number; balls: number }>
+    target?: number | null
+    completedAt: number
+    events?: Array<{ id: number; innings: number; over: string; mark: string; text: string }>
+  }
   createdBy: string
 }
+
+const oversText = (balls = 0) => `${Math.floor(balls / 6)}.${balls % 6}`
 
 const matchStatus = (match: LeagueMatch) => {
   const now = Date.now()
@@ -40,6 +50,7 @@ export default function MatchesScreen({
   const [venue, setVenue] = useState("")
   const [message, setMessage] = useState("")
   const [busy, setBusy] = useState(false)
+  const [selectedMatch, setSelectedMatch] = useState<LeagueMatch | null>(null)
 
   useEffect(() => subscribeCloudData<LeagueMatch[] | Record<string, LeagueMatch>>(
     "matches",
@@ -123,19 +134,51 @@ export default function MatchesScreen({
             const first = team(match.teamA)
             const second = team(match.teamB)
             const status = matchStatus(match)
-            return <article className={`vs-fixture status-${status.toLowerCase()}`} key={match.id}>
+            return <article
+              className={`vs-fixture status-${status.toLowerCase()} ${status === "ENDED" ? "is-result-link" : ""}`}
+              key={match.id}
+              role={status === "ENDED" ? "button" : undefined}
+              tabIndex={status === "ENDED" ? 0 : undefined}
+              onClick={() => status === "ENDED" && setSelectedMatch(match)}
+              onKeyDown={(event) => {
+                if (status === "ENDED" && (event.key === "Enter" || event.key === " ")) setSelectedMatch(match)
+              }}
+            >
               <div className="fixture-top"><span className="fixture-status"><i />{status}</span><time>{new Date(match.startsAt).toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"})} · {new Date(match.startsAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</time></div>
               <div className="versus-stage">
                 <div className="fixture-team"><div>{first?.logo ? <img src={first.logo} alt={`${first.name} logo`} /> : <b>{first?.code || "A"}</b>}</div><strong>{first?.name || "Team A"}</strong></div>
                 <span className="versus-mark"><small>DPL 6</small>VS</span>
                 <div className="fixture-team"><div>{second?.logo ? <img src={second.logo} alt={`${second.name} logo`} /> : <b>{second?.code || "B"}</b>}</div><strong>{second?.name || "Opponent"}</strong></div>
               </div>
-              <div className="fixture-bottom"><span>⌖ {match.venue}</span>{match.result && <strong>{match.result}</strong>}{isAdmin && <button className="delete-fixture" onClick={() => void deleteMatch(match.id)}>Delete</button>}</div>
+              <div className="fixture-bottom"><span>⌖ {match.venue}</span>{match.result && <strong>{match.result} · View full result</strong>}{isAdmin && <button className="delete-fixture" onClick={(event) => { event.stopPropagation(); void deleteMatch(match.id) }}>Delete</button>}</div>
             </article>
           })}
           {!ordered.length && <div className="empty-fixtures">No fixtures published yet.</div>}
         </div>
       </section>
+      {selectedMatch && (() => {
+        const first = team(selectedMatch.teamA)
+        const second = team(selectedMatch.teamB)
+        const innings = selectedMatch.record?.innings || []
+        return <div className="match-result-backdrop" onMouseDown={() => setSelectedMatch(null)}>
+          <section className="match-result-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Completed match result">
+            <button className="result-modal-close" onClick={() => setSelectedMatch(null)} aria-label="Close match result">×</button>
+            <header><small>OFFICIAL DPL 6 RESULT</small><h2>Match record</h2><time>{new Date(selectedMatch.startsAt).toLocaleString()}</time></header>
+            <div className="result-matchup">
+              <div><span className="result-team-logo">{first?.logo ? <img src={first.logo} alt="" /> : <b>{first?.code || "A"}</b>}</span><strong>{first?.name || "Team A"}</strong></div>
+              <em>VS</em>
+              <div><span className="result-team-logo">{second?.logo ? <img src={second.logo} alt="" /> : <b>{second?.code || "B"}</b>}</span><strong>{second?.name || "Opponent"}</strong></div>
+            </div>
+            <div className="result-verdict">{selectedMatch.record?.result || selectedMatch.result || "Match ended"}</div>
+            <div className="result-innings-grid">
+              {innings.map((item, index) => <article key={`${item.team}-${index}`}><small>{index === 0 ? "FIRST INNINGS" : "SECOND INNINGS"}</small><h3>{item.team}</h3><strong>{item.runs}/{item.wickets}</strong><span>{oversText(item.balls)} overs</span></article>)}
+              {!innings.length && <p className="legacy-result-note">The result is available, but this older fixture has no detailed score record.</p>}
+            </div>
+            {selectedMatch.record?.events?.length ? <div className="result-event-list"><h3>Match timeline</h3>{selectedMatch.record.events.slice(0, 12).map((event) => <p key={event.id}><b>{event.over}</b><i>{event.mark}</i><span>{event.text}</span></p>)}</div> : null}
+            <footer><span>⌖ {selectedMatch.venue}</span>{selectedMatch.record?.completedAt ? <time>Completed {new Date(selectedMatch.record.completedAt).toLocaleString()}</time> : null}</footer>
+          </section>
+        </div>
+      })()}
     </main>
   )
 }

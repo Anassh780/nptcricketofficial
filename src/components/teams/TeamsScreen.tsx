@@ -7,16 +7,21 @@ type PlayerProfile = { id: string; name: string; photo: string }
 type TeamProfile = SharedTeamProfile
 
 const makePlayers = () =>
-  Array.from({ length: 11 }, (_, index) => ({
+  Array.from({ length: 11 }, () => ({
     id: crypto.randomUUID(),
-    name: `Player ${index + 1}`,
+    name: "",
     photo: "",
   }))
 
 const ensureEleven = (players: PlayerProfile[] = []) =>
   Array.from({ length: 11 }, (_, index) =>
-    players[index] || { id: crypto.randomUUID(), name: `Player ${index + 1}`, photo: "" },
+    players[index] || { id: crypto.randomUUID(), name: "", photo: "" },
   )
+
+const customPlayerName = (value: unknown) => {
+  const name = typeof value === "string" ? value : ""
+  return /^player\s+\d+$/i.test(name.trim()) ? "" : name
+}
 
 function normalizeStoredTeams(value: unknown): TeamProfile[] {
   if (!Array.isArray(value)) return []
@@ -30,12 +35,12 @@ function normalizeStoredTeams(value: unknown): TeamProfile[] {
       color: raw.color || "#9df22f",
       logo: raw.logo || raw.logoUrl || "",
       players: ensureEleven(
-      (raw.playerDetails || raw.players || []).map((player: any, playerIndex: number) =>
+      (raw.playerDetails || raw.players || []).map((player: any) =>
         typeof player === "string"
-          ? { id: crypto.randomUUID(), name: player, photo: "" }
+          ? { id: crypto.randomUUID(), name: customPlayerName(player), photo: "" }
           : {
               id: player.id || crypto.randomUUID(),
-              name: player.name || `Player ${playerIndex + 1}`,
+              name: customPlayerName(player.name),
               photo: player.photo || player.avatarUrl || "",
             },
       ),
@@ -83,10 +88,10 @@ function TeamCard({
 
   const uploadPlayer = async (index: number, file?: File) => {
     if (!file) return
-    onMessage(`Processing ${team.players[index].name || `Player ${index + 1}`} photo…`)
+    onMessage(`Processing ${team.players[index].name || `squad member ${index + 1}`} photo…`)
     try {
       updatePlayer(index, { photo: await uploadLeagueImage(file, `teams/${team.id}/players`) })
-      onMessage(`${team.players[index].name || `Player ${index + 1}`} photo ready. Saving online…`)
+      onMessage(`${team.players[index].name || `Squad member ${index + 1}`} photo ready. Saving online…`)
     } catch (error) {
       onMessage(error instanceof Error ? error.message : "Player upload failed.")
     }
@@ -185,7 +190,7 @@ function TeamCard({
                   }} />}
                   {player.photo ? <img src={player.photo} alt="" /> : <span>{player.name.charAt(0) || "P"}</span>}
                 </label>
-                <input disabled={!isAdmin} value={player.name} onChange={(event) => updatePlayer(index, { name: event.target.value })} aria-label={`Player ${index + 1} name`} />
+                <input disabled={!isAdmin} value={player.name} onChange={(event) => updatePlayer(index, { name: event.target.value })} aria-label={`Squad member ${index + 1} name`} />
               </div>
             ))}
           </div>
