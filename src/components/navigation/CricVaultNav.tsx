@@ -21,6 +21,18 @@ const primaryLinks: Array<{ label: string; screen: NavScreen }> = [
   { label: "Players", screen: "players" },
 ]
 
+export function CricVaultBrand() {
+  return (
+    <span className="cv-wordmark-brand">
+      <span className="cv-mark" aria-hidden="true">V</span>
+      <span className="cv-wordmark-copy">
+        <strong>CRIC<span>VAULT</span></strong>
+        <small>DPL 6</small>
+      </span>
+    </span>
+  )
+}
+
 export default function CricVaultNav({
   screen,
   onNavigate,
@@ -65,11 +77,7 @@ export default function CricVaultNav({
   return (
     <header ref={navRef} className="cv-nav-shell">
       <button className="cv-wordmark" onClick={() => goTo("home")} aria-label="CricVault home">
-        <span className="cv-mark" aria-hidden="true">V</span>
-        <span className="cv-wordmark-copy">
-          <strong>CRIC<span>VAULT</span></strong>
-          <small>DPL 6</small>
-        </span>
+        <CricVaultBrand />
       </button>
 
       <nav className="cv-desktop-links" aria-label="Primary navigation">

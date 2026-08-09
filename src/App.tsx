@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
-import CricVaultNav, { type NavScreen as Screen } from "./components/navigation/CricVaultNav"
+import CricVaultNav, { CricVaultBrand, type NavScreen as Screen } from "./components/navigation/CricVaultNav"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
@@ -957,7 +957,7 @@ function PublicFooter({
     <footer className="public-footer">
       <div className="footer-top">
         <div>
-          <Brand />
+            <CricVaultBrand />
           <p>
             Cricket intelligence and professional match operations, designed as
             one coherent platform.

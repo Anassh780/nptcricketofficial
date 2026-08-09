@@ -43,6 +43,7 @@
   background: transparent;
   cursor: pointer;
 }
+.cv-wordmark-brand { display: flex; align-items: center; gap: 10px; }
 .cv-mark {
   width: 30px;
   height: 34px;
@@ -190,6 +191,7 @@
 @media (max-width: 460px) {
   .cv-nav-shell { padding-left: 10px; }
   .cv-wordmark { gap: 7px; }
+  .cv-wordmark-brand { gap: 7px; }
   .cv-mark { width: 26px; height: 30px; }
   .cv-wordmark-copy strong { font-size: 17px; }
   .cv-wordmark-copy small { display: none; }
