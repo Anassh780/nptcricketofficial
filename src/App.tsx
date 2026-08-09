@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
-import CricVaultNav, { CricVaultBrand, type NavScreen as Screen } from "./components/navigation/CricVaultNav"
+import Navbar, { NavbarBrand, type NavScreen as Screen } from "./components/navigation/Navbar"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
@@ -957,7 +957,7 @@ function PublicFooter({
     <footer className="public-footer">
       <div className="footer-top">
         <div>
-            <CricVaultBrand />
+            <NavbarBrand />
           <p>
             Cricket intelligence and professional match operations, designed as
             one coherent platform.
@@ -2556,7 +2556,7 @@ export default function App() {
   }
   return (
     <div className={`scoring-app screen-${screen}`}>
-      <CricVaultNav screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
+      <Navbar screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
       {screen === "home" && <HomeScreen onNavigate={navigate} />}
       {screen === "matches" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 match center…</main>}>

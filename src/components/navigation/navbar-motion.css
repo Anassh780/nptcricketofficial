@@ -1,0 +1,20 @@
+.cv-dropdown { animation: cv-dropdown-enter .22s cubic-bezier(.2,.8,.2,1) both; transform-origin: top center; }
+.cv-mobile-panel { animation: cv-mobile-enter .22s cubic-bezier(.2,.8,.2,1) both; }
+.cv-mobile-accordion { animation: cv-accordion-enter .18s ease-out both; overflow: hidden; }
+
+@keyframes cv-dropdown-enter {
+  from { opacity: 0; transform: translate(-50%, -8px) scale(.975); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+@keyframes cv-mobile-enter {
+  from { opacity: 0; transform: translateY(-7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cv-accordion-enter {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 180px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cv-dropdown, .cv-mobile-panel, .cv-mobile-accordion { animation: none; }
+}
+
