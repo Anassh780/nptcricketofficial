@@ -72,6 +72,7 @@ function TeamCard({
 
   const uploadLogo = async (file?: File) => {
     if (!file) return
+    onMessage("Processing team logo…")
     try {
       onUpdate({ ...team, logo: await uploadLeagueImage(file, `teams/${team.id}`) })
       onMessage("Team logo ready. Saving online…")
@@ -88,6 +89,7 @@ function TeamCard({
 
   const uploadPlayer = async (index: number, file?: File) => {
     if (!file) return
+    onMessage(`Processing ${team.players[index].name || `Player ${index + 1}`} photo…`)
     try {
       updatePlayer(index, { photo: await uploadLeagueImage(file, `teams/${team.id}/players`) })
       onMessage(`${team.players[index].name || `Player ${index + 1}`} photo ready. Saving online…`)
@@ -121,7 +123,11 @@ function TeamCard({
           <div className="team-logo-stage">
             {team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <div className="team-logo-placeholder">{initials}</div>}
             {isAdmin && <label className="team-front-upload">
-              <input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0])} />
+              <input type="file" accept="image/*" onChange={(event) => {
+                const file = event.currentTarget.files?.[0]
+                event.currentTarget.value = ""
+                void uploadLogo(file)
+              }} />
               {team.logo ? "Change team picture" : "Upload team picture"}
             </label>}
           </div>
@@ -141,7 +147,11 @@ function TeamCard({
               <input disabled={!isAdmin} className="team-name-editor" value={team.name} onChange={(event) => onUpdate({ ...team, name: event.target.value })} aria-label="Team name" />
             </div>
             {isAdmin && <label className="team-image-action">
-              <input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0])} />
+              <input type="file" accept="image/*" onChange={(event) => {
+                const file = event.currentTarget.files?.[0]
+                event.currentTarget.value = ""
+                void uploadLogo(file)
+              }} />
               Replace image
             </label>}
             {isAdmin && <button className="team-delete-action" onClick={onDelete}>Delete</button>}
@@ -158,7 +168,11 @@ function TeamCard({
                 }}
               >
                 <label className={`player-photo-control ${!isAdmin ? "read-only" : ""}`} title={isAdmin ? "Upload player photo" : "Player photo"}>
-                  {isAdmin && <input type="file" accept="image/*" onChange={(event) => uploadPlayer(index, event.target.files?.[0])} />}
+                  {isAdmin && <input type="file" accept="image/*" onChange={(event) => {
+                    const file = event.currentTarget.files?.[0]
+                    event.currentTarget.value = ""
+                    void uploadPlayer(index, file)
+                  }} />}
                   {player.photo ? <img src={player.photo} alt="" /> : <span>{player.name.charAt(0) || "P"}</span>}
                 </label>
                 <input disabled={!isAdmin} value={player.name} onChange={(event) => updatePlayer(index, { name: event.target.value })} aria-label={`Player ${index + 1} name`} />

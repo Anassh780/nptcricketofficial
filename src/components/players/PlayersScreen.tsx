@@ -119,7 +119,10 @@ export default function PlayersScreen({
         <form onSubmit={addPlayer}>
           <label>Player name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Full name" /></label>
           <label>City<input value={city} onChange={(event) => setCity(event.target.value)} placeholder="Home city" /></label>
-          <label className="player-photo-picker">Profile picture<input type="file" accept="image/*" onChange={(event) => setPhoto(event.target.files?.[0] || null)} /><span>{photo?.name || "Choose portrait"}</span></label>
+          <label className="player-photo-picker">Profile picture<input type="file" accept="image/*" onChange={(event) => {
+            setPhoto(event.currentTarget.files?.[0] || null)
+            event.currentTarget.value = ""
+          }} /><span>{photo?.name || "Choose portrait"}</span></label>
           <button disabled={busy}>{busy ? "Uploading…" : user ? "Add player →" : "Sign in to add"}</button>
         </form>
         {message && <div className="player-form-message">{message}</div>}
