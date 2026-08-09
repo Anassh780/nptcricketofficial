@@ -4,6 +4,7 @@ import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, sa
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
+import "./components/series/series-expanded.css"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
@@ -1546,6 +1547,7 @@ type TournamentSelections = {
   qf2: string
   qf3: string
   qf4: string
+  qualifiers: string[]
   groups: string[][]
 }
 
@@ -1584,6 +1586,7 @@ function SeriesScreen({
       qf2: gB[0],
       qf3: gA[1],
       qf4: gB[1],
+      qualifiers: orderedNames.slice(0, 8).concat(Array(8).fill("")).slice(0, 8),
       groups: [gA, gB],
     }
   }, [table, allTeamNames])
@@ -1625,6 +1628,9 @@ function SeriesScreen({
         qf2: cleanValue(current.qf2) || initialSelections.qf2,
         qf3: cleanValue(current.qf3) || initialSelections.qf3,
         qf4: cleanValue(current.qf4) || initialSelections.qf4,
+        qualifiers: Array.from({ length: 8 }, (_, index) =>
+          cleanValue(current.qualifiers?.[index] || initialSelections.qualifiers[index]),
+        ),
         groups,
       }
       return JSON.stringify(cleaned) === JSON.stringify(current) ? current : cleaned
@@ -1647,6 +1653,15 @@ function SeriesScreen({
       )
       return { ...prev, groups: newGroups }
     })
+  }
+
+  const updateQualifier = (slotIndex: number, val: string) => {
+    setSelections((current) => ({
+      ...current,
+      qualifiers: Array.from({ length: 8 }, (_, index) =>
+        index === slotIndex ? val : current.qualifiers?.[index] || "",
+      ),
+    }))
   }
 
   const resetSelections = () => {
@@ -1675,6 +1690,12 @@ function SeriesScreen({
     ),
   }))
 
+  const qfSelections = [selections.qf1, selections.qf2, selections.qf3, selections.qf4]
+  const qfOptions = (quarterIndex: number) => Array.from(new Set([
+    qfSelections[quarterIndex],
+    selections.qualifiers?.[quarterIndex * 2],
+    selections.qualifiers?.[quarterIndex * 2 + 1],
+  ].filter(Boolean)))
   const sf1Options = useMemo(() => Array.from(new Set([selections.qf1, selections.qf2, ...allTeamNames].filter(Boolean))), [selections.qf1, selections.qf2, allTeamNames])
   const sf2Options = useMemo(() => Array.from(new Set([selections.qf3, selections.qf4, ...allTeamNames].filter(Boolean))), [selections.qf3, selections.qf4, allTeamNames])
   const finalOptions = useMemo(() => Array.from(new Set([selections.sf1, selections.sf2, ...allTeamNames].filter(Boolean))), [selections.sf1, selections.sf2, allTeamNames])
@@ -1715,7 +1736,7 @@ function SeriesScreen({
           {/* SVG Connecting Flow Lines */}
           <svg
             className="tb-wires-svg"
-            viewBox="0 0 1000 280"
+            viewBox="0 0 1000 310"
             preserveAspectRatio="none"
             aria-hidden="true"
           >
@@ -1738,10 +1759,16 @@ function SeriesScreen({
             <line x1="875" y1="144" x2="875" y2="168" vectorEffect="non-scaling-stroke" />
 
             {/* QF1..4 → Groups Vertical Drops */}
-            <line x1="125" y1="204" x2="125" y2="265" vectorEffect="non-scaling-stroke" />
-            <line x1="375" y1="204" x2="375" y2="265" vectorEffect="non-scaling-stroke" />
-            <line x1="625" y1="204" x2="625" y2="265" vectorEffect="non-scaling-stroke" />
-            <line x1="875" y1="204" x2="875" y2="265" vectorEffect="non-scaling-stroke" />
+            {[125, 375, 625, 875].map((quarterCenter, index) => {
+              const left = quarterCenter - 62.5
+              const right = quarterCenter + 62.5
+              return <g key={quarterCenter} className={`tb-qualifier-wire tb-qualifier-wire-${index + 1}`}>
+                <line x1={quarterCenter} y1="204" x2={quarterCenter} y2="234" vectorEffect="non-scaling-stroke" />
+                <line x1={left} y1="234" x2={right} y2="234" vectorEffect="non-scaling-stroke" />
+                <line x1={left} y1="234" x2={left} y2="264" vectorEffect="non-scaling-stroke" />
+                <line x1={right} y1="234" x2={right} y2="264" vectorEffect="non-scaling-stroke" />
+              </g>
+            })}
           </svg>
 
           {/* Final tier */}
@@ -1792,7 +1819,7 @@ function SeriesScreen({
               flagLabel="FLAG"
               value={selections.qf1}
               placeholder="QUARTER-FINAL 1"
-              options={allTeamNames}
+              options={qfOptions(0)}
               teams={teams}
               disabled={!isAdmin}
               tone="green"
@@ -1802,7 +1829,7 @@ function SeriesScreen({
               flagLabel="FLAG"
               value={selections.qf2}
               placeholder="QUARTER-FINAL 2"
-              options={allTeamNames}
+              options={qfOptions(1)}
               teams={teams}
               disabled={!isAdmin}
               tone="green"
@@ -1812,7 +1839,7 @@ function SeriesScreen({
               flagLabel="FLAG"
               value={selections.qf3}
               placeholder="QUARTER-FINAL 3"
-              options={allTeamNames}
+              options={qfOptions(2)}
               teams={teams}
               disabled={!isAdmin}
               tone="green"
@@ -1822,12 +1849,32 @@ function SeriesScreen({
               flagLabel="FLAG"
               value={selections.qf4}
               placeholder="QUARTER-FINAL 4"
-              options={allTeamNames}
+              options={qfOptions(3)}
               teams={teams}
               disabled={!isAdmin}
               tone="green"
               onChange={(val) => updateSelection("qf4", val)}
             />
+          </div>
+          <div className="tb-tier tb-tier-qualifiers" aria-label="Quarter-final qualifying matches">
+            {Array.from({ length: 4 }, (_, quarterIndex) => (
+              <div className="tb-qualifier-pair" key={quarterIndex}>
+                {[0, 1].map((pairIndex) => {
+                  const slotIndex = quarterIndex * 2 + pairIndex
+                  return <BracketSlot
+                    key={slotIndex}
+                    flagLabel="FLAG"
+                    value={selections.qualifiers?.[slotIndex] || ""}
+                    placeholder={`QUALIFIER ${slotIndex + 1}`}
+                    options={allTeamNames}
+                    teams={teams}
+                    disabled={!isAdmin}
+                    tone="green"
+                    onChange={(val) => updateQualifier(slotIndex, val)}
+                  />
+                })}
+              </div>
+            ))}
           </div>
         </section>
 
@@ -2277,6 +2324,7 @@ export default function App() {
 
     const battingId = teamProfiles.find((team) => team.name === state.batting)?.id
     const bowlingId = teamProfiles.find((team) => team.name === state.bowling)?.id
+    const winnerId = teamProfiles.find((team) => state.result.startsWith(`${team.name} won by`))?.id
     const scheduled = scheduledMatches.find((match) =>
       !match.result &&
       ((match.teamA === battingId && match.teamB === bowlingId) ||
@@ -2291,7 +2339,7 @@ export default function App() {
         completedAt: Date.now(),
       }
       const updated = scheduledMatches.map((match) =>
-        match.id === scheduled.id ? { ...match, result: state.result, record } : match,
+        match.id === scheduled.id ? { ...match, result: state.result, winnerId, record } : match,
       )
       setScheduledMatches(updated)
       void saveCloudData("matches", updated).catch(() => undefined)

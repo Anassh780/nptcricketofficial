@@ -12,6 +12,7 @@ export type LeagueMatch = {
   startsAt: number
   venue: string
   result?: string
+  winnerId?: string
   record?: {
     result: string
     innings: Array<{ team: string; runs: number; wickets: number; balls: number }>
@@ -134,6 +135,9 @@ export default function MatchesScreen({
             const first = team(match.teamA)
             const second = team(match.teamB)
             const status = matchStatus(match)
+            const winnerId = match.winnerId || (status === "ENDED"
+              ? [first, second].find((candidate) => candidate && match.result?.startsWith(`${candidate.name} won by`))?.id
+              : undefined)
             return <article
               className={`vs-fixture status-${status.toLowerCase()} ${status === "ENDED" ? "is-result-link" : ""}`}
               key={match.id}
@@ -146,9 +150,9 @@ export default function MatchesScreen({
             >
               <div className="fixture-top"><span className="fixture-status"><i />{status}</span><time>{new Date(match.startsAt).toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"})} · {new Date(match.startsAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</time></div>
               <div className="versus-stage">
-                <div className="fixture-team"><div>{first?.logo ? <img src={first.logo} alt={`${first.name} logo`} /> : <b>{first?.code || "A"}</b>}</div><strong>{first?.name || "Team A"}</strong></div>
+                <div className={`fixture-team ${winnerId === first?.id ? "is-winner" : ""}`}><div>{first?.logo ? <img src={first.logo} alt={`${first.name} logo`} /> : <b>{first?.code || "A"}</b>}</div>{winnerId === first?.id && <span className="fixture-winner-tag">WINNER</span>}<strong>{first?.name || "Team A"}</strong></div>
                 <span className="versus-mark"><small>DPL 6</small>VS</span>
-                <div className="fixture-team"><div>{second?.logo ? <img src={second.logo} alt={`${second.name} logo`} /> : <b>{second?.code || "B"}</b>}</div><strong>{second?.name || "Opponent"}</strong></div>
+                <div className={`fixture-team ${winnerId === second?.id ? "is-winner" : ""}`}><div>{second?.logo ? <img src={second.logo} alt={`${second.name} logo`} /> : <b>{second?.code || "B"}</b>}</div>{winnerId === second?.id && <span className="fixture-winner-tag">WINNER</span>}<strong>{second?.name || "Opponent"}</strong></div>
               </div>
               <div className="fixture-bottom"><span>⌖ {match.venue}</span>{match.result && <strong>{match.result} · View full result</strong>}{isAdmin && <button className="delete-fixture" onClick={(event) => { event.stopPropagation(); void deleteMatch(match.id) }}>Delete</button>}</div>
             </article>

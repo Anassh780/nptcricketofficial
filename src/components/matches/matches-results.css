@@ -27,6 +27,26 @@
   outline: 0;
 }
 
+.fixture-team.is-winner>div {
+  border-color: var(--lime);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25), 0 0 0 3px rgba(145,229,33,.12), 0 0 25px rgba(145,229,33,.2);
+}
+
+.fixture-winner-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin: -4px auto 6px;
+  padding: 0 9px;
+  border: 1px solid rgba(145,229,33,.62);
+  border-radius: 11px;
+  background: rgba(145,229,33,.14);
+  color: var(--lime);
+  font: 800 7px Rajdhani;
+  letter-spacing: .13em;
+  box-shadow: 0 0 15px rgba(145,229,33,.12);
+}
+
 .match-result-backdrop {
   position: fixed;
   inset: 0;
