@@ -128,7 +128,13 @@ function TeamCard({
           <div className="team-card-summary">
             <span className="team-card-kicker">CRICVAULT OFFICIAL TEAM</span>
             <div className="team-summary-title">
-              <div><h3>{team.name || "Unnamed Team"}</h3><small>{team.code} · 11 registered players</small></div>
+              <div>
+                {isAdmin ? <input className="team-front-name" value={team.name} placeholder="Enter team name" onChange={(event) => {
+                  const name = event.target.value
+                  onUpdate((current) => ({ ...current, name }))
+                }} aria-label="Team name" /> : <h3>{team.name || "Unnamed Team"}</h3>}
+                <small>{team.code} · 11 registered players</small>
+              </div>
             </div>
             <p>{isAdmin ? "Hover to edit the team name, team picture, player names and player photos." : "Open the card to view the complete registered squad."}</p>
           </div>
