@@ -6,6 +6,7 @@ import "./widgets.css"
 type Batter = { name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean }
 type Bowler = { name: string; balls: number; runs: number; wickets: number; maidens?: number }
 type LiveScore = {
+  matchId: string
   innings: number
   batting: string
   bowling: string
@@ -55,6 +56,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
   const need = score.target ? Math.max(0, score.target - score.runs) : null
   const ballsRemaining = Math.max(0, matchOvers * 6 - score.balls)
   const runRate = score.balls ? (score.runs * 6 / score.balls).toFixed(2) : "0.00"
+  const requiredRate = need !== null && ballsRemaining ? (need * 6 / ballsRemaining).toFixed(2) : "—"
   const lastWicket = score.fall?.at(-1) || "No wicket recorded"
   const statusLabel = score.result ? "FINAL" : isLive ? "LIVE" : "READY"
 
@@ -98,20 +100,25 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
 
       <section className="tech-widget-stage standard-stage">
         <div className="widget-size-heading"><span>STANDARD LIVE MATCH WIDGET</span><b>4 × 2</b></div>
-        <article className="technology-widget standard-technology-widget">
-          <div className="widget-scanline" />
-          <header className="tech-score-head">
-            <div className="tech-team left"><TeamLogo team={battingTeam} /><strong>{battingName}</strong></div>
-            <div className="tech-main-score"><strong>{scoreText}</strong><span>{overs(score.balls)} OVERS</span><small className={isLive ? "live" : ""}><i /> {statusLabel}</small></div>
-            <div className="tech-versus">VS</div>
-            <div className="tech-team right"><strong>{bowlingName}</strong><TeamLogo team={bowlingTeam} /></div>
-          </header>
-          <section className="standard-data-rail">
-            <div><small>{score.target ? `TARGET ${score.target}` : `INNINGS ${score.innings || 1}`}</small><strong>{need !== null ? `Need ${need} runs` : "Match data synchronized"}</strong><span>CRR {runRate}</span></div>
-            <div className="bowler-cell"><small>CURRENT BOWLER</small><strong>{score.bowler || "Not selected"}</strong><span>{bowler ? `${bowler.wickets}/${bowler.runs}  (${overs(bowler.balls)})` : "0/0 (0.0)"}</span></div>
+        <article className="standard-live-widget" aria-label={`${battingName} versus ${bowlingName}, ${scoreText} after ${overs(score.balls)} overs`}>
+          <div className="stdw-sheen" />
+          <header className="stdw-header"><div className="stdw-brand"><i /> CRICVAULT</div><div>T20 · {score.matchId ? `MATCH ${score.matchId.slice(-4).toUpperCase()}` : `INNINGS ${score.innings || 1}`}</div></header>
+          <section className="stdw-score-zone">
+            <div className="stdw-team"><TeamLogo team={battingTeam} small /><div><strong>{battingName}</strong><span>BATTING</span></div></div>
+            <div className="stdw-score"><strong>{scoreText}</strong><span>{overs(score.balls)} <small>OVERS</small></span><b className={isLive ? "live" : ""}><i /> {statusLabel}</b></div>
+            <div className="stdw-team away"><div><strong>{bowlingName}</strong><span>BOWLING</span></div><TeamLogo team={bowlingTeam} small /></div>
           </section>
-          <section className="standard-players"><BatterCell label="STRIKER" player={striker} active /><BatterCell label="NON-STRIKER" player={nonStriker} /></section>
-          <footer className="tech-widget-footer"><span>LAST 6 BALLS</span><BallStrip balls={recentBalls} /><div><small>THIS OVER</small><strong>{currentOverRuns} RUNS</strong></div></footer>
+          <section className="stdw-context">
+            <div><span>{score.target ? "TARGET" : "INNINGS"}</span><strong>{score.target || score.innings || 1}</strong></div>
+            <div className="stdw-required"><span>{score.target ? "NEED" : "SYNC"}</span><strong>{need !== null ? `${need} runs from ${ballsRemaining} balls` : "Live match data ready"}</strong></div>
+            <div className="right"><span>RRR</span><strong>{requiredRate}</strong></div>
+          </section>
+          <section className="stdw-players">
+            <div className="active"><i /><span>{score.striker || "STRIKER"}</span><strong>{striker ? `${striker.runs}*` : "—"} <small>({striker?.balls || 0})</small></strong></div>
+            <div><span>{score.nonStriker || "NON-STRIKER"}</span><strong>{nonStriker?.runs ?? "—"} <small>({nonStriker?.balls || 0})</small></strong></div>
+            <div><span>{score.bowler || "BOWLER"}</span><strong>{bowler ? `${bowler.wickets}/${bowler.runs}` : "—"} <small>({bowler ? overs(bowler.balls) : "0.0"})</small></strong></div>
+          </section>
+          <footer className="stdw-balls"><div><span>LAST 6</span><small>THIS OVER</small></div><BallStrip balls={recentBalls} /><strong>{currentOverRuns} <span>RUNS</span></strong></footer>
         </article>
       </section>
 
@@ -144,7 +151,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
       <section className="widget-feature-rail">
         <div><MousePointerClick /><span><b>TAP ACTIONS</b><small>Scores · Players · Team</small></span></div>
         <div><RefreshCw /><span><b>LIVE SYNC</b><small>Updates every ball</small></span></div>
-        <div><Maximize2 /><span><b>TWO SIZES</b><small>4×2 · 5×3 responsive</small></span></div>
+        <div><Maximize2 /><span><b>THREE SIZES</b><small>2×1 · 4×2 · 5×3</small></span></div>
         <div><Moon /><span><b>DARK MODE</b><small>Optimized for Android</small></span></div>
         <button onClick={() => void install()}><Download /> Add to Android</button>
       </section>
