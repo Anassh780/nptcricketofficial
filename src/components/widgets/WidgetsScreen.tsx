@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Bell, Download, Maximize2, Moon, MousePointerClick, RefreshCw, Smartphone } from "lucide-react"
+import { Download, Maximize2, Moon, MousePointerClick, RefreshCw, Smartphone } from "lucide-react"
 import { clearInstallPrompt, getInstallPrompt, subscribeInstallPrompt, type InstallPromptEvent } from "../../lib/pwaInstall"
 import "./widgets.css"
 
@@ -36,10 +36,6 @@ function TeamLogo({ team, small = false }: { team?: WidgetTeam; small?: boolean 
 
 function BallStrip({ balls }: { balls: string[] }) {
   return <div className="tech-ball-strip">{balls.length ? balls.map((mark, index) => <b key={`${mark}-${index}`} className={mark === "W" ? "wicket" : mark === "4" || mark === "6" ? "boundary" : mark === "WD" || mark === "NB" ? "extra" : ""}>{mark}</b>) : <span>Waiting for first ball</span>}</div>
-}
-
-function BatterCell({ label, player, active }: { label: string; player?: Batter; active?: boolean }) {
-  return <div className="tech-player-cell"><small>{label}</small><strong>{player?.name || "Not selected"}{active && <i />}</strong><p>{player ? <><b>{player.runs}{active ? "*" : ""}</b> ({player.balls})</> : "—"}</p><span>{player ? `4s: ${player.fours}  |  6s: ${player.sixes}  |  SR: ${player.balls ? (player.runs * 100 / player.balls).toFixed(2) : "0.00"}` : "Waiting for match setup"}</span></div>
 }
 
 export default function WidgetsScreen({ score, teams, matchOvers }: { score: LiveScore; teams: WidgetTeam[]; matchOvers: number }) {
@@ -124,26 +120,29 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
 
       <section className="tech-widget-stage expanded-stage">
         <div className="widget-size-heading"><span>EXPANDED LIVE MATCH WIDGET</span><b>5 × 3</b></div>
-        <article className="technology-widget expanded-technology-widget">
-          <div className="widget-scanline" />
-          <div className="expanded-topbar"><div><span className="mini-shield">CV</span><strong>CRICVAULT</strong><i /> <b>{statusLabel} MATCH</b></div><div><Bell /><RefreshCw /></div></div>
-          <header className="tech-score-head expanded-score-head">
-            <div className="tech-team left"><TeamLogo team={battingTeam} /><strong>{battingName}</strong></div>
-            <div className="tech-main-score"><strong>{scoreText}</strong><span>{overs(score.balls)} OVERS</span><small className={isLive ? "live" : ""}><i /> {statusLabel}</small></div>
-            <div className="tech-versus">VS</div>
-            <div className="tech-team right"><strong>{bowlingName}</strong><TeamLogo team={bowlingTeam} /></div>
-          </header>
-          <section className="expanded-data-grid">
-            <div className="match-equation"><small>{score.target ? `TARGET ${score.target}` : `INNINGS ${score.innings || 1}`}</small><strong>{score.result || (need !== null ? `Need ${need} runs` : "Live scoring ready")}</strong><span>CRR {runRate}</span></div>
-            <BatterCell label="STRIKER" player={striker} active />
-            <BatterCell label="NON-STRIKER" player={nonStriker} />
-            <div className="bowler-cell"><small>CURRENT BOWLER</small><strong>{score.bowler || "Not selected"}</strong><p>{bowler ? `${bowler.wickets}/${bowler.runs} (${overs(bowler.balls)})` : "0/0 (0.0)"}</p><span>{bowler ? `${bowler.maidens || 0} maidens` : "Waiting for setup"}</span></div>
+        <article className="expanded-live-widget" aria-label={`Expanded live score for ${battingName} versus ${bowlingName}`}>
+          <header className="expw-header"><div className="expw-brand"><i><b /><b /><b /></i><strong>CRIC<span>VAULT</span></strong></div><div className={isLive ? "live" : ""}><i /> {statusLabel} MATCH <RefreshCw /></div></header>
+          <section className="expw-score-area">
+            <div className="expw-team"><TeamLogo team={battingTeam} small /><strong>{battingName}</strong></div>
+            <div className="expw-score"><strong>{scoreText}</strong><span><i /> {overs(score.balls)} <small>OVERS</small></span></div>
+            <div className="expw-team right"><TeamLogo team={bowlingTeam} small /><strong>{bowlingName}</strong></div>
           </section>
-          <footer className="expanded-footer">
-            <div><small>PARTNERSHIP</small><strong>{score.partnershipRuns || 0} <span>({score.partnershipBalls || 0})</span></strong></div>
-            <div><small>LAST WICKET</small><strong>{lastWicket}</strong></div>
-            <div className="expanded-balls"><small>LAST 6 BALLS</small><BallStrip balls={recentBalls} /></div>
-            <div><small>THIS OVER</small><strong className="lime">{currentOverRuns} RUNS</strong></div>
+          <section className="expw-context">
+            <div><span>{score.target ? "TARGET" : "INNINGS"}</span><strong>{score.target || score.innings || 1}</strong></div>
+            <div className="needed"><span>{score.target ? "NEED" : "STATUS"}</span><strong>{need !== null ? need : score.result || "LIVE"} <small>{need !== null ? "RUNS" : ""}</small></strong><em>{need !== null ? `FROM ${ballsRemaining} BALLS` : "REAL-TIME SYNC"}</em></div>
+            <div><span>RRR</span><strong>{requiredRate}</strong></div>
+            <div><span>CRR</span><strong>{runRate}</strong></div>
+          </section>
+          <section className="expw-players">
+            <article className="active"><header><span>{score.striker || "STRIKER"} <i>★</i></span><strong>{striker?.runs ?? "—"}<small>*</small></strong></header><p>{striker?.balls || 0} balls <b>•</b> {striker?.fours || 0} × 4 <b>•</b> {striker?.sixes || 0} × 6 <b>•</b> SR {striker?.balls ? (striker.runs * 100 / striker.balls).toFixed(1) : "0.0"}</p></article>
+            <article><header><span>{score.nonStriker || "NON-STRIKER"}</span><strong>{nonStriker?.runs ?? "—"}</strong></header><p>{nonStriker?.balls || 0} balls <b>•</b> {nonStriker?.fours || 0} × 4 <b>•</b> {nonStriker?.sixes || 0} × 6 <b>•</b> SR {nonStriker?.balls ? (nonStriker.runs * 100 / nonStriker.balls).toFixed(1) : "0.0"}</p></article>
+            <article className="bowler"><header><span>{score.bowler || "BOWLER"} <em>BOWLING</em></span><strong>{bowler ? `${bowler.wickets}/${bowler.runs}` : "—"}</strong></header><p>{bowler ? overs(bowler.balls) : "0.0"} overs <b>•</b> Econ {bowler?.balls ? (bowler.runs * 6 / bowler.balls).toFixed(2) : "0.00"} <b>•</b> {bowler?.maidens || 0} maidens</p></article>
+          </section>
+          <footer className="expw-detail-strip">
+            <div className="partnership"><span>PARTNERSHIP</span><strong>{score.partnershipRuns || 0} <small>({score.partnershipBalls || 0})</small></strong></div>
+            <div className="last-wicket"><span>LAST WICKET</span><strong>{lastWicket}</strong></div>
+            <div className="last-balls"><span>LAST 6</span><BallStrip balls={recentBalls} /></div>
+            <div className="this-over"><span>THIS OVER</span><strong>{currentOverRuns} <small>RUNS</small></strong></div>
           </footer>
         </article>
       </section>
