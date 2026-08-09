@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
-import { loadTeamProfiles, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
+import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
@@ -88,93 +88,8 @@ type ScoreState = {
   table: Standing[]
 }
 
-const TEAMS: Team[] = [
-  {
-    code: "NW",
-    name: "Northern Warriors",
-    color: "#9df22f",
-    players: [
-      "Arjun Dev",
-      "Rohan Malhotra",
-      "Vihaan Rao",
-      "Ketan Deshmukh",
-      "Shaurya Iyer",
-      "Devansh Kulkarni",
-      "Manav Bhandari",
-      "Nirav Patel",
-      "Samar Khanna",
-      "Jayant Mehra",
-      "Kabir Chopra",
-    ],
-  },
-  {
-    code: "SS",
-    name: "Southern Strikers",
-    color: "#4a8cff",
-    players: [
-      "Liam Carter",
-      "Ethan Mitchell",
-      "Noah Wilkinson",
-      "Jack Bennett",
-      "Jack Fraser",
-      "Oliver Hayes",
-      "Benjamin Lee",
-      "Harry Dawson",
-      "William Park",
-      "Archie Graham",
-      "Thomas Reid",
-    ],
-  },
-  {
-    code: "EB",
-    name: "Eastern Bulls",
-    color: "#f39c3d",
-    players: [
-      "Aarav Shah",
-      "Neil Dutta",
-      "Vikram Sethi",
-      "Reyansh Bose",
-      "Aman Gill",
-      "Ishaan Roy",
-      "Kunal Pal",
-      "Viraj Sen",
-      "Om Batra",
-      "Rishi Das",
-      "Parth Jain",
-    ],
-  },
-  {
-    code: "WR",
-    name: "Western Royals",
-    color: "#f4c542",
-    players: [
-      "Daniel Roy",
-      "Sam Wilson",
-      "Adam Price",
-      "Leo Martin",
-      "Ben King",
-      "Tom Reed",
-      "Max Hill",
-      "Luke Cole",
-      "Ryan Bell",
-      "Alex Ward",
-      "Ian Wood",
-    ],
-  },
-]
-
-const DEFAULT_TEAM_PROFILES: SharedTeamProfile[] = TEAMS.map((team) => ({
-  id: team.name.toLowerCase().replaceAll(" ", "-"),
-  name: team.name,
-  code: team.code,
-  color: team.color,
-  logo: team.logo || "",
-  players: team.players.map((name, index) => ({
-    id: `${team.code.toLowerCase()}-player-${index + 1}`,
-    name,
-    photo: "",
-  })),
-}))
+const EMPTY_TEAM: Team = { code: "--", name: "", color: "#91e521", players: [] }
+const DEFAULT_TEAM_PROFILES: SharedTeamProfile[] = []
 
 const blankStanding = (team: Team): Standing => ({
   team: team.name,
@@ -239,141 +154,10 @@ const nrrSummary = (summary: InningsSummary, inningsBallLimit: number) => ({
   balls: summary.wickets >= 10 ? inningsBallLimit : Math.max(1, summary.balls),
 })
 
-const INITIAL_TABLE: Standing[] = [
-  {
-    team: "Northern Warriors",
-    p: 6,
-    w: 5,
-    l: 1,
-    t: 0,
-    nr: 0,
-    pts: 10,
-    forRuns: 1010,
-    forBalls: 690,
-    againstRuns: 872,
-    againstBalls: 690,
-  },
-  {
-    team: "Southern Strikers",
-    p: 6,
-    w: 4,
-    l: 2,
-    t: 0,
-    nr: 0,
-    pts: 8,
-    forRuns: 965,
-    forBalls: 704,
-    againstRuns: 882,
-    againstBalls: 704,
-  },
-  {
-    team: "Eastern Bulls",
-    p: 6,
-    w: 3,
-    l: 3,
-    t: 0,
-    nr: 0,
-    pts: 6,
-    forRuns: 890,
-    forBalls: 710,
-    againstRuns: 905,
-    againstBalls: 710,
-  },
-  {
-    team: "Western Royals",
-    p: 6,
-    w: 2,
-    l: 4,
-    t: 0,
-    nr: 0,
-    pts: 4,
-    forRuns: 830,
-    forBalls: 700,
-    againstRuns: 934,
-    againstBalls: 700,
-  },
-  {
-    team: "Central Chargers",
-    p: 5,
-    w: 2,
-    l: 3,
-    t: 0,
-    nr: 0,
-    pts: 4,
-    forRuns: 720,
-    forBalls: 575,
-    againstRuns: 741,
-    againstBalls: 575,
-  },
-  {
-    team: "Coastal Titans",
-    p: 5,
-    w: 2,
-    l: 3,
-    t: 0,
-    nr: 0,
-    pts: 4,
-    forRuns: 696,
-    forBalls: 568,
-    againstRuns: 735,
-    againstBalls: 568,
-  },
-  {
-    team: "Metro Falcons",
-    p: 5,
-    w: 1,
-    l: 4,
-    t: 0,
-    nr: 0,
-    pts: 2,
-    forRuns: 662,
-    forBalls: 570,
-    againstRuns: 728,
-    againstBalls: 570,
-  },
-  {
-    team: "Desert Kings",
-    p: 4,
-    w: 1,
-    l: 3,
-    t: 0,
-    nr: 0,
-    pts: 2,
-    forRuns: 526,
-    forBalls: 456,
-    againstRuns: 582,
-    againstBalls: 456,
-  },
-  {
-    team: "Highland Hawks",
-    p: 4,
-    w: 1,
-    l: 3,
-    t: 0,
-    nr: 0,
-    pts: 2,
-    forRuns: 501,
-    forBalls: 448,
-    againstRuns: 568,
-    againstBalls: 448,
-  },
-  {
-    team: "River Riders",
-    p: 4,
-    w: 0,
-    l: 4,
-    t: 0,
-    nr: 0,
-    pts: 0,
-    forRuns: 465,
-    forBalls: 452,
-    againstRuns: 554,
-    againstBalls: 452,
-  },
-]
+const INITIAL_TABLE: Standing[] = []
 
-const teamByName = (name: string, teams: Team[] = TEAMS) =>
-  teams.find((team) => team.name === name) || TEAMS.find((team) => team.name === name) || teams[0] || TEAMS[0]
+const teamByName = (name: string, teams: Team[] = []) =>
+  teams.find((team) => team.name === name) || teams[0] || EMPTY_TEAM
 const freshBatters = (team: Team) =>
   Object.fromEntries(
     team.players.map((name) => [
@@ -402,20 +186,20 @@ const oversText = (balls: number) => `${Math.floor(balls / 6)}.${balls % 6}`
 const INITIAL: ScoreState = {
   matchId: "",
   innings: 1,
-  batting: TEAMS[0].name,
-  bowling: TEAMS[1].name,
+  batting: "",
+  bowling: "",
   runs: 0,
   wickets: 0,
   balls: 0,
-  striker: TEAMS[0].players[0],
-  nonStriker: TEAMS[0].players[1],
-  bowler: TEAMS[1].players[7],
+  striker: "",
+  nonStriker: "",
+  bowler: "",
   freeHit: false,
   partnershipRuns: 0,
   partnershipBalls: 0,
   extras: { wd: 0, nb: 0, b: 0, lb: 0 },
-  batters: freshBatters(TEAMS[0]),
-  bowlers: freshBowlers(TEAMS[1]),
+  batters: {},
+  bowlers: {},
   events: [],
   overMarks: [],
   fall: [],
@@ -1776,9 +1560,8 @@ function SeriesScreen({
   isAdmin: boolean
 }) {
   const allTeamNames = useMemo(() => {
-    const fromTable = table.map((t) => t.team)
-    return Array.from(new Set([...teams.map((team) => team.name), ...fromTable]))
-  }, [table, teams])
+    return Array.from(new Set(teams.map((team) => team.name)))
+  }, [teams])
 
   const initialSelections = useMemo<TournamentSelections>(() => {
     const ordered = [...table].sort(
@@ -1814,19 +1597,24 @@ function SeriesScreen({
   })
 
   useEffect(() => subscribeCloudData<TournamentSelections>("series", (online) => {
-    if (online?.groups) setSelections(online)
+    if (online?.groups) setSelections((current) =>
+      JSON.stringify(current) === JSON.stringify(online) ? current : online,
+    )
   }), [])
 
   useEffect(() => {
     setSelections((current) => {
       const cleanValue = (value: string) => allTeamNames.includes(value) ? value : ""
-      const groupCount = Math.max(2, current.groups?.length || 0)
-      const groups = Array.from({ length: groupCount }, (_, groupIndex) =>
-        Array.from({ length: 4 }, (_, slotIndex) =>
-          cleanValue(current.groups?.[groupIndex]?.[slotIndex] || "") ||
-          initialSelections.groups[groupIndex]?.[slotIndex] || "",
-        ),
-      )
+      const sourceGroups = current.groups?.length ? current.groups : initialSelections.groups
+      const groupCount = Math.max(1, sourceGroups.length)
+      const groups = Array.from({ length: groupCount }, (_, groupIndex) => {
+        const sourceTeams = sourceGroups[groupIndex]?.length
+          ? sourceGroups[groupIndex]
+          : initialSelections.groups[groupIndex]?.length
+            ? initialSelections.groups[groupIndex]
+            : [""]
+        return sourceTeams.map(cleanValue)
+      })
       const cleaned = {
         ...current,
         final: cleanValue(current.final),
@@ -1865,13 +1653,25 @@ function SeriesScreen({
   }
   const addGroup = () => setSelections((current) => ({
     ...current,
-    groups: [...current.groups, ["", "", "", ""]],
+    groups: [...current.groups, [""]],
   }))
   const deleteGroup = (groupIndex: number) => setSelections((current) => ({
     ...current,
-    groups: current.groups.length > 2
+    groups: current.groups.length > 1
       ? current.groups.filter((_, index) => index !== groupIndex)
       : current.groups,
+  }))
+  const addTeamToGroup = (groupIndex: number) => setSelections((current) => ({
+    ...current,
+    groups: current.groups.map((group, index) => index === groupIndex ? [...group, ""] : group),
+  }))
+  const deleteTeamFromGroup = (groupIndex: number, teamIndex: number) => setSelections((current) => ({
+    ...current,
+    groups: current.groups.map((group, index) =>
+      index === groupIndex && group.length > 1
+        ? group.filter((_, slotIndex) => slotIndex !== teamIndex)
+        : group,
+    ),
   }))
 
   const sf1Options = useMemo(() => Array.from(new Set([selections.qf1, selections.qf2, ...allTeamNames].filter(Boolean))), [selections.qf1, selections.qf2, allTeamNames])
@@ -2036,7 +1836,7 @@ function SeriesScreen({
             const groupTeams = selections.groups[gi] || ["", "", "", ""]
             return (
               <article className="tb-group" key={label}>
-                <h2 className="tb-group-title">{label}{isAdmin && selections.groups.length > 2 && <button onClick={() => deleteGroup(gi)} aria-label={`Delete ${label}`}>×</button>}</h2>
+                <h2 className="tb-group-title">{label}{isAdmin && selections.groups.length > 1 && <button type="button" onClick={() => deleteGroup(gi)} aria-label={`Delete ${label}`}>×</button>}</h2>
                 <div className="tb-group-list">
                   {groupTeams.map((teamName, ti) => {
                     const selectedTeam = teams.find((team) => team.name === teamName)
@@ -2079,9 +1879,11 @@ function SeriesScreen({
                         </select>
                         <span className="tb-chevron-small">▼</span>
                       </div>
+                      {isAdmin && groupTeams.length > 1 && <button type="button" className="tb-remove-team" onClick={() => deleteTeamFromGroup(gi, ti)} aria-label={`Remove team slot ${ti + 1} from ${label}`}>×</button>}
                     </div>
                   })}
                 </div>
+                {isAdmin && <button type="button" className="tb-add-team" onClick={() => addTeamToGroup(gi)}>+ Add team</button>}
               </article>
             )
           })}
@@ -2308,23 +2110,23 @@ export default function App() {
   const admin = isLeagueAdmin(user)
   const [overs, setOvers] = useState(20)
   const [teamProfiles, setTeamProfiles] = useState<SharedTeamProfile[]>(() =>
-    loadTeamProfiles(DEFAULT_TEAM_PROFILES),
+    DEFAULT_TEAM_PROFILES,
   )
+  const [teamsLoaded, setTeamsLoaded] = useState(false)
   const [scheduledMatches, setScheduledMatches] = useState<LeagueMatch[]>([])
   const scoringTeams = useMemo<Team[]>(() => {
     const mapped = teamProfiles.map((profile) => {
-      const fallback = TEAMS.find((team) => team.code === profile.code)
       const savedPlayers = Array.isArray(profile.players) ? profile.players : []
       const namedPlayers = savedPlayers
         .map((player) =>
           (typeof player === "string" ? player : player?.name || "").trim(),
         )
         .filter(Boolean)
-      const players = namedPlayers.length >= 2 ? namedPlayers : fallback?.players || []
+      const players = namedPlayers
       return {
-        code: profile.code || fallback?.code || profile.name.slice(0, 2).toUpperCase(),
+        code: profile.code || profile.name.slice(0, 2).toUpperCase(),
         name: profile.name,
-        color: profile.color || fallback?.color || "#91e521",
+        color: profile.color || "#91e521",
         logo: profile.logo,
         players,
         playerPhotos: Object.fromEntries(
@@ -2340,32 +2142,12 @@ export default function App() {
     const unique = mapped.filter(
       (team, index) => mapped.findIndex((item) => item.name === team.name) === index,
     )
-    return unique.length >= 2 ? unique : TEAMS
+    return unique
   }, [teamProfiles])
   const [matchReady, setMatchReady] = useState(
     () => localStorage.getItem("cricvault-match-ready") === "true",
   )
-  const [state, setState] = useState<ScoreState>(() => {
-    try {
-      const stored = JSON.parse(
-        localStorage.getItem("cricvault-score") || "null",
-      )
-      if (!stored) return INITIAL
-      const saved: Standing[] = stored.table || []
-      return {
-        ...INITIAL,
-        ...stored,
-        table: dedupeStandings([
-          ...saved,
-          ...INITIAL_TABLE.filter(
-            (row) => !saved.some((item) => item.team === row.team),
-          ),
-        ]),
-      }
-    } catch {
-      return INITIAL
-    }
-  })
+  const [state, setState] = useState<ScoreState>(INITIAL)
   const [history, setHistory] = useState<ScoreState[]>([])
   const [extraPrompt, setExtraPrompt] =
     useState<null | "wd" | "nb" | "b" | "lb">(null)
@@ -2386,17 +2168,25 @@ export default function App() {
     ),
   ), [])
 
-  useEffect(() => {
-    const stopTeams = subscribeTeamProfiles(setTeamProfiles)
-    const stopStandings = subscribeCloudData<Standing[]>("standings", (onlineTable) => {
-      if (!Array.isArray(onlineTable)) return
-      setState((current) => ({ ...current, table: dedupeStandings(onlineTable) }))
-    })
-    return () => {
-      stopTeams()
-      stopStandings()
-    }
-  }, [admin])
+  useEffect(() => subscribeTeamProfiles((onlineTeams) => {
+    setTeamProfiles((current) =>
+      JSON.stringify(current) === JSON.stringify(onlineTeams) ? current : onlineTeams,
+    )
+    setTeamsLoaded(true)
+  }), [])
+
+  useEffect(() => subscribeCloudData<Standing[] | null>("standings", (onlineTable) => {
+    const currentNames = new Set(scoringTeams.map((team) => team.name))
+    const validRows = Array.isArray(onlineTable)
+      ? onlineTable.filter((row) => currentNames.has(row.team))
+      : []
+    const nextTable = dedupeStandings(validRows)
+    setState((current) =>
+      JSON.stringify(current.table) === JSON.stringify(nextTable)
+        ? current
+        : { ...current, table: nextTable },
+    )
+  }), [scoringTeams])
 
   useEffect(() => {
     const syncTeams = (event: Event) => {
@@ -2423,15 +2213,17 @@ export default function App() {
       const missingRows = scoringTeams
         .filter((team) => !existingNames.has(team.name))
         .map(blankStanding)
-      const nextTable = current.table.map((row) => ({
-        ...row,
-        team: renamed.get(row.team) || row.team,
-      }))
-      const nextBatting = renamed.get(current.batting) || current.batting
-      const nextBowling = renamed.get(current.bowling) || current.bowling
+      const activeNames = new Set(scoringTeams.map((team) => team.name))
+      const nextTable = current.table
+        .map((row) => ({ ...row, team: renamed.get(row.team) || row.team }))
+        .filter((row) => activeNames.has(row.team))
+      const renamedBatting = renamed.get(current.batting) || current.batting
+      const renamedBowling = renamed.get(current.bowling) || current.bowling
+      const nextBatting = activeNames.has(renamedBatting) ? renamedBatting : ""
+      const nextBowling = activeNames.has(renamedBowling) ? renamedBowling : ""
       if (
         !renamed.size &&
-        !missingRows.length &&
+        !missingRows.length && nextTable.length === current.table.length &&
         nextBatting === current.batting &&
         nextBowling === current.bowling
       ) return current
@@ -2439,10 +2231,9 @@ export default function App() {
         ...current,
         batting: nextBatting,
         bowling: nextBowling,
-        summaries: current.summaries.map((summary) => ({
-          ...summary,
-          team: renamed.get(summary.team) || summary.team,
-        })),
+        summaries: current.summaries
+          .map((summary) => ({ ...summary, team: renamed.get(summary.team) || summary.team }))
+          .filter((summary) => activeNames.has(summary.team)),
         table: dedupeStandings([...nextTable, ...missingRows]),
       }
     })
@@ -2451,13 +2242,16 @@ export default function App() {
     localStorage.setItem("cricvault-score", JSON.stringify(state))
   }, [state])
   useEffect(() => {
-    if (!admin) return
+    if (teamsLoaded && scoringTeams.length < 2) setMatchReady(false)
+  }, [teamsLoaded, scoringTeams.length])
+  useEffect(() => {
+    if (!admin || !teamsLoaded) return
     const timer = window.setTimeout(() => {
       void saveCloudData("liveScore", state).catch(() => undefined)
       void saveCloudData("standings", state.table).catch(() => undefined)
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [state, admin])
+  }, [state, admin, teamsLoaded])
   useEffect(() => {
     if (!admin || !state.result || !state.matchId) return
     void saveCloudData(`results/${state.matchId}`, {
@@ -2855,7 +2649,17 @@ export default function App() {
           </section>
         </main>
       )}
-      {screen === "scoring" && admin && !matchReady && (
+      {screen === "scoring" && admin && teamsLoaded && scoringTeams.length < 2 && (
+        <main className="admin-access-page">
+          <section>
+            <span>TEAMS REQUIRED</span>
+            <h1>Add teams first</h1>
+            <p>Create at least two teams in the Teams section. The scoring setup will automatically use their current names, logos and players.</p>
+            <button onClick={() => navigate("teams")}>Open Team Center</button>
+          </section>
+        </main>
+      )}
+      {screen === "scoring" && admin && scoringTeams.length >= 2 && !matchReady && (
         <main className="guided-flow-page">
           <section className="guided-intro">
             <span>GUIDED MATCH SETUP</span>
@@ -2865,7 +2669,7 @@ export default function App() {
           <SetupPanel onStart={startMatch} teams={scoringTeams} />
         </main>
       )}
-      {screen === "scoring" && admin && matchReady && (
+      {screen === "scoring" && admin && scoringTeams.length >= 2 && matchReady && (
         <>
           <main className="dashboard scoring-focus-dashboard">
             <aside className="scorecards-left">

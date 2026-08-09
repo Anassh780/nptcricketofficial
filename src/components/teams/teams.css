@@ -22,3 +22,7 @@
 
 .team-card-front{grid-template-rows:70% 30%}.team-card-kicker{display:block;color:var(--team-color)}.team-card-summary p{display:block;margin:10px 0 0;color:#7f9299;line-height:1.5;font-size:8px}.team-summary-title{margin-top:7px}.team-summary-title h3{display:block;color:#fff}.team-summary-title small{display:block;color:#91a4aa;text-transform:none;letter-spacing:.03em}
 @media(max-width:600px){.team-card-front{grid-template-rows:68% 32%}.team-card-summary p{font-size:7.5px}}
+
+/* Clean, uncropped uploaded artwork and reliable admin controls */
+.team-logo-stage{background:#06151b}.team-logo-stage:after{display:none}.team-logo-stage>img{box-sizing:border-box;width:100%;height:100%;padding:22px;object-fit:contain;object-position:center;background:#06151b;filter:none}.team-roster-head{grid-template-columns:minmax(0,1fr) auto auto}.team-delete-action{position:relative;z-index:5;pointer-events:auto}.team-player-row>input{position:relative;z-index:4;pointer-events:auto}.player-photo-control img{object-fit:cover;object-position:center}
+@media(max-width:600px){.team-logo-stage>img{padding:14px}.team-roster-head{grid-template-columns:minmax(0,1fr) auto auto}.team-image-action,.team-delete-action{padding-inline:6px}}

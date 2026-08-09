@@ -37,9 +37,9 @@ export function saveTeamProfiles(teams: SharedTeamProfile[]) {
 export function subscribeTeamProfiles(
   callback: (teams: SharedTeamProfile[]) => void,
 ) {
-  return subscribeCloudData<SharedTeamProfile[]>("teams", (teams) => {
-    if (!Array.isArray(teams)) return
-    localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(teams))
-    callback(teams)
+  return subscribeCloudData<SharedTeamProfile[] | null>("teams", (teams) => {
+    const onlineTeams = Array.isArray(teams) ? teams.filter(Boolean) : []
+    localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(onlineTeams))
+    callback(onlineTeams)
   })
 }

@@ -1,30 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { loadTeamProfiles, saveTeamProfiles, type SharedTeamProfile } from "../../data/teamStore"
+import { saveTeamProfiles, subscribeTeamProfiles, type SharedTeamProfile } from "../../data/teamStore"
 import { uploadLeagueImage } from "../../lib/firebase"
 import "./teams.css"
 
 type PlayerProfile = { id: string; name: string; photo: string }
 type TeamProfile = SharedTeamProfile
 
-const playerNames = [
-  "Arjun Dev", "Rohan Malhotra", "Vihaan Rao", "Ketan Deshmukh",
-  "Shaurya Iyer", "Devansh Kulkarni", "Manav Bhandari", "Nirav Patel",
-  "Samar Khanna", "Jayant Mehra", "Kabir Chopra",
-]
-
-const makePlayers = (prefix = "Player") =>
+const makePlayers = () =>
   Array.from({ length: 11 }, (_, index) => ({
     id: crypto.randomUUID(),
-    name: prefix === "Player" ? `${prefix} ${index + 1}` : playerNames[index],
+    name: `Player ${index + 1}`,
     photo: "",
   }))
-
-const INITIAL_TEAMS: TeamProfile[] = [
-  { id: "northern-warriors", name: "Northern Warriors", code: "NW", color: "#9df22f", logo: "", players: makePlayers("Warrior") },
-  { id: "southern-strikers", name: "Southern Strikers", code: "SS", color: "#ff5f66", logo: "", players: makePlayers() },
-  { id: "eastern-bulls", name: "Eastern Bulls", code: "EB", color: "#53a5ff", logo: "", players: makePlayers() },
-  { id: "western-royals", name: "Western Royals", code: "WR", color: "#f2c94c", logo: "", players: makePlayers() },
-]
 
 const ensureEleven = (players: PlayerProfile[] = []) =>
   Array.from({ length: 11 }, (_, index) =>
@@ -32,7 +19,7 @@ const ensureEleven = (players: PlayerProfile[] = []) =>
   )
 
 function normalizeStoredTeams(value: unknown): TeamProfile[] {
-  if (!Array.isArray(value)) return INITIAL_TEAMS
+  if (!Array.isArray(value)) return []
   return value.map((raw: any, index) => ({
     id: raw.id || `${raw.code || "team"}-${index}`,
     name: raw.name || `Team ${index + 1}`,
@@ -61,7 +48,7 @@ function TeamCard({
   onDelete,
 }: {
   team: TeamProfile
-  onUpdate: (team: TeamProfile) => void
+  onUpdate: (updater: (team: TeamProfile) => TeamProfile) => void
   onMessage: (message: string) => void
   isAdmin: boolean
   onDelete: () => void
@@ -74,7 +61,8 @@ function TeamCard({
     if (!file) return
     onMessage("Processing team logo…")
     try {
-      onUpdate({ ...team, logo: await uploadLeagueImage(file, `teams/${team.id}`) })
+      const logo = await uploadLeagueImage(file, `teams/${team.id}`)
+      onUpdate((current) => ({ ...current, logo }))
       onMessage("Team logo ready. Saving online…")
     } catch (error) {
       onMessage(error instanceof Error ? error.message : "Logo upload failed.")
@@ -82,9 +70,11 @@ function TeamCard({
   }
 
   const updatePlayer = (index: number, changes: Partial<PlayerProfile>) => {
-    const players = [...team.players]
-    players[index] = { ...players[index], ...changes }
-    onUpdate({ ...team, players })
+    onUpdate((current) => {
+      const players = [...current.players]
+      players[index] = { ...players[index], ...changes }
+      return { ...current, players }
+    })
   }
 
   const uploadPlayer = async (index: number, file?: File) => {
@@ -144,7 +134,10 @@ function TeamCard({
           <header className="team-roster-head">
             <div className="team-back-title">
               <small>EDIT TEAM</small>
-              <input disabled={!isAdmin} className="team-name-editor" value={team.name} onChange={(event) => onUpdate({ ...team, name: event.target.value })} aria-label="Team name" />
+              <input disabled={!isAdmin} className="team-name-editor" value={team.name} onChange={(event) => {
+                const name = event.target.value
+                onUpdate((current) => ({ ...current, name }))
+              }} aria-label="Team name" />
             </div>
             {isAdmin && <label className="team-image-action">
               <input type="file" accept="image/*" onChange={(event) => {
@@ -154,7 +147,10 @@ function TeamCard({
               }} />
               Replace image
             </label>}
-            {isAdmin && <button className="team-delete-action" onClick={onDelete}>Delete</button>}
+            {isAdmin && <button type="button" className="team-delete-action" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+              event.stopPropagation()
+              void onDelete()
+            }}>Delete</button>}
           </header>
           <div className="team-player-list">
             {team.players.map((player, index) => (
@@ -186,18 +182,21 @@ function TeamCard({
 }
 
 export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
-  const [teams, setTeams] = useState<TeamProfile[]>(() => {
-    try {
-      return normalizeStoredTeams(loadTeamProfiles(INITIAL_TEAMS))
-    } catch {
-      return INITIAL_TEAMS
-    }
-  })
+  const [teams, setTeams] = useState<TeamProfile[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [query, setQuery] = useState("")
   const [message, setMessage] = useState("Ready to manage tournament squads.")
 
+  useEffect(() => subscribeTeamProfiles((onlineTeams) => {
+    const normalized = normalizeStoredTeams(onlineTeams)
+    setTeams((current) =>
+      JSON.stringify(current) === JSON.stringify(normalized) ? current : normalized,
+    )
+    setLoaded(true)
+  }), [])
+
   useEffect(() => {
-    if (!isAdmin) return
+    if (!isAdmin || !loaded) return
     const timer = window.setTimeout(() => {
       void saveTeamProfiles(teams)
         .then(() => setMessage("All team changes are synced online."))
@@ -206,14 +205,14 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
         })
     }, 400)
     return () => window.clearTimeout(timer)
-  }, [teams, isAdmin])
+  }, [teams, isAdmin, loaded])
 
   const visibleTeams = useMemo(
     () => teams.filter((team) => `${team.name} ${team.code}`.toLowerCase().includes(query.toLowerCase())),
     [query, teams],
   )
-  const updateTeam = (updated: TeamProfile) =>
-    setTeams((current) => current.map((team) => team.id === updated.id ? updated : team))
+  const updateTeam = (teamId: string, updater: (team: TeamProfile) => TeamProfile) =>
+    setTeams((current) => current.map((team) => team.id === teamId ? updater(team) : team))
   const addTeam = () => {
     const number = teams.length + 1
     setTeams((current) => [...current, {
@@ -222,10 +221,16 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
     }])
     setMessage("New team added. Edit its name, logo and players directly on the card.")
   }
-  const deleteTeam = (teamId: string) => {
+  const deleteTeam = async (teamId: string) => {
     if (!window.confirm("Delete this team and its squad?")) return
-    setTeams((current) => current.filter((team) => team.id !== teamId))
-    setMessage("Team deleted from DPL 6.")
+    const next = teams.filter((team) => team.id !== teamId)
+    setTeams(next)
+    try {
+      await saveTeamProfiles(next)
+      setMessage("Team deleted from DPL 6 and every connected section.")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not delete the team online.")
+    }
   }
 
   return (
@@ -242,7 +247,7 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
         </div>
         <section className="teams-card-grid" aria-label="Tournament teams">
           {visibleTeams.map((team) => (
-            <TeamCard key={team.id} team={team} onUpdate={updateTeam} onMessage={setMessage} isAdmin={isAdmin} onDelete={() => deleteTeam(team.id)} />
+            <TeamCard key={team.id} team={team} onUpdate={(updater) => updateTeam(team.id, updater)} onMessage={setMessage} isAdmin={isAdmin} onDelete={() => deleteTeam(team.id)} />
           ))}
         </section>
       </section>

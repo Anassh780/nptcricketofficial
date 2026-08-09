@@ -55,7 +55,7 @@ export const subscribeCloudData = <T,>(
 ) => onValue(
   ref(database, `dpl6/${path}`),
   (snapshot) => {
-    if (snapshot.exists()) callback(snapshot.val() as T)
+    callback((snapshot.exists() ? snapshot.val() : null) as T)
   },
   () => undefined,
 )
@@ -66,5 +66,5 @@ export const uploadLeagueImage = async (file: File, folder: string) => {
   // This Firebase project does not currently have a working Storage bucket.
   // Keep profile images small and save them with their Realtime Database record
   // so team logos and player portraits remain available everywhere in the app.
-  return optimizeUploadedImage(file, folder.includes("players") ? 300 : 480, 0.72)
+  return optimizeUploadedImage(file, folder.includes("players") ? 480 : 1000, folder.includes("players") ? 0.84 : 0.88)
 }
