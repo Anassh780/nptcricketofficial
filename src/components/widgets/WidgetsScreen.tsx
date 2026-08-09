@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Bell, Download, Maximize2, Moon, MousePointerClick, RefreshCw, Smartphone } from "lucide-react"
+import { clearInstallPrompt, getInstallPrompt, subscribeInstallPrompt, type InstallPromptEvent } from "../../lib/pwaInstall"
 import "./widgets.css"
 
 type Batter = { name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean }
@@ -25,8 +26,6 @@ type LiveScore = {
 }
 
 type WidgetTeam = { name: string; code: string; color: string; logo?: string }
-type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> }
-
 const overs = (balls: number) => `${Math.floor(balls / 6)}.${balls % 6}`
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).map((word) => word[0]).join("").slice(0, 3).toUpperCase() || "DPL"
 
@@ -42,8 +41,8 @@ function BatterCell({ label, player, active }: { label: string; player?: Batter;
   return <div className="tech-player-cell"><small>{label}</small><strong>{player?.name || "Not selected"}{active && <i />}</strong><p>{player ? <><b>{player.runs}{active ? "*" : ""}</b> ({player.balls})</> : "—"}</p><span>{player ? `4s: ${player.fours}  |  6s: ${player.sixes}  |  SR: ${player.balls ? (player.runs * 100 / player.balls).toFixed(2) : "0.00"}` : "Waiting for match setup"}</span></div>
 }
 
-export default function WidgetsScreen({ score, teams }: { score: LiveScore; teams: WidgetTeam[] }) {
-  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
+export default function WidgetsScreen({ score, teams, matchOvers }: { score: LiveScore; teams: WidgetTeam[]; matchOvers: number }) {
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(() => getInstallPrompt())
   const [installNote, setInstallNote] = useState("")
   const battingTeam = teams.find((team) => team.name === score.batting)
   const bowlingTeam = teams.find((team) => team.name === score.bowling)
@@ -54,18 +53,12 @@ export default function WidgetsScreen({ score, teams }: { score: LiveScore; team
   const recentBalls = useMemo(() => score.overMarks?.slice(-6) || [], [score.overMarks])
   const currentOverRuns = useMemo(() => recentBalls.reduce((sum, mark) => sum + (/^[1-6]$/.test(mark) ? Number(mark) : 0), 0), [recentBalls])
   const need = score.target ? Math.max(0, score.target - score.runs) : null
+  const ballsRemaining = Math.max(0, matchOvers * 6 - score.balls)
   const runRate = score.balls ? (score.runs * 6 / score.balls).toFixed(2) : "0.00"
   const lastWicket = score.fall?.at(-1) || "No wicket recorded"
   const statusLabel = score.result ? "FINAL" : isLive ? "LIVE" : "READY"
 
-  useEffect(() => {
-    const capturePrompt = (event: Event) => {
-      event.preventDefault()
-      setInstallPrompt(event as InstallPromptEvent)
-    }
-    window.addEventListener("beforeinstallprompt", capturePrompt)
-    return () => window.removeEventListener("beforeinstallprompt", capturePrompt)
-  }, [])
+  useEffect(() => subscribeInstallPrompt(setInstallPrompt), [])
 
   const install = async () => {
     if (!installPrompt) {
@@ -75,7 +68,7 @@ export default function WidgetsScreen({ score, teams }: { score: LiveScore; team
     await installPrompt.prompt()
     const choice = await installPrompt.userChoice
     setInstallNote(choice.outcome === "accepted" ? "CricVault was added to your home screen." : "You can install it later from your browser menu.")
-    setInstallPrompt(null)
+    clearInstallPrompt()
   }
 
   const scoreText = score.batting ? `${score.runs}/${score.wickets}` : "--/--"
@@ -91,6 +84,19 @@ export default function WidgetsScreen({ score, teams }: { score: LiveScore; team
       </section>
 
       <section className="tech-widget-stage">
+        <div className="widget-size-heading"><span>COMPACT LIVE MATCH WIDGET</span><b>2 × 1</b></div>
+        <article className="compact-live-widget" aria-label={`${battingName} ${scoreText} after ${overs(score.balls)} overs against ${bowlingName}`}>
+          <div className="compact-widget-topline"><div className="compact-widget-brand"><span>CV</span><b>CRICVAULT</b></div><small>T20 · {Math.floor(score.balls / 6) + 1}TH OV</small></div>
+          <div className="compact-widget-scoreline">
+            <TeamLogo team={battingTeam} small />
+            <div><strong>{scoreText}</strong><span>{overs(score.balls)} OVERS <i /> <b className={isLive ? "live" : ""}>{statusLabel}</b></span></div>
+            <TeamLogo team={bowlingTeam} small />
+          </div>
+          <div className="compact-widget-requirement"><span>{score.target ? "CHASE" : `INNINGS ${score.innings || 1}`}</span>{need !== null ? <>Need <strong>{need}</strong> runs from <strong>{ballsRemaining}</strong> balls</> : <>Live score updates automatically</>}</div>
+        </article>
+      </section>
+
+      <section className="tech-widget-stage standard-stage">
         <div className="widget-size-heading"><span>STANDARD LIVE MATCH WIDGET</span><b>4 × 2</b></div>
         <article className="technology-widget standard-technology-widget">
           <div className="widget-scanline" />
@@ -143,6 +149,10 @@ export default function WidgetsScreen({ score, teams }: { score: LiveScore; team
         <button onClick={() => void install()}><Download /> Add to Android</button>
       </section>
       {installNote && <p className="widget-install-note">{installNote}</p>}
+      <section className="android-install-guide">
+        <div><small>ANDROID INSTALLATION</small><h2>Keep live cricket one tap away.</h2><p>Install CricVault from Chrome or Samsung Internet. The installed experience launches directly into the responsive live widget screen and continues receiving Firebase score updates.</p></div>
+        <ol><li><b>01</b><span>Open CricVault in Chrome on Android.</span></li><li><b>02</b><span>Tap “Add to Android” or choose Install app from the browser menu.</span></li><li><b>03</b><span>Launch CricVault from the new home-screen icon.</span></li></ol>
+      </section>
     </main>
   )
 }

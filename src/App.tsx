@@ -2080,7 +2080,12 @@ function ChoiceModal({
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>(() => new URLSearchParams(window.location.search).has("widget") ? "widgets" : "home")
+  const [screen, setScreen] = useState<Screen>(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.has("widget")) return "widgets"
+    const requested = params.get("screen") as Screen | null
+    return requested && ["home", "matches", "series", "teams", "players", "widgets", "scoring", "points"].includes(requested) ? requested : "home"
+  })
   const [routeLeaving, setRouteLeaving] = useState(false)
   const routeTimeoutRef = useRef<number | null>(null)
   const [user, setUser] = useState<FirebaseUser | null>(null)
@@ -2647,7 +2652,7 @@ export default function App() {
           <LazyPlayersScreen user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
         </Suspense>
       )}
-      {screen === "widgets" && <WidgetsScreen score={state} teams={scoringTeams} />}
+      {screen === "widgets" && <WidgetsScreen score={state} teams={scoringTeams} matchOvers={overs} />}
       {screen === "points" && (
         <PointsScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} onNavigate={navigate} onChangeTable={(table) => setState((current) => ({ ...current, table }))} />
       )}
