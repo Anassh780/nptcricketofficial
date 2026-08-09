@@ -1,5 +1,9 @@
-.cv-dropdown { animation: cv-dropdown-enter .22s cubic-bezier(.2,.8,.2,1) both; transform-origin: top center; }
-.cv-mobile-panel { animation: cv-mobile-enter .22s cubic-bezier(.2,.8,.2,1) both; }
+.navbar-surface { --nav-motion: cubic-bezier(.2,.8,.2,1); }
+.cv-dropdown {
+  animation: cv-dropdown-enter .22s var(--nav-motion) both;
+  transform-origin: top center;
+}
+.cv-mobile-panel { animation: cv-mobile-enter .22s var(--nav-motion) both; }
 .cv-mobile-accordion { animation: cv-accordion-enter .18s ease-out both; overflow: hidden; }
 
 @keyframes cv-dropdown-enter {
@@ -14,7 +18,33 @@
   from { opacity: 0; max-height: 0; }
   to { opacity: 1; max-height: 180px; }
 }
+
+@media (max-width: 767px) {
+  .navbar-surface { min-height: 52px; }
+  .cv-dropdown { display: none; }
+  .cv-mobile-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    max-height: calc(100dvh - 82px);
+    padding: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 16px;
+    background: rgba(5,18,24,.97);
+    box-shadow: 0 22px 64px rgba(0,0,0,.72);
+    backdrop-filter: blur(24px) saturate(135%);
+  }
+  .cv-mobile-panel::-webkit-scrollbar { width: 0; }
+}
+
+@media (max-width: 390px) {
+  .navbar-surface { padding-left: 10px; padding-right: 8px; }
+  .navbar-surface small { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .cv-dropdown, .cv-mobile-panel, .cv-mobile-accordion { animation: none; }
 }
-

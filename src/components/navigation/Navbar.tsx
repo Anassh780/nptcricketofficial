@@ -16,10 +16,12 @@ type NavbarProps = {
   isAdmin: boolean
 }
 
-const mobileMenus: Array<{ type: DropdownType; label: string; entries: Array<[string, NavScreen]> }> = [
-  { type: "matches", label: "Matches", entries: [["Fixtures & results", "matches"], ["Points table", "points"]] },
-  { type: "league", label: "League", entries: [["Tournament series", "series"], ["Teams", "teams"], ["Players", "players"]] },
-  { type: "control", label: "Control", entries: [["Live scoring", "scoring"], ["Match operations", "matches"], ["Squad management", "teams"]] },
+type MobileEntry = { label: string; screen?: NavScreen; anchor?: string }
+const mobileMenus: Array<{ type: DropdownType; label: string; entries: MobileEntry[] }> = [
+  { type: "matches", label: "Matches", entries: [{ label: "Fixtures & results", screen: "matches" }, { label: "Points table", screen: "points" }] },
+  { type: "league", label: "League", entries: [{ label: "Tournament series", screen: "series" }, { label: "Teams", screen: "teams" }, { label: "Players", screen: "players" }] },
+  { type: "about", label: "About us", entries: [{ label: "Follow us", anchor: "follow-us" }, { label: "DPL 6 Management", anchor: "management" }, { label: "Developer", anchor: "developer" }] },
+  { type: "control", label: "Control", entries: [{ label: "Live scoring", screen: "scoring" }, { label: "Match operations", screen: "matches" }, { label: "Squad management", screen: "teams" }] },
 ]
 
 export function NavbarBrand() {
@@ -75,19 +77,28 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
     setMobileAccordion(null)
   }
 
+  const goToAnchor = (anchor: string) => {
+    if (screen !== "home") onNavigate("home")
+    setActiveDropdown(null)
+    setMobileMenuOpen(false)
+    setMobileAccordion(null)
+    window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), screen === "home" ? 50 : 520)
+  }
+
   const toggleDropdown = (type: DropdownType) => setActiveDropdown((current) => current === type ? null : type)
   const dropdownActive = (type: DropdownType) => {
     if (type === "matches") return screen === "matches" || screen === "points"
     if (type === "league") return screen === "series" || screen === "teams" || screen === "players"
+    if (type === "about") return false
     return screen === "scoring"
   }
 
   return (
     <>
-      <header className="pointer-events-none fixed left-0 right-0 top-4 z-[100] flex justify-center px-4">
+      <header className="pointer-events-none fixed left-0 right-0 top-2 z-[100] flex justify-center px-2 md:top-4 md:px-4">
         <div
           ref={navRef}
-          className={`pointer-events-auto relative w-full max-w-5xl rounded-full border px-3 transition-all duration-300 ease-out sm:px-4 ${
+          className={`navbar-surface pointer-events-auto relative w-full max-w-5xl rounded-2xl border px-3 transition-all duration-300 ease-out md:rounded-full sm:px-4 ${
             isScrolled
               ? "border-white/15 bg-[#07141a]/88 py-2 shadow-[0_18px_48px_rgba(0,0,0,0.62)] backdrop-blur-2xl"
               : "border-white/10 bg-[#07141a]/58 py-2.5 shadow-[0_10px_38px_rgba(0,0,0,0.4)] backdrop-blur-[22px]"
@@ -108,24 +119,26 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
                     {type === "matches" ? "Matches" : "League"}
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${activeDropdown === type ? "rotate-180 text-[#91e521]" : "text-zinc-500"}`} />
                   </button>
-                  {activeDropdown === type && <DropdownMenu type={type} onNavigate={goTo} />}
                 </div>
               ))}
-              <button onClick={() => goTo("series")} className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${screen === "series" ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>Series</button>
+              <div className="relative">
+                <button onClick={() => toggleDropdown("about")} aria-expanded={activeDropdown === "about"} className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${activeDropdown === "about" ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>
+                  About us <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${activeDropdown === "about" ? "rotate-180 text-[#91e521]" : "text-zinc-500"}`} />
+                </button>
+              </div>
               <button onClick={() => goTo("players")} className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${screen === "players" ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>Players</button>
               {isAdmin && (
                 <div className="relative">
                   <button onClick={() => toggleDropdown("control")} aria-expanded={activeDropdown === "control"} className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${dropdownActive("control") || activeDropdown === "control" ? "bg-[#91e521]/10 text-[#b2ff4d]" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>
                     Control <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${activeDropdown === "control" ? "rotate-180" : ""}`} />
                   </button>
-                  {activeDropdown === "control" && <DropdownMenu type="control" onNavigate={goTo} />}
                 </div>
               )}
             </nav>
 
             <div className="hidden items-center gap-2 md:flex">
               <button onClick={user ? onLogout : onLogin} className="rounded-full px-3.5 py-1.5 text-sm font-medium text-zinc-400 transition-colors hover:text-white">{isAdmin ? "Admin" : user ? "Account" : "Log in"}</button>
-              <button onClick={() => goTo(isAdmin ? "scoring" : "points")} className="flex items-center gap-2 rounded-full bg-[#f4f4f5] px-4 py-1.5 text-sm font-semibold text-zinc-950 shadow-sm transition-all hover:scale-[1.02] hover:bg-white active:scale-[0.98]">
+              <button onClick={() => goTo(isAdmin ? "scoring" : "points")} className="flex items-center gap-2 rounded-full bg-[#f4f4f5] px-4 py-1.5 text-sm font-semibold !text-zinc-950 shadow-sm transition-all hover:scale-[1.02] hover:bg-white active:scale-[0.98]">
                 {isAdmin && <Play className="h-3 w-3 fill-current" />}{isAdmin ? "Score live" : "View table"}
               </button>
             </div>
@@ -136,7 +149,7 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
           </div>
 
           {mobileMenuOpen && (
-            <div className="cv-mobile-panel mt-3 space-y-1 border-t border-white/10 pt-3 md:hidden">
+            <div className="cv-mobile-panel space-y-1 md:hidden">
               <button onClick={() => goTo("home")} className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white">Home</button>
               {mobileMenus.filter((menu) => menu.type !== "control" || isAdmin).map((menu) => (
                 <div key={menu.type}>
@@ -145,21 +158,21 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
                   </button>
                   {mobileAccordion === menu.type && (
                     <div className="cv-mobile-accordion ml-3 space-y-1 border-l border-white/10 py-1 pl-4">
-                      {menu.entries.map(([label, next]) => <button key={label} onClick={() => goTo(next)} className="block w-full py-1.5 text-left text-xs text-zinc-500 hover:text-white">{label}</button>)}
+                      {menu.entries.map((entry) => <button key={entry.label} onClick={() => entry.anchor ? goToAnchor(entry.anchor) : entry.screen && goTo(entry.screen)} className="block w-full py-2 text-left text-xs text-zinc-400 hover:text-white">{entry.label}</button>)}
                     </div>
                   )}
                 </div>
               ))}
               <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
                 <button onClick={user ? onLogout : onLogin} className="w-full rounded-xl bg-white/5 py-2 text-sm font-medium text-zinc-300">{user ? "Sign out" : "Admin login"}</button>
-                <button onClick={() => goTo(isAdmin ? "scoring" : "points")} className="w-full rounded-full bg-[#f4f4f5] py-2.5 text-sm font-semibold text-zinc-950">{isAdmin ? "Open scoring" : "View points table"}</button>
+                <button onClick={() => goTo(isAdmin ? "scoring" : "points")} className="w-full rounded-full bg-[#f4f4f5] py-2.5 text-sm font-semibold !text-zinc-950">{isAdmin ? "Open scoring" : "View points table"}</button>
               </div>
             </div>
           )}
         </div>
+        {activeDropdown && <DropdownMenu type={activeDropdown} onNavigate={goTo} onAnchor={goToAnchor} />}
       </header>
       <div className="h-[88px]" aria-hidden="true" />
     </>
   )
 }
-

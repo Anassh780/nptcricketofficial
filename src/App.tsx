@@ -6,6 +6,7 @@ import Navbar, { NavbarBrand, type NavScreen as Screen } from "./components/navi
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
+import "./components/landing/landing-motion.css"
 
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
@@ -887,12 +888,30 @@ const TABLE_COLORS = [
 ]
 
 function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"))
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      elements.forEach((element) => element.classList.add("is-revealed"))
+      return
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-revealed")
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.14, rootMargin: "0px 0px -7%" })
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <>
       <main className="public-home">
         <section className="public-hero">
           <div className="public-overlay" />
-          <div className="public-copy">
+          <div className="public-copy landing-hero-enter">
             <span>THE GAME NEVER STOPS</span>
             <h1>
               Cricket.
@@ -925,7 +944,7 @@ function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
             <b>ONLINE</b>
           </div>
         </section>
-        <section className="home-features">
+        <section className="home-features" data-reveal>
           <article>
             <span>01</span>
             <h2>Match center</h2>
@@ -941,6 +960,44 @@ function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
             <h2>League standings</h2>
             <p>Team identities, points and calculated net run rate.</p>
           </article>
+        </section>
+        <section className="home-metrics" data-reveal>
+          <div><strong>Live</strong><span>Ball-by-ball scoring</span></div>
+          <div><strong>2 groups</strong><span>DPL 6 tournament</span></div>
+          <div><strong>Real time</strong><span>Firebase synchronization</span></div>
+          <div><strong>One platform</strong><span>Teams, players, and results</span></div>
+        </section>
+
+        <section className="landing-section home-platform" data-reveal>
+          <header>
+            <span>BUILT FOR THE WHOLE LEAGUE</span>
+            <h2>Everything from the toss to the trophy.</h2>
+            <p>CricVault keeps the tournament connected without forcing scorers, teams, and supporters through separate tools.</p>
+          </header>
+          <div className="home-platform-grid">
+            <article><small>01 / MATCH DAY</small><h3>Fixtures and results</h3><p>Track every scheduled match, winner, innings, batting card, and bowling card.</p><button onClick={() => onNavigate("matches")}>Open match center →</button></article>
+            <article><small>02 / TOURNAMENT</small><h3>Series progression</h3><p>Follow group stages, qualifiers, semi-finals, and the championship path.</p><button onClick={() => onNavigate("series")}>View tournament →</button></article>
+            <article><small>03 / SQUADS</small><h3>Teams and players</h3><p>One source for team logos, player portraits, names, and live match identities.</p><button onClick={() => onNavigate("teams")}>Explore squads →</button></article>
+            <article><small>04 / OPERATIONS</small><h3>Advanced scoring</h3><p>A guided setup and focused scoring room built for accurate match-day operation.</p><button onClick={() => onNavigate("scoring")}>Open scoring →</button></article>
+          </div>
+        </section>
+
+        <section className="landing-section home-about" data-reveal>
+          <header>
+            <span>ABOUT THE LEAGUE</span>
+            <h2>Local cricket. Professional presentation.</h2>
+          </header>
+          <div className="home-about-grid">
+            <article id="follow-us"><small>COMMUNITY</small><h3>Follow us</h3><p>Keep up with DPL 6 match announcements, highlights, team updates, and official results.</p><div className="about-tags"><span>Instagram</span><span>YouTube</span><span>Facebook</span></div></article>
+            <article id="management"><small>LEADERSHIP</small><h3>DPL 6 Management</h3><p>Committed to fair competition, reliable match operations, and a stronger experience for every team.</p><div className="about-status"><i /> League operations active</div></article>
+            <article id="developer"><small>TECHNOLOGY</small><h3>Developer</h3><p>CricVault is engineered as the digital home of Diamond Premier League 6—fast, responsive, and ready for live data.</p><div className="about-code">SCORING ENGINE 2.6.1</div></article>
+          </div>
+        </section>
+
+        <section className="home-final-cta" data-reveal>
+          <span>READY FOR MATCH DAY?</span>
+          <h2>Every ball becomes part of the official story.</h2>
+          <div><button className="home-primary" onClick={() => onNavigate("matches")}>Explore matches</button><button className="home-secondary" onClick={() => onNavigate("points")}>View standings →</button></div>
         </section>
       </main>
       <PublicFooter onNavigate={onNavigate} />
@@ -2032,7 +2089,12 @@ function ChoiceModal({
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home")
+  const [routeLeaving, setRouteLeaving] = useState(false)
+  const routeTimeoutRef = useRef<number | null>(null)
   const [user, setUser] = useState<FirebaseUser | null>(null)
+  useEffect(() => () => {
+    if (routeTimeoutRef.current) window.clearTimeout(routeTimeoutRef.current)
+  }, [])
   const admin = isLeagueAdmin(user)
   const [overs, setOvers] = useState(20)
   const [teamProfiles, setTeamProfiles] = useState<SharedTeamProfile[]>(() =>
@@ -2544,8 +2606,18 @@ export default function App() {
   }
 
   const navigate = (next: Screen) => {
-    setScreen(next)
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    if (next === screen) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return
+    }
+    if (routeTimeoutRef.current) window.clearTimeout(routeTimeoutRef.current)
+    setRouteLeaving(true)
+    routeTimeoutRef.current = window.setTimeout(() => {
+      setScreen(next)
+      setRouteLeaving(false)
+      window.scrollTo({ top: 0, behavior: "auto" })
+      routeTimeoutRef.current = null
+    }, 160)
   }
   const handleGoogleLogin = async () => {
     try {
@@ -2557,6 +2629,7 @@ export default function App() {
   return (
     <div className={`scoring-app screen-${screen}`}>
       <Navbar screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
+      <div key={screen} className={`route-stage ${routeLeaving ? "route-leaving" : ""}`}>
       {screen === "home" && <HomeScreen onNavigate={navigate} />}
       {screen === "matches" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 match center…</main>}>
@@ -2791,6 +2864,7 @@ export default function App() {
           </p>
         </ChoiceModal>
       )}
+      </div>
     </div>
   )
 }

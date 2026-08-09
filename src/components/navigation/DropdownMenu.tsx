@@ -3,8 +3,11 @@ import {
   Activity,
   ArrowRight,
   BookOpen,
+  BriefcaseBusiness,
   CalendarDays,
   ChartNoAxesCombined,
+  Code2,
+  Heart,
   Radio,
   ShieldCheck,
   Sparkles,
@@ -13,13 +16,14 @@ import {
 } from "lucide-react"
 import type { NavScreen } from "./navigation-types"
 
-type DropdownType = "matches" | "league" | "control"
+type DropdownType = "matches" | "league" | "about" | "control"
 
 type DropdownItem = {
   icon: ElementType
   title: string
   description: string
-  screen: NavScreen
+  screen?: NavScreen
+  anchor?: string
   badge?: string
 }
 
@@ -28,6 +32,7 @@ const menuContent: Record<DropdownType, {
   featureTitle: string
   featureDescription: string
   featureScreen: NavScreen
+  featureAnchor?: string
   items: DropdownItem[]
 }> = {
   matches: {
@@ -52,6 +57,18 @@ const menuContent: Record<DropdownType, {
       { icon: UsersRound, title: "Players", description: "DPL 6 player gallery and profiles", screen: "players" },
     ],
   },
+  about: {
+    eyebrow: "ABOUT DPL 6",
+    featureTitle: "The league behind the game",
+    featureDescription: "Meet the management, follow the tournament, and discover who builds the platform.",
+    featureScreen: "home",
+    featureAnchor: "management",
+    items: [
+      { icon: Heart, title: "Follow us", description: "DPL 6 news, highlights, and community", anchor: "follow-us" },
+      { icon: BriefcaseBusiness, title: "DPL 6 Management", description: "League leadership and match operations", anchor: "management" },
+      { icon: Code2, title: "Developer", description: "The technology behind CricVault", anchor: "developer" },
+    ],
+  },
   control: {
     eyebrow: "ADMIN OPERATIONS",
     featureTitle: "Scoring control room",
@@ -70,9 +87,11 @@ export type { DropdownType }
 export default function DropdownMenu({
   type,
   onNavigate,
+  onAnchor,
 }: {
   type: DropdownType
   onNavigate: (screen: NavScreen) => void
+  onAnchor: (anchor: string) => void
 }) {
   const content = menuContent[type]
   return (
@@ -86,7 +105,7 @@ export default function DropdownMenu({
             return (
               <button
                 key={item.title}
-                onClick={() => onNavigate(item.screen)}
+                onClick={() => item.anchor ? onAnchor(item.anchor) : item.screen && onNavigate(item.screen)}
                 className="group flex w-full items-start gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all duration-150 hover:border-white/5 hover:bg-white/[0.06]"
               >
                 <span className="mt-0.5 shrink-0 rounded-lg border border-white/10 bg-white/[0.055] p-2 text-zinc-300 transition-all group-hover:border-[#91e521]/25 group-hover:text-[#aaff3c]">
@@ -106,7 +125,7 @@ export default function DropdownMenu({
         </div>
 
         <button
-          onClick={() => onNavigate(content.featureScreen)}
+          onClick={() => content.featureAnchor ? onAnchor(content.featureAnchor) : onNavigate(content.featureScreen)}
           className="group col-span-4 flex flex-col justify-between rounded-xl border border-white/10 bg-zinc-950/45 p-4 text-left transition-colors hover:border-[#91e521]/25"
         >
           <span>
@@ -124,4 +143,3 @@ export default function DropdownMenu({
     </div>
   )
 }
-
