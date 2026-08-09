@@ -121,6 +121,10 @@ function TeamCard({
               {team.logo ? "Change team picture" : "Upload team picture"}
             </label>}
           </div>
+          {isAdmin && <button type="button" className="team-front-edit" onClick={(event) => {
+            event.stopPropagation()
+            setFlipped(true)
+          }}>Edit team</button>}
           <div className="team-card-summary">
             <span className="team-card-kicker">CRICVAULT OFFICIAL TEAM</span>
             <div className="team-summary-title">
@@ -133,7 +137,7 @@ function TeamCard({
         <section className="team-card-face team-card-back">
           <header className="team-roster-head">
             <div className="team-back-title">
-              <small>EDIT TEAM</small>
+              <small>TEAM NAME · CLICK BELOW TO EDIT</small>
               <input disabled={!isAdmin} className="team-name-editor" value={team.name} onChange={(event) => {
                 const name = event.target.value
                 onUpdate((current) => ({ ...current, name }))
