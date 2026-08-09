@@ -3,6 +3,8 @@ import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import Navbar, { NavbarBrand, type NavScreen as Screen } from "./components/navigation/Navbar"
+import AboutSection from "./components/landing/AboutSection"
+import WidgetsScreen from "./components/widgets/WidgetsScreen"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
@@ -887,7 +889,7 @@ const TABLE_COLORS = [
   "#d0a55e",
 ]
 
-function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+function HomeScreen({ onNavigate, isAdmin }: { onNavigate: (screen: Screen) => void; isAdmin: boolean }) {
   useEffect(() => {
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"))
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -982,17 +984,7 @@ function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
           </div>
         </section>
 
-        <section className="landing-section home-about" data-reveal>
-          <header>
-            <span>ABOUT THE LEAGUE</span>
-            <h2>Local cricket. Professional presentation.</h2>
-          </header>
-          <div className="home-about-grid">
-            <article id="follow-us"><small>COMMUNITY</small><h3>Follow us</h3><p>Keep up with DPL 6 match announcements, highlights, team updates, and official results.</p><div className="about-tags"><span>Instagram</span><span>YouTube</span><span>Facebook</span></div></article>
-            <article id="management"><small>LEADERSHIP</small><h3>DPL 6 Management</h3><p>Committed to fair competition, reliable match operations, and a stronger experience for every team.</p><div className="about-status"><i /> League operations active</div></article>
-            <article id="developer"><small>TECHNOLOGY</small><h3>Developer</h3><p>CricVault is engineered as the digital home of Diamond Premier League 6—fast, responsive, and ready for live data.</p><div className="about-code">SCORING ENGINE 2.6.1</div></article>
-          </div>
-        </section>
+        <AboutSection isAdmin={isAdmin} />
 
         <section className="home-final-cta" data-reveal>
           <span>READY FOR MATCH DAY?</span>
@@ -2088,7 +2080,7 @@ function ChoiceModal({
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("home")
+  const [screen, setScreen] = useState<Screen>(() => new URLSearchParams(window.location.search).has("widget") ? "widgets" : "home")
   const [routeLeaving, setRouteLeaving] = useState(false)
   const routeTimeoutRef = useRef<number | null>(null)
   const [user, setUser] = useState<FirebaseUser | null>(null)
@@ -2185,6 +2177,14 @@ export default function App() {
         : { ...current, table: nextTable },
     )
   }), [scoringTeams])
+
+  useEffect(() => {
+    if (admin) return
+    return subscribeCloudData<ScoreState | null>("liveScore", (onlineScore) => {
+      if (!onlineScore) return
+      setState((current) => ({ ...current, ...onlineScore, table: current.table }))
+    })
+  }, [admin])
 
   useEffect(() => {
     const syncTeams = (event: Event) => {
@@ -2630,7 +2630,7 @@ export default function App() {
     <div className={`scoring-app screen-${screen}`}>
       <Navbar screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
       <div key={screen} className={`route-stage ${routeLeaving ? "route-leaving" : ""}`}>
-      {screen === "home" && <HomeScreen onNavigate={navigate} />}
+      {screen === "home" && <HomeScreen onNavigate={navigate} isAdmin={admin} />}
       {screen === "matches" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 match center…</main>}>
           <LazyMatchesScreen teams={teamProfiles} user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
@@ -2647,6 +2647,7 @@ export default function App() {
           <LazyPlayersScreen user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
         </Suspense>
       )}
+      {screen === "widgets" && <WidgetsScreen score={state} teams={scoringTeams} />}
       {screen === "points" && (
         <PointsScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} onNavigate={navigate} onChangeTable={(table) => setState((current) => ({ ...current, table }))} />
       )}

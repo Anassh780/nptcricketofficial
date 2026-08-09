@@ -43,7 +43,7 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileAccordion, setMobileAccordion] = useState<DropdownType | null>(null)
-  const navRef = useRef<HTMLDivElement>(null)
+  const navRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
@@ -95,9 +95,8 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
 
   return (
     <>
-      <header className="pointer-events-none fixed left-0 right-0 top-2 z-[100] flex justify-center px-2 md:top-4 md:px-4">
+      <header ref={navRef} className="pointer-events-none fixed left-0 right-0 top-2 z-[100] flex justify-center px-2 md:top-4 md:px-4">
         <div
-          ref={navRef}
           className={`navbar-surface pointer-events-auto relative w-full max-w-5xl rounded-2xl border px-3 transition-all duration-300 ease-out md:rounded-full sm:px-4 ${
             isScrolled
               ? "border-white/15 bg-[#07141a]/88 py-2 shadow-[0_18px_48px_rgba(0,0,0,0.62)] backdrop-blur-2xl"
@@ -126,7 +125,7 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
                   About us <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${activeDropdown === "about" ? "rotate-180 text-[#91e521]" : "text-zinc-500"}`} />
                 </button>
               </div>
-              <button onClick={() => goTo("players")} className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${screen === "players" ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>Players</button>
+              <button onClick={() => goTo("widgets")} className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${screen === "widgets" ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>Widgets</button>
               {isAdmin && (
                 <div className="relative">
                   <button onClick={() => toggleDropdown("control")} aria-expanded={activeDropdown === "control"} className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${dropdownActive("control") || activeDropdown === "control" ? "bg-[#91e521]/10 text-[#b2ff4d]" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}>
@@ -151,6 +150,7 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
           {mobileMenuOpen && (
             <div className="cv-mobile-panel space-y-1 md:hidden">
               <button onClick={() => goTo("home")} className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white">Home</button>
+              <button onClick={() => goTo("widgets")} className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white">Live widgets</button>
               {mobileMenus.filter((menu) => menu.type !== "control" || isAdmin).map((menu) => (
                 <div key={menu.type}>
                   <button onClick={() => setMobileAccordion((current) => current === menu.type ? null : menu.type)} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white">

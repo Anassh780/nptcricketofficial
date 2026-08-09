@@ -1,0 +1,19 @@
+{
+  "name": "CricVault DPL 6 Live",
+  "short_name": "CricVault",
+  "description": "Live DPL 6 scores, balls, batters, and bowling figures.",
+  "start_url": "/?widget=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#041118",
+  "theme_color": "#07141a",
+  "icons": [
+    {
+      "src": "/cricvault-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
