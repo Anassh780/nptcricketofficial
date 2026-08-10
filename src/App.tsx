@@ -2068,8 +2068,15 @@ function ChoiceModal({
   onClose?: () => void
 }) {
   return (
-    <div className="modal-backdrop">
-      <div className="choice-modal">
+    <div
+      className="modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) {
+          onClose()
+        }
+      }}
+    >
+      <div className="choice-modal" onClick={(e) => e.stopPropagation()}>
         <div className="panel-title">
           <h2>{title}</h2>
           {onClose && <button onClick={onClose}>×</button>}
