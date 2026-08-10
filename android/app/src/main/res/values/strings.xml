@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">CricVault DPL 6</string>
+    <string name="compact_widget_name">CricVault Compact Score</string>
+    <string name="standard_widget_name">CricVault Standard Score</string>
+    <string name="expanded_widget_name">CricVault Expanded Score</string>
+    <string name="drag_live_score">Drag live score</string>
+    <string name="close_floating_score">Stop floating live score</string>
+</resources>

@@ -2082,6 +2082,7 @@ function ChoiceModal({
 export default function App() {
   const [screen, setScreen] = useState<Screen>(() => {
     const params = new URLSearchParams(window.location.search)
+    if (/^\/open\/live-score\/[A-Za-z0-9_-]{1,80}\/?$/.test(window.location.pathname)) return "widgets"
     if (params.has("widget")) return "widgets"
     const requested = params.get("screen") as Screen | null
     return requested && ["home", "matches", "series", "teams", "players", "widgets", "scoring", "points"].includes(requested) ? requested : "home"
@@ -2256,11 +2257,11 @@ export default function App() {
   useEffect(() => {
     if (!admin || !teamsLoaded) return
     const timer = window.setTimeout(() => {
-      void saveCloudData("liveScore", state).catch(() => undefined)
+      void saveCloudData("liveScore", { ...state, matchOvers: overs, updatedAt: Date.now() }).catch(() => undefined)
       void saveCloudData("standings", state.table).catch(() => undefined)
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [state, admin, teamsLoaded])
+  }, [state, admin, teamsLoaded, overs])
   useEffect(() => {
     if (!admin || !state.result || !state.matchId) return
     void saveCloudData(`results/${state.matchId}`, {

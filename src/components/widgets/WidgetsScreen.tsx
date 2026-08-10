@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
-import { Download, Maximize2, Moon, MousePointerClick, RefreshCw, Smartphone } from "lucide-react"
+import { Download, Maximize2, Moon, MousePointerClick, Move, Pin, RefreshCw, Smartphone } from "lucide-react"
 import { clearInstallPrompt, getInstallPrompt, subscribeInstallPrompt, type InstallPromptEvent } from "../../lib/pwaInstall"
+import { androidBridgeRequest, isAndroidBridgeFallback, openAndroidWidget, type AndroidWidgetSize } from "../../lib/androidBridge"
 import "./widgets.css"
 
 type Batter = { name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean }
@@ -38,6 +39,17 @@ function BallStrip({ balls }: { balls: string[] }) {
   return <div className="tech-ball-strip">{balls.length ? balls.map((mark, index) => <b key={`${mark}-${index}`} className={mark === "W" ? "wicket" : mark === "4" || mark === "6" ? "boundary" : mark === "WD" || mark === "NB" ? "extra" : ""}>{mark}</b>) : <span>Waiting for first ball</span>}</div>
 }
 
+function AndroidWidgetActions({ matchId, size, onMessage }: { matchId: string; size: AndroidWidgetSize; onMessage: (message: string) => void }) {
+  const open = (action: "floating" | "pin") => {
+    const result = openAndroidWidget(matchId || "live", size, action)
+    onMessage(result.message)
+  }
+  return <div className="android-widget-actions" aria-label={`${size} Android widget actions`}>
+    <button onClick={() => open("floating")}><Move /> Float Live Score</button>
+    <button onClick={() => open("pin")}><Pin /> Add to Home Screen</button>
+  </div>
+}
+
 export default function WidgetsScreen({ score, teams, matchOvers }: { score: LiveScore; teams: WidgetTeam[]; matchOvers: number }) {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(() => getInstallPrompt())
   const [installNote, setInstallNote] = useState("")
@@ -55,6 +67,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
   const requiredRate = need !== null && ballsRemaining ? (need * 6 / ballsRemaining).toFixed(2) : "—"
   const lastWicket = score.fall?.at(-1) || "No wicket recorded"
   const statusLabel = score.result ? "FINAL" : isLive ? "LIVE" : "READY"
+  const bridgeRequest = androidBridgeRequest()
 
   useEffect(() => subscribeInstallPrompt(setInstallPrompt), [])
 
@@ -75,9 +88,10 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
 
   return (
     <main className="widgets-page tech-widgets-page">
+      {isAndroidBridgeFallback() && <section className="android-companion-fallback" role="status"><Smartphone /><div><strong>CricVault Android companion required</strong><p>{bridgeRequest ? `Your ${bridgeRequest.size} ${bridgeRequest.mode === "pin" ? "home-screen" : "floating"} score request for match ${bridgeRequest.matchId} is saved in this link.` : "This Android request is invalid."} Install the native CricVault APK, then open this same link again. A browser or PWA cannot display above other apps.</p></div></section>}
       <section className="tech-widget-hero">
         <div className="tech-brand-lockup"><span>CV</span><div><strong>CRIC<span>VAULT</span></strong><small>LIVE CRICKET WIDGETS</small></div></div>
-        <div className="tech-hero-copy"><span>ADVANCED ANDROID LIVE CRICKET SCORE WIDGET SYSTEM</span><h1>Match intelligence,<br />built for your home screen.</h1><p>Two precise widget sizes. One real-time DPL 6 scoring source. No clutter, no duplicate match entry.</p></div>
+        <div className="tech-hero-copy"><span>ADVANCED ANDROID LIVE CRICKET SCORE WIDGET SYSTEM</span><h1>Match intelligence,<br />wherever you are.</h1><p>Three precise widget sizes. One real-time DPL 6 scoring source. Float above other apps or pin to the Android home screen.</p></div>
         <div className="android-mark"><Smartphone /><span>ANDROID<br />READY</span></div>
       </section>
 
@@ -92,6 +106,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
           </div>
           <div className="compact-widget-requirement"><span>{score.target ? "CHASE" : `INNINGS ${score.innings || 1}`}</span>{need !== null ? <>Need <strong>{need}</strong> runs from <strong>{ballsRemaining}</strong> balls</> : <>Live score updates automatically</>}</div>
         </article>
+        <AndroidWidgetActions matchId={score.matchId} size="compact" onMessage={setInstallNote} />
       </section>
 
       <section className="tech-widget-stage standard-stage">
@@ -116,6 +131,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
           </section>
           <footer className="stdw-balls"><div><span>LAST 6</span><small>THIS OVER</small></div><BallStrip balls={recentBalls} /><strong>{currentOverRuns} <span>RUNS</span></strong></footer>
         </article>
+        <AndroidWidgetActions matchId={score.matchId} size="standard" onMessage={setInstallNote} />
       </section>
 
       <section className="tech-widget-stage expanded-stage">
@@ -145,6 +161,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
             <div className="this-over"><span>THIS OVER</span><strong>{currentOverRuns} <small>RUNS</small></strong></div>
           </footer>
         </article>
+        <AndroidWidgetActions matchId={score.matchId} size="expanded" onMessage={setInstallNote} />
       </section>
 
       <section className="widget-feature-rail">
@@ -152,7 +169,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
         <div><RefreshCw /><span><b>LIVE SYNC</b><small>Updates every ball</small></span></div>
         <div><Maximize2 /><span><b>THREE SIZES</b><small>2×1 · 4×2 · 5×3</small></span></div>
         <div><Moon /><span><b>DARK MODE</b><small>Optimized for Android</small></span></div>
-        <button onClick={() => void install()}><Download /> Add to Android</button>
+        <button onClick={() => void install()}><Download /> Install web app</button>
       </section>
       {installNote && <p className="widget-install-note">{installNote}</p>}
       <section className="android-install-guide">

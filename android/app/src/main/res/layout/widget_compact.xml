@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="13dp"
+    android:background="@drawable/widget_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+        <TextView android:id="@+id/widget_brand" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CV  CRICVAULT" android:textColor="@color/widget_text" android:textSize="10sp" android:textStyle="bold" />
+        <TextView android:id="@+id/widget_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SYNCING" android:textColor="@color/widget_lime" android:textSize="9sp" android:textStyle="bold" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <ImageView android:id="@+id/widget_batting_logo" android:layout_width="36dp" android:layout_height="36dp" android:adjustViewBounds="true" android:contentDescription="Batting team logo" android:scaleType="centerInside" />
+            <TextView android:id="@+id/widget_batting" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:text="WAITING" android:textColor="@color/widget_text" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical">
+            <TextView android:id="@+id/widget_score" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0/0" android:textColor="@color/widget_text" android:textSize="30sp" android:textStyle="bold" />
+            <TextView android:id="@+id/widget_overs" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0 OVERS" android:textColor="@color/widget_muted" android:textSize="9sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <ImageView android:id="@+id/widget_bowling_logo" android:layout_width="36dp" android:layout_height="36dp" android:adjustViewBounds="true" android:contentDescription="Bowling team logo" android:scaleType="centerInside" />
+            <TextView android:id="@+id/widget_bowling" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:text="DPL 6" android:textColor="@color/widget_text" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+    <TextView android:id="@+id/widget_context" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="INNINGS 1" android:textColor="@color/widget_lime" android:textSize="10sp" android:textStyle="bold" />
+    <TextView android:id="@+id/widget_striker" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+    <TextView android:id="@+id/widget_striker_score" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+    <TextView android:id="@+id/widget_non_striker" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+    <TextView android:id="@+id/widget_non_striker_score" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+    <TextView android:id="@+id/widget_bowler" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+    <TextView android:id="@+id/widget_bowler_score" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+    <TextView android:id="@+id/widget_balls" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" />
+</LinearLayout>

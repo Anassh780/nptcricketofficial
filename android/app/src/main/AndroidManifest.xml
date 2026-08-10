@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_cricvault"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@style/Theme.CricVault">
+
+        <activity
+            android:name=".deeplink.FloatingScoreEntryActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="nptcricketofficial.vercel.app"
+                    android:pathPrefix="/open/live-score/" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".service.FloatingScoreService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-requested persistent live cricket score overlay displayed above other applications during an active match." />
+        </service>
+
+        <receiver android:name=".widget.CompactWidgetProvider" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.cricvault.dpl6.REFRESH_WIDGETS" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/compact_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.StandardWidgetProvider" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.cricvault.dpl6.REFRESH_WIDGETS" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/standard_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.ExpandedWidgetProvider" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.cricvault.dpl6.REFRESH_WIDGETS" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/expanded_widget_info" />
+        </receiver>
+    </application>
+</manifest>

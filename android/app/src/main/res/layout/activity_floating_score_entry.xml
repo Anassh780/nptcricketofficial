@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05080D"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="46dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="30dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CRICVAULT"
+            android:textColor="#F5F7F4"
+            android:textSize="31sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:letterSpacing="0.18"
+            android:text="REAL ANDROID LIVE SCORE"
+            android:textColor="#91E521"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/entry_match"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="DPL 6 LIVE SCORE"
+            android:textColor="#F5F7F4"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/entry_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:lineSpacingExtra="4dp"
+            android:textColor="#9AACB4"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:id="@+id/entry_permission_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/entry_panel"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="DISPLAY OVER OTHER APPS"
+                android:textColor="#F5F7F4"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="This permission is used only while you explicitly run the floating cricket score. You can stop it from the panel or ongoing notification."
+                android:textColor="#84969E"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/entry_allow_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/entry_button"
+                android:text="Open Android permission"
+                android:textAllCaps="false"
+                android:textColor="#071006"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="27dp"
+            android:letterSpacing="0.12"
+            android:text="FLOAT ABOVE OTHER APPS"
+            android:textColor="#91E521"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:orientation="vertical">
+
+            <Button android:id="@+id/entry_float_compact" style="@style/CricVaultSecondaryButton" android:text="Float compact score" />
+            <Button android:id="@+id/entry_float_standard" style="@style/CricVaultSecondaryButton" android:text="Float standard score" />
+            <Button android:id="@+id/entry_float_expanded" style="@style/CricVaultSecondaryButton" android:text="Float expanded score" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:letterSpacing="0.12"
+            android:text="ADD TO LAUNCHER HOME SCREEN"
+            android:textColor="#91E521"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:orientation="vertical">
+
+            <Button android:id="@+id/entry_pin_compact" style="@style/CricVaultSecondaryButton" android:text="Pin compact widget" />
+            <Button android:id="@+id/entry_pin_standard" style="@style/CricVaultSecondaryButton" android:text="Pin standard widget" />
+            <Button android:id="@+id/entry_pin_expanded" style="@style/CricVaultSecondaryButton" android:text="Pin expanded widget" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

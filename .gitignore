@@ -12,3 +12,7 @@ logs/
 .claude-replay.*
 .tmp-*
 .firebase/
+android/.gradle/
+android/local.properties
+android/**/build/
+.android-tools/

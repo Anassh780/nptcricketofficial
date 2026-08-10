@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cricvault.dpl6",
+      "sha256_cert_fingerprints": [
+        "82:FF:D2:C0:86:E6:EC:E3:3E:8A:CE:94:53:5F:12:48:D7:A6:61:AF:9F:79:1A:C2:37:D9:32:2A:DB:84:01:11"
+      ]
+    }
+  }
+]
