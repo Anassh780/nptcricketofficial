@@ -2322,7 +2322,7 @@ export default function App() {
       }
       return
     }
-    if (draft.balls > 0 && draft.balls % 6 === 0 && draft.events[0]?.legal) {
+    if (draft.balls > 0 && draft.balls % 6 === 0) {
       swap(draft)
       draft.needsBowler = true
       draft.overMarks = []
@@ -2641,7 +2641,12 @@ export default function App() {
                   }
                 }}
                 endOver={() => {
-                  if (state.balls % 6 !== 0) alert("An over ends automatically after six legal balls.")
+                  if (state.result) return
+                  setState((prev) => ({
+                    ...prev,
+                    needsBowler: true,
+                    overMarks: [],
+                  }))
                 }}
                 onChangeBowler={changeBowler}
                 scoringTeams={scoringTeams}

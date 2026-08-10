@@ -103,9 +103,12 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 
   // Auto-open Bowler selection popover when an over ends (state.needsBowler)
   React.useEffect(() => {
-    if (state.needsBowler && overStripRef.current) {
-      setAnchorEl(overStripRef.current)
-      setActivePopover({ type: "bowler" })
+    if (state.needsBowler) {
+      const target = overStripRef.current || (document.querySelector(".scoring-controls") as HTMLElement)
+      if (target) {
+        setAnchorEl(target)
+        setActivePopover({ type: "bowler" })
+      }
     } else if (!state.needsBowler && activePopover?.type === "bowler") {
       setActivePopover(null)
       setAnchorEl(null)
@@ -115,6 +118,13 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
   const closePopover = () => {
     setActivePopover(null)
     setAnchorEl(null)
+  }
+
+  // Handle clicking End Over button
+  const handleEndOverClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    endOver()
+    setAnchorEl(e.currentTarget)
+    setActivePopover({ type: "bowler" })
   }
 
   // Handle clicking Extra buttons (WD, NB, B, LB)
@@ -267,7 +277,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
           ⇄ Swap batters
         </button>
         <button onClick={undo}>↶ Undo</button>
-        <button onClick={endOver}>◎ End over</button>
+        <button onClick={handleEndOverClick}>◎ End over</button>
       </div>
 
       {/* Over summary strip */}
@@ -438,7 +448,10 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 
         {activePopover?.type === "bowler" && (
           <div className="bowler-list">
-            {bowlerOptions.map((b) => (
+            {(bowlerOptions.length > 0
+              ? bowlerOptions
+              : Object.values(state.bowlers).filter((b) => b.name !== state.bowler)
+            ).map((b) => (
               <button
                 key={b.name}
                 onClick={() => {
