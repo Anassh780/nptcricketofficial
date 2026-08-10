@@ -68,10 +68,20 @@
 
 @media (max-width: 560px) {
   .innings-result-backdrop { align-items: end; padding: 0; }
-  .innings-result-modal { padding: 25px 15px 18px; border-radius: 22px 22px 0 0; }
-  .innings-result-score strong { font-size: 58px; }
+  .innings-result-modal {
+    max-height: 90dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 22px 15px max(18px, env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+  }
+  .innings-result-close { right: 12px; top: 12px; width: 38px; height: 38px; font-size: 23px; }
+  .innings-result-score strong { font-size: 52px; }
   .innings-result-stats { grid-template-columns: repeat(2, 1fr); }
   .innings-result-chase { flex-direction: column; }
+  .continue-chase-button { height: 52px; font-size: 15px; }
+  .innings-result-team h2 { font-size: 22px; }
+  .innings-result-team>span { width: 54px; height: 54px; flex: 0 0 54px; }
 }
 
 .setup-roster-alert {
