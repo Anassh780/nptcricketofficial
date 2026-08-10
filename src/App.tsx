@@ -235,6 +235,7 @@ const INITIAL: ScoreState = {
 function SetupPanel({
   onStart,
   teams,
+  onResumeMatch,
 }: {
   teams: Team[]
   onStart: (setup: {
@@ -247,6 +248,7 @@ function SetupPanel({
     nonStriker: string
     bowler: string
   }) => void
+  onResumeMatch?: () => void
 }) {
   const [step, setStep] = useState(1)
   const [teamA, setTeamA] = useState(teams[0].name)
@@ -254,6 +256,19 @@ function SetupPanel({
   const [overs, setOvers] = useState(20)
   const [toss, setToss] = useState(teams[0].name)
   const [decision, setDecision] = useState("Bat")
+
+  const savedSessionRaw = localStorage.getItem("cricvault-active-session")
+  const savedSession = useMemo(() => {
+    if (!savedSessionRaw) return null
+    try {
+      const parsed = JSON.parse(savedSessionRaw)
+      if (parsed?.state && !parsed.state.result && parsed.matchReady) return parsed
+    } catch {
+      return null
+    }
+    return null
+  }, [savedSessionRaw])
+
   const a = teamByName(teamA, teams)
   const b = teamByName(teamB, teams)
   const battingName = decision === "Bat" ? toss : toss === teamA ? teamB : teamA
@@ -276,6 +291,39 @@ function SetupPanel({
         <h2>Match setup</h2>
         <span>GUIDED FLOW</span>
       </div>
+
+      {savedSession && onResumeMatch && (
+        <div style={{
+          margin: "12px 14px 0",
+          padding: "14px 16px",
+          background: "linear-gradient(135deg, rgba(145, 229, 33, 0.16), rgba(8, 24, 32, 0.95))",
+          border: "1px solid rgba(145, 229, 33, 0.4)",
+          borderRadius: "10px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+        }}>
+          <div>
+            <div style={{ fontSize: "10px", color: "#91e521", fontWeight: 700, letterSpacing: "0.1em" }}>
+              ⚡ UNFINISHED MATCH IN PROGRESS
+            </div>
+            <strong style={{ fontSize: "14px", color: "#ffffff", display: "block", marginTop: "2px" }}>
+              {savedSession.state.batting} vs {savedSession.state.bowling} ({savedSession.state.runs}/{savedSession.state.wickets})
+            </strong>
+            <small style={{ fontSize: "10px", color: "#8da0a7" }}>
+              Stopped at {oversText(savedSession.state.balls)} overs · Last saved {new Date(savedSession.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </small>
+          </div>
+          <button
+            className="report-btn report-btn-primary"
+            style={{ height: "36px", padding: "0 16px", fontSize: "12px", whiteSpace: "nowrap" }}
+            onClick={onResumeMatch}
+          >
+            Resume Match →
+          </button>
+        </div>
+      )}
       <div className="steps">
         {["Match", "Teams", "Settings", "Openers", "Confirm"].map((label, index) => (
           <button
@@ -2176,7 +2224,42 @@ export default function App() {
   }, [teamProfiles, scoringTeams])
   useEffect(() => {
     localStorage.setItem("cricvault-score", JSON.stringify(state))
-  }, [state])
+    if (matchReady && liveScoreReady && !state.result) {
+      localStorage.setItem(
+        "cricvault-active-session",
+        JSON.stringify({
+          state,
+          history,
+          matchReady: true,
+          overs,
+          updatedAt: Date.now(),
+        }),
+      )
+    } else if (state.result) {
+      localStorage.removeItem("cricvault-active-session")
+    }
+  }, [state, history, matchReady, overs, liveScoreReady])
+
+  const handleResumeMatch = () => {
+    try {
+      const savedRaw = localStorage.getItem("cricvault-active-session")
+      if (!savedRaw) return
+      const session = JSON.parse(savedRaw)
+      if (session.state && session.matchReady) {
+        setState(session.state)
+        if (Array.isArray(session.history)) setHistory(session.history)
+        if (session.overs) setOvers(session.overs)
+        setMatchReady(true)
+        void saveCloudData("liveScore", {
+          ...session.state,
+          matchOvers: session.overs || 20,
+          updatedAt: Date.now(),
+        }).catch(() => undefined)
+      }
+    } catch (err) {
+      console.error("Resume failed:", err)
+    }
+  }
   useEffect(() => {
     if (previousInnings.current === 1 && state.innings === 2 && state.summaries[0]) {
       setInningsResultOpen(true)
@@ -2616,7 +2699,7 @@ export default function App() {
             <h1>Prepare the match first.</h1>
             <p>Complete the guided flow. The live scoring workspace will open only after setup succeeds.</p>
           </section>
-          <SetupPanel onStart={startMatch} teams={scoringTeams} />
+          <SetupPanel onStart={startMatch} teams={scoringTeams} onResumeMatch={handleResumeMatch} />
         </main>
       )}
       {screen === "scoring" && admin && scoringTeams.length >= 2 && matchReady && liveScoreReady && (
@@ -2633,6 +2716,26 @@ export default function App() {
               <div className="scoring-focus-toolbar">
                 <div><i /> MATCH IN PROGRESS</div>
                 <div className="scoring-toolbar-actions">
+                  <button
+                    className="report-btn report-btn-secondary"
+                    style={{ height: "28px", fontSize: "11px", padding: "0 10px" }}
+                    onClick={() => {
+                      localStorage.setItem(
+                        "cricvault-active-session",
+                        JSON.stringify({
+                          state,
+                          history,
+                          matchReady: true,
+                          overs,
+                          updatedAt: Date.now(),
+                        }),
+                      )
+                      alert("Match paused & saved! You can resume it anytime from setup.")
+                      setMatchReady(false)
+                    }}
+                  >
+                    ⏸ Pause Match
+                  </button>
                   <button
                     className="report-btn report-btn-primary"
                     style={{ height: "28px", fontSize: "11px", padding: "0 12px" }}

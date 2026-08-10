@@ -33,19 +33,27 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
   const secondWickets = state.wickets
   const secondOversText = (state.balls / 6).toFixed(1)
 
-  // Determine top scorer
-  const allBatters = Object.values(state.batters || {})
-  const topScorer = allBatters.reduce((top, current) => {
-    return current.runs > (top?.runs || -1) ? current : top
-  }, allBatters[0])
+  // Current innings batters & bowlers
+  const currentBatters = Object.values(state.batters || {})
+  const currentBowlers = Object.values(state.bowlers || {})
 
-  // Determine top bowler
-  const allBowlers = Object.values(state.bowlers || {})
-  const topBowler = allBowlers.reduce((top, current) => {
+  // First innings batters & bowlers if available
+  const firstBatters = firstInnings?.batting || []
+  const firstBowlers = firstInnings?.bowling || []
+
+  // Combine all batters for top scorer award calculation
+  const allBattersCombined = [...firstBatters, ...currentBatters]
+  const topScorer = allBattersCombined.reduce((top, current) => {
+    return current.runs > (top?.runs || -1) ? current : top
+  }, allBattersCombined[0] || currentBatters[0])
+
+  // Combine all bowlers for top bowler award calculation
+  const allBowlersCombined = [...firstBowlers, ...currentBowlers]
+  const topBowler = allBowlersCombined.reduce((top, current) => {
     if (current.wickets > (top?.wickets || -1)) return current
-    if (current.wickets === top?.wickets && current.runs < top.runs) return current
+    if (current.wickets === top?.wickets && current.runs < (top?.runs || 999)) return current
     return top
-  }, allBowlers[0])
+  }, allBowlersCombined[0] || currentBowlers[0])
 
   // Player of the match
   const potm = topScorer?.runs >= 20 || !topBowler ? topScorer : topBowler
@@ -173,7 +181,7 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
           </div>
 
           <div className="stat-bar-group">
-            <div className="stat-bar-label"><span>Boundary Count (4s & 6s)</span><strong>{allBatters.reduce((acc: number, b) => acc + b.fours + b.sixes, 0)} Boundaries</strong></div>
+            <div className="stat-bar-label"><span>Boundary Count (4s & 6s)</span><strong>{allBattersCombined.reduce((acc: number, b) => acc + b.fours + b.sixes, 0)} Boundaries</strong></div>
             <div className="stat-bar-bg">
               <div className="stat-bar-fill" style={{ width: "75%" }} />
             </div>
@@ -214,13 +222,47 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
           </div>
         )}
 
+        {/* 1st Innings Batting Scorecard if available */}
+        {firstInnings && firstBatters.length > 0 && (
+          <div className="table-section">
+            <h4>Innings 1 Batting Scorecard — {firstInnings.team} ({firstInnings.runs}/{firstInnings.wickets})</h4>
+            <table className="pdf-data-table">
+              <thead>
+                <tr>
+                  <th>BATSMAN</th>
+                  <th>DISMISSAL / STATUS</th>
+                  <th>RUNS</th>
+                  <th>BALLS</th>
+                  <th>4s</th>
+                  <th>6s</th>
+                  <th>SR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {firstBatters.map((b) => (
+                  <tr key={b.name} className={b.name === topScorer?.name ? "top-row" : ""}>
+                    <td><strong>{b.name}</strong></td>
+                    <td><small>{b.out ? b.dismissal || "out" : "not out"}</small></td>
+                    <td><strong>{b.runs}</strong></td>
+                    <td>{b.balls}</td>
+                    <td>{b.fours}</td>
+                    <td>{b.sixes}</td>
+                    <td>{b.balls ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Current Innings Batting Scorecard */}
         <div className="table-section">
-          <h4>Full Batting Scorecard</h4>
+          <h4>{firstInnings ? "Innings 2 Batting Scorecard" : "Batting Scorecard"} — {state.batting} ({secondRuns}/{secondWickets})</h4>
           <table className="pdf-data-table">
             <thead>
               <tr>
                 <th>BATSMAN</th>
-                <th>STATUS</th>
+                <th>DISMISSAL / STATUS</th>
                 <th>RUNS</th>
                 <th>BALLS</th>
                 <th>4s</th>
@@ -229,10 +271,10 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
               </tr>
             </thead>
             <tbody>
-              {allBatters.map((b) => (
+              {currentBatters.map((b) => (
                 <tr key={b.name} className={b.name === topScorer?.name ? "top-row" : ""}>
                   <td><strong>{b.name}</strong></td>
-                  <td><small>{b.out ? b.dismissal : "not out"}</small></td>
+                  <td><small>{b.out ? b.dismissal || "out" : "not out"}</small></td>
                   <td><strong>{b.runs}</strong></td>
                   <td>{b.balls}</td>
                   <td>{b.fours}</td>
@@ -278,8 +320,38 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
           </div>
         )}
 
+        {/* First Innings Bowling Figures if available */}
+        {firstInnings && firstBowlers.length > 0 && (
+          <div className="table-section">
+            <h4>Innings 1 Bowling Analysis ({bowlingTeam.name})</h4>
+            <table className="pdf-data-table">
+              <thead>
+                <tr>
+                  <th>BOWLER</th>
+                  <th>OVERS</th>
+                  <th>RUNS</th>
+                  <th>WICKETS</th>
+                  <th>ECONOMY</th>
+                </tr>
+              </thead>
+              <tbody>
+                {firstBowlers.map((bw) => (
+                  <tr key={bw.name} className={bw.name === topBowler?.name ? "top-row" : ""}>
+                    <td><strong>{bw.name}</strong></td>
+                    <td>{(bw.balls / 6).toFixed(1)}</td>
+                    <td>{bw.runs}</td>
+                    <td><strong>{bw.wickets}</strong></td>
+                    <td>{bw.balls ? ((bw.runs / bw.balls) * 6).toFixed(2) : "0.00"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Current Innings Bowling Figures */}
         <div className="table-section">
-          <h4>Bowling Figures</h4>
+          <h4>{firstInnings ? "Innings 2 Bowling Analysis" : "Bowling Analysis"} ({bowlingTeam.name})</h4>
           <table className="pdf-data-table">
             <thead>
               <tr>
@@ -291,7 +363,7 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
               </tr>
             </thead>
             <tbody>
-              {allBowlers.map((bw) => (
+              {currentBowlers.map((bw) => (
                 <tr key={bw.name} className={bw.name === topBowler?.name ? "top-row" : ""}>
                   <td><strong>{bw.name}</strong></td>
                   <td>{(bw.balls / 6).toFixed(1)}</td>
@@ -402,7 +474,7 @@ export const MatchReportPDF: React.FC<MatchReportPDFProps> = ({
           <div className="analytics-card">
             <h4>Boundary Breakdown</h4>
             <p style={{ fontSize: "11px", color: "#a8b7ba" }}>
-              Total 4s: <strong>{allBatters.reduce((a: number, b) => a + b.fours, 0)}</strong> · Total 6s: <strong>{allBatters.reduce((a: number, b) => a + b.sixes, 0)}</strong>
+              Total 4s: <strong>{allBattersCombined.reduce((a: number, b) => a + b.fours, 0)}</strong> · Total 6s: <strong>{allBattersCombined.reduce((a: number, b) => a + b.sixes, 0)}</strong>
             </p>
           </div>
         </div>

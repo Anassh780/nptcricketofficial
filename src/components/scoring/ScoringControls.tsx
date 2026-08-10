@@ -41,6 +41,8 @@ export interface InningsSummary {
   wickets: number
   balls: number
   extras?: { wd: number; nb: number; b: number; lb: number }
+  batting?: Array<{ name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean; dismissal: string }>
+  bowling?: Array<{ name: string; balls: number; runs: number; wickets: number; maidens: number }>
 }
 
 export interface ScoreState {

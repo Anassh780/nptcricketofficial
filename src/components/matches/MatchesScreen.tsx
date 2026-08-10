@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react"
 import type { SharedTeamProfile } from "../../data/teamStore"
 import type { FirebaseUser } from "../../lib/firebase"
 import { saveCloudData, subscribeCloudData } from "../../lib/firebase"
+import MatchReportModal from "../report/MatchReportModal"
+import type { Batter, Bowler, ScoreState, Team } from "../scoring/ScoringControls"
 import "./matches.css"
 import "./matches-results.css"
 
@@ -98,6 +100,71 @@ export default function MatchesScreen({
   const [message, setMessage] = useState("")
   const [busy, setBusy] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState<LeagueMatch | null>(null)
+  const [reportModalState, setReportModalState] = useState<ScoreState | null>(null)
+
+  const convertMatchToScoreState = (match: LeagueMatch): ScoreState => {
+    const innings = match.record?.innings || []
+    const first = innings[0]
+    const second = innings[1] || first || { team: match.teamA, runs: 0, wickets: 0, balls: 0 }
+
+    const derived1 = deriveScorecards(1, match.record?.events)
+    const derived2 = deriveScorecards(2, match.record?.events)
+
+    const battersObj: Record<string, Batter> = {}
+    const bowlersObj: Record<string, Bowler> = {}
+
+    const secondBatting = second.batting?.length ? second.batting : derived2.batting
+    const secondBowling = second.bowling?.length ? second.bowling : derived2.bowling
+
+    secondBatting.forEach((b) => {
+      battersObj[b.name] = { ...b, dismissal: b.dismissal || (b.out ? "out" : "not out") }
+    })
+    secondBowling.forEach((bw) => {
+      bowlersObj[bw.name] = { ...bw }
+    })
+
+    return {
+      matchId: match.id,
+      innings: innings.length,
+      batting: second.team || match.teamA,
+      bowling: innings.length > 1 ? first?.team || match.teamB : match.teamB,
+      runs: second.runs || 0,
+      wickets: second.wickets || 0,
+      balls: second.balls || 0,
+      striker: secondBatting[0]?.name || "Batter 1",
+      nonStriker: secondBatting[1]?.name || "Batter 2",
+      bowler: secondBowling[0]?.name || "Bowler 1",
+      freeHit: false,
+      partnershipRuns: 0,
+      partnershipBalls: 0,
+      extras: second.extras || { wd: 0, nb: 0, b: 0, lb: 0 },
+      batters: battersObj,
+      bowlers: bowlersObj,
+      overMarks: [],
+      fall: [],
+      result: match.record?.result || match.result || "Match Ended",
+      needsBowler: false,
+      summaries: first
+        ? [
+            {
+              team: first.team,
+              runs: first.runs,
+              wickets: first.wickets,
+              balls: first.balls,
+              extras: first.extras,
+              batting: first.batting?.length ? first.batting : derived1.batting,
+              bowling: first.bowling?.length ? first.bowling : derived1.bowling,
+            },
+          ]
+        : [],
+      events: (match.record?.events || []).map((e) => ({
+        id: e.id,
+        mark: e.mark,
+        runs: e.runs || 0,
+        legal: e.legal ?? true,
+      })),
+    }
+  }
 
   useEffect(() => subscribeCloudData<LeagueMatch[] | Record<string, LeagueMatch>>(
     "matches",
@@ -251,10 +318,36 @@ export default function MatchesScreen({
                 </section>
               })}
             </div>
-            <footer><span>⌖ {selectedMatch.venue}</span>{selectedMatch.record?.completedAt ? <time>Completed {new Date(selectedMatch.record.completedAt).toLocaleString()}</time> : null}</footer>
+            <footer>
+              <button
+                className="report-btn report-btn-primary"
+                style={{ height: "32px", fontSize: "11px", padding: "0 14px" }}
+                onClick={() => setReportModalState(convertMatchToScoreState(selectedMatch))}
+              >
+                📄 Share PDF Match Report
+              </button>
+              <span>⌖ {selectedMatch.venue}</span>
+              {selectedMatch.record?.completedAt ? <time>Completed {new Date(selectedMatch.record.completedAt).toLocaleString()}</time> : null}
+            </footer>
           </section>
         </div>
       })()}
+
+      {reportModalState && (
+        <MatchReportModal
+          isOpen={Boolean(reportModalState)}
+          onClose={() => setReportModalState(null)}
+          state={reportModalState}
+          teams={teams.map((t) => ({
+            code: t.code,
+            name: t.name,
+            color: t.color,
+            players: (t.players || []).map((p) => (typeof p === "string" ? p : p.name)),
+            logo: t.logo,
+          }))}
+          overs={20}
+        />
+      )}
     </main>
   )
 }
