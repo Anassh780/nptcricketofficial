@@ -35,43 +35,8 @@ export type LeagueMatch = {
 
 const oversText = (balls = 0) => `${Math.floor(balls / 6)}.${balls % 6}`
 
-type BattingLine = { name: string; runs: number; balls: number; fours: number; sixes: number; out: boolean; dismissal: string }
-type BowlingLine = { name: string; balls: number; runs: number; wickets: number; maidens: number }
-
-const deriveScorecards = (inningsNumber: number, events: NonNullable<LeagueMatch["record"]>["events"] = []) => {
-  const batting = new Map<string, BattingLine>()
-  const bowling = new Map<string, BowlingLine>()
-  ;[...events].filter((event) => event.innings === inningsNumber).reverse().forEach((event) => {
-    const delivery = event.text.match(/^(.+?) to (.+?),/)
-    if (!delivery) return
-    const [, bowlerName, batterName] = delivery
-    const batter = batting.get(batterName) || { name: batterName, runs: 0, balls: 0, fours: 0, sixes: 0, out: false, dismissal: "not out" }
-    const bowler = bowling.get(bowlerName) || { name: bowlerName, balls: 0, runs: 0, wickets: 0, maidens: 0 }
-    const legal = event.legal ?? !/^(WD|NB)/.test(event.mark)
-    const eventRuns = Number(event.runs ?? event.mark.match(/^\d+$/)?.[0] ?? 0)
-    if (legal) { batter.balls += 1; bowler.balls += 1 }
-    if (/^\d+$/.test(event.mark)) {
-      batter.runs += eventRuns
-      bowler.runs += eventRuns
-      if (eventRuns === 4) batter.fours += 1
-      if (eventRuns === 6) batter.sixes += 1
-    } else if (/^NB/.test(event.mark)) {
-      const batRuns = Math.max(0, eventRuns - 1)
-      batter.runs += batRuns
-      bowler.runs += eventRuns
-      if (batRuns === 4) batter.fours += 1
-      if (batRuns === 6) batter.sixes += 1
-    } else if (/^WD/.test(event.mark)) bowler.runs += eventRuns
-    if (event.mark === "W") {
-      batter.out = true
-      batter.dismissal = event.text.split(/OUT\s*[—-]\s*/)[1]?.replace(/\.$/, "") || "out"
-      if (!/run out/i.test(event.text)) bowler.wickets += 1
-    }
-    batting.set(batterName, batter)
-    bowling.set(bowlerName, bowler)
-  })
-  return { batting: [...batting.values()], bowling: [...bowling.values()] }
-}
+import { deriveScorecards, type BattingLine, type BowlingLine } from "../../utils/scorecardHelpers"
+export { deriveScorecards, type BattingLine, type BowlingLine }
 
 const matchStatus = (match: LeagueMatch) => {
   const now = Date.now()
@@ -85,11 +50,13 @@ export default function MatchesScreen({
   user,
   onLogin,
   isAdmin,
+  onResumeMatch,
 }: {
   teams: SharedTeamProfile[]
   user: FirebaseUser | null
   onLogin: () => void
   isAdmin: boolean
+  onResumeMatch?: (match: LeagueMatch) => void
 }) {
   const [matches, setMatches] = useState<LeagueMatch[]>([])
   const [teamA, setTeamA] = useState(teams[0]?.id || "")
@@ -319,13 +286,41 @@ export default function MatchesScreen({
               })}
             </div>
             <footer>
-              <button
-                className="report-btn report-btn-primary"
-                style={{ height: "32px", fontSize: "11px", padding: "0 14px" }}
-                onClick={() => setReportModalState(convertMatchToScoreState(selectedMatch))}
-              >
-                📄 Share PDF Match Report
-              </button>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", width: "100%", marginBottom: "8px" }}>
+                <button
+                  className="report-btn report-btn-primary"
+                  style={{ height: "32px", fontSize: "11px", padding: "0 14px" }}
+                  onClick={() => setReportModalState(convertMatchToScoreState(selectedMatch))}
+                >
+                  📄 Share PDF Match Report
+                </button>
+                {isAdmin && onResumeMatch && (
+                  <button
+                    className="report-btn report-btn-secondary"
+                    style={{ height: "32px", fontSize: "11px", padding: "0 14px" }}
+                    onClick={() => {
+                      onResumeMatch(selectedMatch)
+                      setSelectedMatch(null)
+                    }}
+                  >
+                    ⚡ Resume / Edit Match Scoring
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    className="delete-fixture"
+                    style={{ height: "32px", fontSize: "11px", padding: "0 14px", background: "rgba(255,52,45,0.15)", color: "#ff342d", border: "1px solid rgba(255,52,45,0.4)" }}
+                    onClick={() => {
+                      if (window.confirm(`Delete match record for ${selectedMatch.teamA} vs ${selectedMatch.teamB}?`)) {
+                        deleteMatch(selectedMatch.id)
+                        setSelectedMatch(null)
+                      }
+                    }}
+                  >
+                    🗑 Delete Match Record
+                  </button>
+                )}
+              </div>
               <span>⌖ {selectedMatch.venue}</span>
               {selectedMatch.record?.completedAt ? <time>Completed {new Date(selectedMatch.record.completedAt).toLocaleString()}</time> : null}
             </footer>

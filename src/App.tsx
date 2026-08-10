@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
+import { deriveScorecards, type BattingLine, type BowlingLine } from "./utils/scorecardHelpers"
 import Navbar, { NavbarBrand, type NavScreen as Screen } from "./components/navigation/Navbar"
 import AboutSection from "./components/landing/AboutSection"
 import WidgetsScreen from "./components/widgets/WidgetsScreen"
@@ -315,13 +316,27 @@ function SetupPanel({
               Stopped at {oversText(savedSession.state.balls)} overs · Last saved {new Date(savedSession.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </small>
           </div>
-          <button
-            className="report-btn report-btn-primary"
-            style={{ height: "36px", padding: "0 16px", fontSize: "12px", whiteSpace: "nowrap" }}
-            onClick={onResumeMatch}
-          >
-            Resume Match →
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              className="report-btn report-btn-secondary"
+              style={{ height: "36px", padding: "0 12px", fontSize: "11px" }}
+              onClick={() => {
+                if (window.confirm("Discard the saved unfinished match session?")) {
+                  localStorage.removeItem("cricvault-active-session")
+                  window.location.reload()
+                }
+              }}
+            >
+              Discard
+            </button>
+            <button
+              className="report-btn report-btn-primary"
+              style={{ height: "36px", padding: "0 16px", fontSize: "12px", whiteSpace: "nowrap" }}
+              onClick={onResumeMatch}
+            >
+              Resume Match →
+            </button>
+          </div>
         </div>
       )}
       <div className="steps">
@@ -2260,6 +2275,85 @@ export default function App() {
       console.error("Resume failed:", err)
     }
   }
+
+  const handleResumeMatchRecord = (match: LeagueMatch) => {
+    try {
+      const innings = match.record?.innings || []
+      const first = innings[0]
+      const second = innings[1] || first || { team: match.teamA, runs: 0, wickets: 0, balls: 0 }
+
+      const derived1 = deriveScorecards(1, match.record?.events)
+      const derived2 = deriveScorecards(2, match.record?.events)
+
+      const battersObj: Record<string, Batter> = {}
+      const bowlersObj: Record<string, Bowler> = {}
+
+      const secondBatting = second.batting?.length ? second.batting : derived2.batting
+      const secondBowling = second.bowling?.length ? second.bowling : derived2.bowling
+
+      secondBatting.forEach((b: BattingLine) => {
+        battersObj[b.name] = { ...b, dismissal: b.dismissal || (b.out ? "out" : "not out") }
+      })
+      secondBowling.forEach((bw: BowlingLine) => {
+        bowlersObj[bw.name] = { ...bw }
+      })
+
+      const loadedState: ScoreState = {
+        matchId: match.id,
+        innings: innings.length || 1,
+        batting: second.team || match.teamA,
+        bowling: innings.length > 1 ? first?.team || match.teamB : match.teamB,
+        runs: second.runs || 0,
+        wickets: second.wickets || 0,
+        balls: second.balls || 0,
+        striker: secondBatting[0]?.name || "Batter 1",
+        nonStriker: secondBatting[1]?.name || "Batter 2",
+        bowler: secondBowling[0]?.name || "Bowler 1",
+        target: match.record?.target ?? null,
+        freeHit: false,
+        partnershipRuns: 0,
+        partnershipBalls: 0,
+        extras: second.extras || { wd: 0, nb: 0, b: 0, lb: 0 },
+        batters: battersObj,
+        bowlers: bowlersObj,
+        overMarks: [],
+        fall: [],
+        result: "",
+        needsBowler: false,
+        summaries: first
+          ? [
+              {
+                team: first.team,
+                runs: first.runs,
+                wickets: first.wickets,
+                balls: first.balls,
+                extras: first.extras,
+                batting: first.batting?.length ? first.batting : derived1.batting,
+                bowling: first.bowling?.length ? first.bowling : derived1.bowling,
+              },
+            ]
+          : [],
+        events: (match.record?.events || []).map((e) => ({
+          id: e.id,
+          innings: e.innings || 1,
+          over: e.over || "0.1",
+          mark: e.mark || "0",
+          tone: "neutral",
+          text: e.text || "Delivery",
+          legal: e.legal ?? true,
+          runs: e.runs || 0,
+        })),
+        table: state.table,
+      }
+
+      setState(loadedState)
+      setMatchReady(true)
+      setScreen("scoring")
+      void saveCloudData("liveScore", { ...loadedState, matchOvers: overs, updatedAt: Date.now() }).catch(() => undefined)
+    } catch (err) {
+      console.error("Failed to resume match record:", err)
+    }
+  }
   useEffect(() => {
     if (previousInnings.current === 1 && state.innings === 2 && state.summaries[0]) {
       setInningsResultOpen(true)
@@ -2653,7 +2747,7 @@ export default function App() {
       {screen === "home" && <HomeScreen onNavigate={navigate} isAdmin={admin} />}
       {screen === "matches" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 match center…</main>}>
-          <LazyMatchesScreen teams={teamProfiles} user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
+          <LazyMatchesScreen teams={teamProfiles} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onResumeMatch={handleResumeMatchRecord} />
         </Suspense>
       )}
       {screen === "series" && <SeriesScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} />}
