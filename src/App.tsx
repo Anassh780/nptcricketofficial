@@ -2077,6 +2077,7 @@ function ChoiceModal({
       }}
     >
       <div className="choice-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-handle" />
         <div className="panel-title">
           <h2>{title}</h2>
           {onClose && <button onClick={onClose}>×</button>}
@@ -2756,8 +2757,11 @@ export default function App() {
         const summary = state.summaries[0]
         const inningsTeam = teamByName(summary.team, scoringTeams)
         const runRate = summary.balls ? (summary.runs / (summary.balls / 6)).toFixed(2) : "0.00"
-        return <div className="innings-result-backdrop">
-          <section className="innings-result-modal" role="dialog" aria-modal="true" aria-label="First innings result">
+        return <div className="innings-result-backdrop" onClick={(e) => {
+          if (e.target === e.currentTarget) setInningsResultOpen(false)
+        }}>
+          <section className="innings-result-modal" role="dialog" aria-modal="true" aria-label="First innings result" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle" />
             <button className="innings-result-close" onClick={() => setInningsResultOpen(false)} aria-label="Close first innings result">×</button>
             <div className="innings-result-kicker"><i /> FIRST INNINGS COMPLETE</div>
             <div className="innings-result-team">
