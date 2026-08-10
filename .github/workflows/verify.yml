@@ -33,7 +33,18 @@ jobs:
           java-version: 17
       - uses: android-actions/setup-android@v3
       - run: chmod +x gradlew
-      - run: ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace
+      - name: Compile, lint, and test Android
+        shell: bash
+        run: |
+          set +e
+          ./gradlew assembleDebug lintDebug testDebugUnitTest --stacktrace 2>&1 | tee android-build.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            grep -E "(^e: |error:|FAILURE:|What went wrong|Execution failed|Could not|Exception)" android-build.log | tail -n 24 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          exit "$code"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
