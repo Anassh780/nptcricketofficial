@@ -21,7 +21,7 @@ const mobileMenus: Array<{ type: DropdownType; label: string; entries: MobileEnt
   { type: "matches", label: "Matches", entries: [{ label: "Fixtures & results", screen: "matches" }, { label: "Points table", screen: "points" }] },
   { type: "league", label: "League", entries: [{ label: "Tournament series", screen: "series" }, { label: "Teams", screen: "teams" }, { label: "Players", screen: "players" }] },
   { type: "about", label: "About us", entries: [{ label: "Follow us", anchor: "follow-us" }, { label: "DPL 6 Management", anchor: "management" }, { label: "Developer", anchor: "developer" }] },
-  { type: "control", label: "Control", entries: [{ label: "Live scoring", screen: "scoring" }, { label: "Match operations", screen: "matches" }, { label: "Squad management", screen: "teams" }] },
+  { type: "control", label: "Control", entries: [{ label: "Live scoring", screen: "scoring" }, { label: "Match operations", screen: "matches" }, { label: "Squad management", screen: "teams" }, { label: "Admin access", screen: "admin" }] },
 ]
 
 export function NavbarBrand() {
@@ -90,7 +90,7 @@ export default function Navbar({ screen, onNavigate, user, onLogin, onLogout, is
     if (type === "matches") return screen === "matches" || screen === "points"
     if (type === "league") return screen === "series" || screen === "teams" || screen === "players"
     if (type === "about") return false
-    return screen === "scoring"
+    return screen === "scoring" || screen === "admin"
   }
 
   return (

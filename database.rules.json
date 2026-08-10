@@ -2,7 +2,22 @@
   "rules": {
     "dpl6": {
       ".read": true,
-      ".write": "auth != null && auth.token.email == 'ghhhbbbhjn3@gmail.com'"
+      ".write": "auth != null && auth.token.email != null && (auth.token.email == 'ghhhbbbhjn3@gmail.com' || root.child('adminAccess').child(auth.uid).child('active').val() == true)"
+    },
+    "adminCandidates": {
+      ".read": "auth != null && auth.token.email == 'ghhhbbbhjn3@gmail.com'",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid && auth.token.email != null && newData.child('email').val() == auth.token.email",
+        ".validate": "newData.hasChildren(['email', 'lastSeenAt'])"
+      }
+    },
+    "adminAccess": {
+      ".read": "auth != null && auth.token.email == 'ghhhbbbhjn3@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.token.email == 'ghhhbbbhjn3@gmail.com'",
+        ".validate": "!newData.exists() || (newData.child('active').val() == true && newData.child('email').isString())"
+      }
     },
     ".read": false,
     ".write": false

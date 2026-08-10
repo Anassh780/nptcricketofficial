@@ -1,1 +1,1 @@
-export type NavScreen = "home" | "matches" | "series" | "teams" | "players" | "widgets" | "scoring" | "points"
+export type NavScreen = "home" | "matches" | "series" | "teams" | "players" | "widgets" | "scoring" | "points" | "admin"

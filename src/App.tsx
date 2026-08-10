@@ -13,6 +13,7 @@ import "./components/landing/landing-motion.css"
 const LazyTeamsScreen = lazy(() => import("./components/teams/TeamsScreen"))
 const LazyPlayersScreen = lazy(() => import("./components/players/PlayersScreen"))
 const LazyMatchesScreen = lazy(() => import("./components/matches/MatchesScreen"))
+const LazyAdminAccessScreen = lazy(() => import("./components/admin/AdminAccessScreen"))
 
 type Team = {
   code: string
@@ -2085,15 +2086,16 @@ export default function App() {
     if (/^\/open\/live-score\/[A-Za-z0-9_-]{1,80}\/?$/.test(window.location.pathname)) return "widgets"
     if (params.has("widget")) return "widgets"
     const requested = params.get("screen") as Screen | null
-    return requested && ["home", "matches", "series", "teams", "players", "widgets", "scoring", "points"].includes(requested) ? requested : "home"
+    return requested && ["home", "matches", "series", "teams", "players", "widgets", "scoring", "points", "admin"].includes(requested) ? requested : "home"
   })
   const [routeLeaving, setRouteLeaving] = useState(false)
   const routeTimeoutRef = useRef<number | null>(null)
   const [user, setUser] = useState<FirebaseUser | null>(null)
+  const [adminRevision, setAdminRevision] = useState(0)
   useEffect(() => () => {
     if (routeTimeoutRef.current) window.clearTimeout(routeTimeoutRef.current)
   }, [])
-  const admin = isLeagueAdmin(user)
+  const admin = useMemo(() => isLeagueAdmin(user), [user, adminRevision])
   const [overs, setOvers] = useState(20)
   const [teamProfiles, setTeamProfiles] = useState<SharedTeamProfile[]>(() =>
     DEFAULT_TEAM_PROFILES,
@@ -2153,7 +2155,10 @@ export default function App() {
     state.bowlers?.[state.bowler],
   )
 
-  useEffect(() => observeFirebaseUser(setUser), [])
+  useEffect(() => observeFirebaseUser((nextUser) => {
+    setUser(nextUser)
+    setAdminRevision((revision) => revision + 1)
+  }), [])
 
   useEffect(() => subscribeCloudData<LeagueMatch[] | Record<string, LeagueMatch>>(
     "matches",
@@ -2654,6 +2659,7 @@ export default function App() {
         </Suspense>
       )}
       {screen === "widgets" && <WidgetsScreen score={state} teams={scoringTeams} matchOvers={overs} />}
+      {screen === "admin" && <Suspense fallback={<main className="players-loading">Loading access controls…</main>}><LazyAdminAccessScreen user={user} /></Suspense>}
       {screen === "points" && (
         <PointsScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} onNavigate={navigate} onChangeTable={(table) => setState((current) => ({ ...current, table }))} />
       )}

@@ -13,6 +13,7 @@ import {
   Sparkles,
   Trophy,
   UsersRound,
+  UserCog,
 } from "lucide-react"
 import type { NavScreen } from "./navigation-types"
 
@@ -78,6 +79,7 @@ const menuContent: Record<DropdownType, {
       { icon: Radio, title: "Live scoring", description: "Ball-by-ball innings controls", screen: "scoring", badge: "Admin" },
       { icon: Activity, title: "Match operations", description: "Review fixtures, winners, and records", screen: "matches" },
       { icon: UsersRound, title: "Squad management", description: "Manage teams, logos, and player data", screen: "teams" },
+      { icon: UserCog, title: "Admin access", description: "Main admin can grant or revoke access", screen: "admin" },
     ],
   },
 }
