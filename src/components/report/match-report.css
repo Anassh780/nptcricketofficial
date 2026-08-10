@@ -1,0 +1,721 @@
+/* Advanced PDF Match Report Styling */
+
+.report-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10500;
+  background: rgba(2, 10, 15, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.report-modal-dialog {
+  width: min(880px, calc(100vw - 24px));
+  background: linear-gradient(155deg, #071923 0%, #030e14 100%);
+  border: 1px solid rgba(145, 229, 33, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9), 0 0 30px rgba(145, 229, 33, 0.15);
+  display: flex;
+  flex-direction: column;
+  max-height: 92dvh;
+  overflow: hidden;
+}
+
+.report-modal-header {
+  height: 60px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 20, 28, 0.95);
+}
+
+.report-modal-header h3 {
+  margin: 0;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-modal-header h3 span {
+  color: var(--lime, #91e521);
+}
+
+.report-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.report-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.report-btn-primary {
+  border: 1px solid var(--lime, #91e521);
+  background: linear-gradient(180deg, var(--lime2, #b3ff3d), #6fba11);
+  color: #071006;
+}
+
+.report-btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 15px rgba(145, 229, 33, 0.4);
+}
+
+.report-btn-secondary {
+  border: 1px solid var(--line2, #24434e);
+  background: rgba(10, 32, 42, 0.8);
+  color: #dce7e9;
+}
+
+.report-btn-secondary:hover {
+  border-color: var(--lime, #91e521);
+  color: var(--lime, #91e521);
+}
+
+.report-close-btn {
+  background: transparent;
+  border: 0;
+  color: #8da0a7;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.report-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  background: #020a0e;
+}
+
+/* ---------------------------------------------------- */
+/* PDF Printable Document Container (A4 Ratio: 794x1123) */
+/* ---------------------------------------------------- */
+
+.pdf-export-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+}
+
+.pdf-page {
+  width: 794px;
+  height: 1123px;
+  background: radial-gradient(circle at 50% 10%, #08212e 0%, #030d13 70%);
+  color: #e7eff1;
+  font-family: Inter, system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 40px;
+  flex-shrink: 0;
+}
+
+/* Stadium Lights Background Effect */
+.pdf-page::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 350px;
+  background: radial-gradient(ellipse at center, rgba(145, 229, 33, 0.12) 0%, rgba(76, 143, 247, 0.08) 45%, transparent 75%);
+  pointer-events: none;
+}
+
+/* Watermark Grid */
+.pdf-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+}
+
+.pdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(145, 229, 33, 0.3);
+  padding-bottom: 14px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
+}
+
+.pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdf-shield {
+  width: 30px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #91e521;
+  font: 700 13px Rajdhani, sans-serif;
+  border: 2px solid #91e521;
+  border-radius: 8px 8px 12px 12px;
+  clip-path: polygon(50% 0, 100% 16%, 91% 76%, 50% 100%, 9% 76%, 0 16%);
+  background: rgba(145, 229, 33, 0.12);
+}
+
+.pdf-brand strong {
+  font: 800 22px Rajdhani, sans-serif;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.pdf-brand strong span {
+  color: #91e521;
+}
+
+.pdf-header-meta {
+  text-align: right;
+}
+
+.pdf-header-meta span {
+  display: block;
+  font: 700 11px Rajdhani, sans-serif;
+  color: #91e521;
+  letter-spacing: 0.12em;
+}
+
+.pdf-header-meta small {
+  font-size: 9px;
+  color: #7f929a;
+}
+
+.pdf-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #64767d;
+  position: relative;
+  z-index: 2;
+}
+
+.pdf-footer span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-footer i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #91e521;
+}
+
+/* Page 1: Hero Cover */
+.hero-cover {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  padding: 20px 0;
+}
+
+.hero-tournament-badge {
+  padding: 6px 18px;
+  border: 1px solid rgba(145, 229, 33, 0.4);
+  border-radius: 20px;
+  background: rgba(145, 229, 33, 0.08);
+  color: #91e521;
+  font: 800 12px Rajdhani, sans-serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.hero-title-group h1 {
+  margin: 16px 0 6px;
+  font: 800 42px Rajdhani, sans-serif;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.hero-title-group p {
+  margin: 0;
+  color: #8da0a7;
+  font-size: 13px;
+}
+
+.hero-teams-vs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 80px 1fr;
+  align-items: center;
+  gap: 20px;
+  margin: 30px 0;
+}
+
+.hero-team-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(8, 27, 36, 0.9), rgba(4, 16, 23, 0.9));
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-team-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #91e521;
+  background: rgba(145, 229, 33, 0.15);
+  display: grid;
+  place-items: center;
+  font: 800 24px Rajdhani, sans-serif;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 0 25px rgba(145, 229, 33, 0.25);
+}
+
+.hero-team-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-team-card h2 {
+  margin: 0;
+  font: 700 22px Rajdhani, sans-serif;
+  color: #ffffff;
+}
+
+.hero-team-score {
+  font: 800 32px Rajdhani, sans-serif;
+  color: #91e521;
+}
+
+.hero-team-score small {
+  font-size: 16px;
+  color: #7f929a;
+}
+
+.hero-vs-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(7, 23, 32, 0.9);
+  display: grid;
+  place-items: center;
+  font: 800 18px Rajdhani, sans-serif;
+  color: #91e521;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.victory-banner {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #91e521;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(145, 229, 33, 0.18) 0%, rgba(145, 229, 33, 0.04) 100%);
+  color: #ffffff;
+  font: 800 20px Rajdhani, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 30px rgba(145, 229, 33, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Page 2: Summary Dashboard */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(7, 24, 33, 0.85);
+  padding: 16px;
+}
+
+.summary-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.summary-card-head h3 {
+  margin: 0;
+  font: 700 16px Rajdhani, sans-serif;
+  color: #fff;
+}
+
+.summary-card-head span {
+  font: 800 22px Rajdhani, sans-serif;
+  color: #91e521;
+}
+
+.summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.summary-metric small {
+  display: block;
+  font-size: 8px;
+  color: #7f929a;
+  text-transform: uppercase;
+}
+
+.summary-metric strong {
+  display: block;
+  font: 700 16px Rajdhani, sans-serif;
+  color: #ffffff;
+  margin-top: 2px;
+}
+
+/* Comparison Bar */
+.comparison-box {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(5, 18, 25, 0.9);
+  padding: 18px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+}
+
+.comparison-box h4 {
+  margin: 0 0 14px;
+  font: 700 14px Rajdhani, sans-serif;
+  color: #91e521;
+  text-transform: uppercase;
+}
+
+.stat-bar-group {
+  margin-bottom: 12px;
+}
+
+.stat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #a8b7ba;
+  margin-bottom: 4px;
+}
+
+.stat-bar-bg {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6fba11, #91e521);
+  border-radius: 5px;
+}
+
+/* Page 3: Batting Cards */
+.top-scorer-award {
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(7, 23, 32, 0.95));
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.award-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.award-badge {
+  font-size: 32px;
+}
+
+.award-details h3 {
+  margin: 0;
+  font: 800 20px Rajdhani, sans-serif;
+  color: #ffd700;
+}
+
+.award-details p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #a8b7ba;
+}
+
+.award-stat {
+  font: 800 26px Rajdhani, sans-serif;
+  color: #ffffff;
+  text-align: right;
+}
+
+.award-stat small {
+  display: block;
+  font-size: 10px;
+  color: #ffd700;
+}
+
+/* Batting Table / Ranking Cards */
+.table-section {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 16px;
+}
+
+.table-section h4 {
+  margin: 0 0 10px;
+  font: 700 14px Rajdhani, sans-serif;
+  color: #91e521;
+  text-transform: uppercase;
+}
+
+.pdf-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.pdf-data-table th {
+  background: rgba(145, 229, 33, 0.1);
+  color: #91e521;
+  font: 700 11px Rajdhani, sans-serif;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(145, 229, 33, 0.3);
+}
+
+.pdf-data-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #dce7e9;
+}
+
+.pdf-data-table tr.top-row td {
+  background: rgba(145, 229, 33, 0.06);
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Page 5: Visual Timeline */
+.timeline-over-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-over-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 70px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(7, 24, 33, 0.8);
+}
+
+.timeline-over-row span {
+  font: 700 12px Rajdhani, sans-serif;
+  color: #91e521;
+}
+
+.balls-flex {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ball-chip {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 700 10px Rajdhani, sans-serif;
+  background: #192b34;
+  color: #ffffff;
+}
+
+.ball-chip.four, .ball-chip.six {
+  background: #3c6c11;
+  color: #91e521;
+  box-shadow: 0 0 8px rgba(145, 229, 33, 0.3);
+}
+
+.ball-chip.wicket {
+  background: #781915;
+  color: #ff342d;
+  box-shadow: 0 0 8px rgba(255, 52, 45, 0.3);
+}
+
+.ball-chip.extra {
+  background: #78610e;
+  color: #e5b52b;
+}
+
+/* Page 6: Analytics Charts */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.analytics-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(7, 24, 33, 0.85);
+  padding: 16px;
+}
+
+.analytics-card h4 {
+  margin: 0 0 14px;
+  font: 700 13px Rajdhani, sans-serif;
+  color: #91e521;
+  text-transform: uppercase;
+}
+
+/* Page 7: Player of Match */
+.potm-hero-card {
+  width: 100%;
+  border: 2px solid #91e521;
+  border-radius: 20px;
+  background: linear-gradient(155deg, rgba(145, 229, 33, 0.12) 0%, rgba(6, 21, 29, 0.95) 100%);
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 15px 50px rgba(145, 229, 33, 0.15);
+}
+
+.potm-trophy {
+  font-size: 54px;
+  margin-bottom: 10px;
+}
+
+.potm-hero-card h2 {
+  margin: 0;
+  font: 800 16px Rajdhani, sans-serif;
+  color: #91e521;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.potm-hero-card h1 {
+  margin: 10px 0 6px;
+  font: 800 36px Rajdhani, sans-serif;
+  color: #ffffff;
+}
+
+.potm-hero-card p {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #a8b7ba;
+  max-width: 440px;
+}
+
+.potm-stats-row {
+  display: flex;
+  gap: 20px;
+}
+
+.potm-stat-pill {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 23, 32, 0.9);
+  text-align: center;
+}
+
+.potm-stat-pill small {
+  display: block;
+  font-size: 9px;
+  color: #7f929a;
+  text-transform: uppercase;
+}
+
+.potm-stat-pill strong {
+  display: block;
+  font: 800 20px Rajdhani, sans-serif;
+  color: #91e521;
+  margin-top: 2px;
+}

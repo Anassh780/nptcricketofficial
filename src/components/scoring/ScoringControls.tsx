@@ -28,6 +28,21 @@ export interface Team {
   playerPhotos?: Record<string, string>
 }
 
+export interface BallEvent {
+  id: number
+  mark: string
+  runs: number
+  legal: boolean
+}
+
+export interface InningsSummary {
+  team: string
+  runs: number
+  wickets: number
+  balls: number
+  extras?: { wd: number; nb: number; b: number; lb: number }
+}
+
 export interface ScoreState {
   matchId: string
   innings: number
@@ -49,6 +64,9 @@ export interface ScoreState {
   fall: string[]
   result: string
   needsBowler: boolean
+  summaries?: InningsSummary[]
+  events?: BallEvent[]
+  target?: number | null
 }
 
 export interface ScoringControlsProps {

@@ -6,6 +6,7 @@ import Navbar, { NavbarBrand, type NavScreen as Screen } from "./components/navi
 import AboutSection from "./components/landing/AboutSection"
 import WidgetsScreen from "./components/widgets/WidgetsScreen"
 import ScoringControls from "./components/scoring/ScoringControls"
+import MatchReportModal from "./components/report/MatchReportModal"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
@@ -498,10 +499,12 @@ function ScoreHeader({
   state,
   overs,
   teams,
+  onOpenReport,
 }: {
   state: ScoreState
   overs: number
   teams: Team[]
+  onOpenReport?: () => void
 }) {
   const batting = teamByName(state.batting, teams),
     bowling = teamByName(state.bowling, teams)
@@ -517,6 +520,15 @@ function ScoreHeader({
           <i /> LIVE
         </span>
         <div>
+          {onOpenReport && (
+            <button
+              className="report-btn report-btn-primary"
+              style={{ height: "24px", fontSize: "9px", padding: "0 8px", borderRadius: "4px" }}
+              onClick={onOpenReport}
+            >
+              📄 Share Report
+            </button>
+          )}
           <button>▣</button>
           <button>•••</button>
         </div>
@@ -2058,6 +2070,7 @@ export default function App() {
   const [state, setState] = useState<ScoreState>(INITIAL)
   const [history, setHistory] = useState<ScoreState[]>([])
   const [inningsResultOpen, setInningsResultOpen] = useState(false)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const previousInnings = useRef(state.innings)
   const previousProfiles = useRef<SharedTeamProfile[]>(DEFAULT_TEAM_PROFILES)
   const liveScoreReady = Boolean(
@@ -2620,13 +2633,25 @@ export default function App() {
               <div className="scoring-focus-toolbar">
                 <div><i /> MATCH IN PROGRESS</div>
                 <div className="scoring-toolbar-actions">
+                  <button
+                    className="report-btn report-btn-primary"
+                    style={{ height: "28px", fontSize: "11px", padding: "0 12px" }}
+                    onClick={() => setIsReportModalOpen(true)}
+                  >
+                    📄 Share Match Report
+                  </button>
                   <button onClick={() => {
                     if (window.confirm("Open guided setup for a new match?")) setMatchReady(false)
                   }}>New match setup</button>
                   <button className="end-match-button" onClick={endMatch} disabled={!!state.result}>End match</button>
                 </div>
               </div>
-              <ScoreHeader state={state} overs={overs} teams={scoringTeams} />
+              <ScoreHeader
+                state={state}
+                overs={overs}
+                teams={scoringTeams}
+                onOpenReport={() => setIsReportModalOpen(true)}
+              />
               <ScoringControls
                 state={state}
                 onRuns={scoreRuns}
@@ -2689,10 +2714,26 @@ export default function App() {
               <article><small>CHASE TARGET</small><b>{state.target || summary.runs + 1}</b></article>
             </div>
             <div className="innings-result-chase"><span>{state.batting}</span><strong>need {state.target || summary.runs + 1} runs to win</strong></div>
-            <button className="continue-chase-button" onClick={() => setInningsResultOpen(false)}>Continue to second innings →</button>
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              <button
+                className="report-btn report-btn-secondary"
+                style={{ flex: 1, height: "44px", fontSize: "12px", justifyContent: "center" }}
+                onClick={() => setIsReportModalOpen(true)}
+              >
+                📄 Share PDF Match Report
+              </button>
+              <button className="continue-chase-button" style={{ flex: 1 }} onClick={() => setInningsResultOpen(false)}>Continue to second innings →</button>
+            </div>
           </section>
         </div>
       })()}
+      <MatchReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        state={state}
+        teams={scoringTeams}
+        overs={overs}
+      />
       </div>
     </div>
   )
