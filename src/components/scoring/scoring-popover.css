@@ -1,0 +1,279 @@
+/* Floating Contextual Popover System */
+
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(1, 8, 13, 0.35);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: block;
+}
+
+.scoring-popover-container {
+  position: fixed;
+  z-index: 10000;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 24px));
+  background: linear-gradient(155deg, rgba(9, 27, 37, 0.92) 0%, rgba(4, 16, 23, 0.95) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(145, 229, 33, 0.35);
+  border-radius: 16px;
+  box-shadow: 
+    0 16px 45px rgba(0, 0, 0, 0.75), 
+    0 0 25px rgba(145, 229, 33, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 14px 16px;
+  color: #e7eff1;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  transform-origin: center;
+  pointer-events: auto;
+}
+
+.scoring-popover-container.placement-above {
+  animation: popover-spring-in-above 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scoring-popover-container.placement-below {
+  animation: popover-spring-in-below 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes popover-spring-in-above {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popover-spring-in-below {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Caret / Arrow pointer */
+.popover-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: rgba(7, 23, 32, 0.94);
+  border-right: 1px solid rgba(145, 229, 33, 0.35);
+  border-bottom: 1px solid rgba(145, 229, 33, 0.35);
+  transform: translateX(-50%) rotate(45deg);
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.popover-arrow.placement-above {
+  bottom: -6px;
+  border-left: none;
+  border-top: none;
+}
+
+.popover-arrow.placement-below {
+  top: -6px;
+  border-right: none;
+  border-bottom: none;
+  border-left: 1px solid rgba(145, 229, 33, 0.35);
+  border-top: 1px solid rgba(145, 229, 33, 0.35);
+}
+
+/* Popover Header */
+.popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.popover-header h4 {
+  margin: 0;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popover-header h4 span {
+  color: var(--lime, #91e521);
+}
+
+.popover-close-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #8da0a7;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.popover-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Popover Content Grids & Options */
+.popover-runs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.popover-run-chip {
+  height: 44px;
+  border: 1px solid var(--line2, #24434e);
+  border-radius: 10px;
+  background: rgba(10, 32, 42, 0.85);
+  color: #ffffff;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.popover-run-chip:hover {
+  border-color: var(--lime, #91e521);
+  color: var(--lime, #91e521);
+  background: rgba(145, 229, 33, 0.14);
+  transform: translateY(-1px);
+}
+
+.popover-run-chip.active {
+  border-color: var(--lime, #91e521);
+  background: linear-gradient(180deg, var(--lime2, #b3ff3d), #6fba11);
+  color: #071006;
+}
+
+.popover-help-text {
+  margin: 10px 0 0;
+  font-size: 10px;
+  color: #85989f;
+  line-height: 1.45;
+}
+
+/* Wicket Form inside Popover */
+.popover-wicket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 240px;
+}
+
+.popover-wicket-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 10px;
+  color: #8fa1a8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.popover-wicket-form select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line2, #24434e);
+  border-radius: 8px;
+  background: #06141c;
+  color: #dbe5e8;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.popover-wicket-form select:focus {
+  border-color: var(--lime, #91e521);
+}
+
+.popover-confirm-btn {
+  height: 38px;
+  margin-top: 4px;
+  border: 1px solid var(--lime, #91e521);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--lime2, #b3ff3d), #6fba11);
+  color: #071006;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.popover-confirm-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 15px rgba(145, 229, 33, 0.4);
+}
+
+.popover-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow: none;
+}
+
+/* Quick Run Confirmation Content */
+.popover-run-confirm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.shot-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shot-chip {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #8aa0a9;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shot-chip:hover, .shot-chip.selected {
+  border-color: var(--lime, #91e521);
+  color: var(--lime, #91e521);
+  background: rgba(145, 229, 33, 0.1);
+}

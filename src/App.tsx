@@ -5,6 +5,7 @@ import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import Navbar, { NavbarBrand, type NavScreen as Screen } from "./components/navigation/Navbar"
 import AboutSection from "./components/landing/AboutSection"
 import WidgetsScreen from "./components/widgets/WidgetsScreen"
+import ScoringControls from "./components/scoring/ScoringControls"
 import tournamentStadiumUrl from "./assets/tournament-stadium.png"
 import "./components/scoring/innings-result.css"
 import "./components/series/series-expanded.css"
@@ -558,95 +559,6 @@ function ScoreHeader({
     </section>
   )
 }
-
-function ScoringControls({
-  state,
-  onRuns,
-  onExtra,
-  onWicket,
-  onSwapBatters,
-  undo,
-  endOver,
-}: {
-  state: ScoreState
-  onRuns: (runs: number) => void
-  onExtra: (type: "wd" | "nb" | "b" | "lb") => void
-  onWicket: () => void
-  onSwapBatters: () => void
-  undo: () => void
-  endOver: () => void
-}) {
-  return (
-    <section className="panel scoring-controls">
-      <div className="panel-label">
-        <span>Ball-by-ball scoring</span>
-        <small>
-          {state.freeHit ? "FREE HIT ACTIVE" : "6 legal balls per over"}
-        </small>
-      </div>
-      <div className="run-buttons">
-        {[0, 1, 2, 3, 4, 6].map((run) => (
-          <button
-            className={run >= 4 ? "boundary" : ""}
-            onClick={() => onRuns(run)}
-            disabled={!!state.result || state.needsBowler}
-            key={run}
-          >
-            {run}
-          </button>
-        ))}
-        <button
-          className="wicket"
-          onClick={onWicket}
-          disabled={!!state.result || state.needsBowler}
-        >
-          W
-        </button>
-      </div>
-      <div className="extra-buttons">
-        <button disabled={!!state.result || state.needsBowler} onClick={() => onExtra("wd")}>WD</button>
-        <button disabled={!!state.result || state.needsBowler} onClick={() => onExtra("nb")}>NB</button>
-        <button disabled={!!state.result || state.needsBowler} onClick={() => onExtra("b")}>B</button>
-        <button disabled={!!state.result || state.needsBowler} onClick={() => onExtra("lb")}>LB</button>
-        <button disabled={!!state.result} className="swap-batters" onClick={onSwapBatters}>⇄ Swap batters</button>
-        <button onClick={undo}>↶ Undo</button>
-        <button onClick={endOver}>◎ End over</button>
-      </div>
-      <div className="over-strip">
-        <span>OVER {Math.floor(state.balls / 6) + 1}</span>
-        <div>
-          {state.overMarks.length ? (
-            state.overMarks.map((mark, i) => (
-              <i
-                className={
-                  mark === "W"
-                    ? "red"
-                    : mark.includes("4") || mark.includes("6")
-                      ? "green"
-                      : ""
-                }
-                key={i}
-              >
-                {mark}
-              </i>
-            ))
-          ) : (
-            <small>No balls yet</small>
-          )}
-        </div>
-        <b>
-          This over:{" "}
-          {state.overMarks.reduce(
-            (sum, mark) => sum + (Number.parseInt(mark) || 0),
-            0,
-          )}{" "}
-          runs
-        </b>
-      </div>
-    </section>
-  )
-}
-
 function PlayerCards({ state, teams }: { state: ScoreState; teams: Team[] }) {
   const striker = state.batters[state.striker],
     non = state.batters[state.nonStriker],
@@ -2145,12 +2057,6 @@ export default function App() {
   )
   const [state, setState] = useState<ScoreState>(INITIAL)
   const [history, setHistory] = useState<ScoreState[]>([])
-  const [extraPrompt, setExtraPrompt] =
-    useState<null | "wd" | "nb" | "b" | "lb">(null)
-  const [wicketPrompt, setWicketPrompt] = useState(false)
-  const [wicketType, setWicketType] = useState("Bowled")
-  const [nextBatter, setNextBatter] = useState("")
-  const [fielder, setFielder] = useState("")
   const [inningsResultOpen, setInningsResultOpen] = useState(false)
   const previousInnings = useRef(state.innings)
   const previousProfiles = useRef<SharedTeamProfile[]>(DEFAULT_TEAM_PROFILES)
@@ -2451,9 +2357,7 @@ export default function App() {
       if (runs % 2 === 1) swap(draft)
     })
 
-  const scoreExtra = (amount: number) => {
-    const type = extraPrompt!
-    setExtraPrompt(null)
+  const scoreExtra = (type: "wd" | "nb" | "b" | "lb", amount: number) => {
     commit((draft) => {
       const bowler = draft.bowlers[draft.bowler],
         batter = draft.batters[draft.striker]
@@ -2490,20 +2394,23 @@ export default function App() {
     })
   }
 
-  const confirmWicket = () => {
+  const confirmWicket = (
+    wType: string,
+    fielderName: string,
+    nextBatterName: string,
+  ) => {
     if (
-      (!nextBatter && state.wickets < 9) ||
-      (["Caught", "Run out", "Stumped"].includes(wicketType) && !fielder)
+      (!nextBatterName && state.wickets < 9) ||
+      (["Caught", "Run out", "Stumped"].includes(wType) && !fielderName)
     )
       return
-    setWicketPrompt(false)
     commit((draft) => {
       const dismissed = draft.batters[draft.striker],
         bowler = draft.bowlers[draft.bowler]
       const assisted =
-        ["Caught", "Run out", "Stumped"].includes(wicketType) && fielder
-          ? `${wicketType} (${fielder})`
-          : wicketType
+        ["Caught", "Run out", "Stumped"].includes(wType) && fielderName
+          ? `${wType} (${fielderName})`
+          : wType
       dismissed.out = true
       dismissed.dismissal = assisted
       dismissed.balls++
@@ -2511,7 +2418,7 @@ export default function App() {
       draft.wickets++
       draft.partnershipBalls++
       bowler.balls++
-      if (wicketType !== "Run out") bowler.wickets++
+      if (wType !== "Run out") bowler.wickets++
       draft.fall.push(`${draft.wickets}-${draft.runs}`)
       addEvent(
         draft,
@@ -2524,10 +2431,8 @@ export default function App() {
       draft.freeHit = false
       draft.partnershipRuns = 0
       draft.partnershipBalls = 0
-      if (draft.wickets < 10) draft.striker = nextBatter
+      if (draft.wickets < 10) draft.striker = nextBatterName
     })
-    setNextBatter("")
-    setFielder("")
   }
 
   const changeBowler = (name: string) =>
@@ -2725,12 +2630,8 @@ export default function App() {
               <ScoringControls
                 state={state}
                 onRuns={scoreRuns}
-                onExtra={setExtraPrompt}
-                onWicket={() => {
-                  setWicketPrompt(true)
-                  setWicketType(state.freeHit ? "Run out" : "Bowled")
-                  setNextBatter(remainingBatters[0]?.name || "")
-                }}
+                onExtra={scoreExtra}
+                onWicket={confirmWicket}
                 onSwapBatters={swapBattingPlayers}
                 undo={() => {
                   const last = history.at(-1)
@@ -2742,6 +2643,13 @@ export default function App() {
                 endOver={() => {
                   if (state.balls % 6 !== 0) alert("An over ends automatically after six legal balls.")
                 }}
+                onChangeBowler={changeBowler}
+                scoringTeams={scoringTeams}
+                remainingBatters={remainingBatters}
+                bowlerOptions={bowlerOptions}
+                overs={overs}
+                oversText={oversText}
+                teamByName={teamByName}
               />
               <PlayerCards state={state} teams={scoringTeams} />
             </div>
@@ -2780,114 +2688,6 @@ export default function App() {
           </section>
         </div>
       })()}
-      {screen === "scoring" && admin && extraPrompt && (
-        <ChoiceModal
-          title={`${extraPrompt.toUpperCase()} — select ${
-            extraPrompt === "wd" || extraPrompt === "nb"
-              ? "additional"
-              : "completed"
-          } runs`}
-          onClose={() => setExtraPrompt(null)}
-        >
-          <div className="choice-grid">
-            {[0, 1, 2, 3, 4, 6]
-              .filter(
-                (n) => !(extraPrompt === "b" || extraPrompt === "lb") || n > 0,
-              )
-              .map((n) => (
-                <button onClick={() => scoreExtra(n)} key={n}>
-                  {n}
-                </button>
-              ))}
-          </div>
-          <p className="modal-help">
-            Wides and no-balls include the automatic one-run penalty and do not
-            count as legal deliveries.
-          </p>
-        </ChoiceModal>
-      )}
-      {screen === "scoring" && admin && wicketPrompt && (
-        <ChoiceModal
-          title={state.freeHit ? "Free-hit dismissal" : "Record wicket"}
-          onClose={() => setWicketPrompt(false)}
-        >
-          <label>
-            Dismissal type
-            <select
-              value={wicketType}
-              onChange={(e) => {
-                setWicketType(e.target.value)
-                setFielder("")
-              }}
-            >
-              {(state.freeHit
-                ? ["Run out"]
-                : [
-                    "Bowled",
-                    "Caught",
-                    "LBW",
-                    "Run out",
-                    "Stumped",
-                    "Hit wicket",
-                  ]
-              ).map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          {["Caught", "Run out", "Stumped"].includes(wicketType) && (
-            <label>
-              Fielder involved
-              <select
-                value={fielder}
-                onChange={(e) => setFielder(e.target.value)}
-              >
-                <option value="">Select fielder</option>
-                {teamByName(state.bowling, scoringTeams).players.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-          )}
-          {state.wickets < 9 && (
-            <label>
-              Next batsman
-              <select
-                value={nextBatter}
-                onChange={(e) => setNextBatter(e.target.value)}
-              >
-                {remainingBatters.map((b) => (
-                  <option key={b.name}>{b.name}</option>
-                ))}
-              </select>
-            </label>
-          )}
-          <button className="lime wide" onClick={confirmWicket}>
-            Confirm wicket
-          </button>
-        </ChoiceModal>
-      )}
-      {screen === "scoring" && admin && state.needsBowler && (
-        <ChoiceModal
-          title={`Over ${Math.floor(state.balls / 6)} complete — choose bowler`}
-        >
-          <div className="bowler-list">
-            {bowlerOptions.map((b) => (
-              <button onClick={() => changeBowler(b.name)} key={b.name}>
-                <span>{b.name}</span>
-                <small>
-                  {oversText(b.balls)} overs · {b.runs} runs · {b.wickets}{" "}
-                  wickets
-                </small>
-              </button>
-            ))}
-          </div>
-          <p className="modal-help">
-            The previous bowler is unavailable. Maximum allowance: {overs / 5}{" "}
-            overs per bowler.
-          </p>
-        </ChoiceModal>
-      )}
       </div>
     </div>
   )
