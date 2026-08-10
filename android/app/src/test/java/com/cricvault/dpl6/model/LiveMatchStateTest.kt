@@ -8,8 +8,8 @@ class LiveMatchStateTest {
         val state = LiveMatchState(runs = 100, wickets = 3, balls = 60, target = 151, matchOvers = 20)
         assertEquals("100/3", state.scoreText)
         assertEquals("10.0", state.oversText)
-        assertEquals(51, state.runsRequired)
-        assertEquals(60, state.ballsRemaining)
+        assertEquals(51L, state.runsRequired)
+        assertEquals(60L, state.ballsRemaining)
         assertEquals("10.00", state.currentRunRate)
         assertEquals("5.10", state.requiredRunRate)
     }
