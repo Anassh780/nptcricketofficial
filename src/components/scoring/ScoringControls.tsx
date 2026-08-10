@@ -93,12 +93,24 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 }) => {
   const [activePopover, setActivePopover] = useState<ActivePopoverType>(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const overStripRef = React.useRef<HTMLDivElement | null>(null)
 
   // Wicket Form Local State
   const [wicketType, setWicketType] = useState<string>("Bowled")
   const [fielder, setFielder] = useState<string>("")
   const [nextBatter, setNextBatter] = useState<string>("")
   const [selectedShot, setSelectedShot] = useState<string>("Cover Drive")
+
+  // Auto-open Bowler selection popover when an over ends (state.needsBowler)
+  React.useEffect(() => {
+    if (state.needsBowler && overStripRef.current) {
+      setAnchorEl(overStripRef.current)
+      setActivePopover({ type: "bowler" })
+    } else if (!state.needsBowler && activePopover?.type === "bowler") {
+      setActivePopover(null)
+      setAnchorEl(null)
+    }
+  }, [state.needsBowler])
 
   const closePopover = () => {
     setActivePopover(null)
@@ -259,7 +271,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
       </div>
 
       {/* Over summary strip */}
-      <div className="over-strip">
+      <div className="over-strip" ref={overStripRef}>
         <span>OVER {Math.floor(state.balls / 6) + 1}</span>
         <div>
           {state.overMarks.length ? (
@@ -421,6 +433,25 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
                   ? `Confirm Boundary (${activePopover.runs})`
                   : `Score ${activePopover.runs} Run${activePopover.runs > 1 ? "s" : ""}`}
             </button>
+          </div>
+        )}
+
+        {activePopover?.type === "bowler" && (
+          <div className="bowler-list">
+            {bowlerOptions.map((b) => (
+              <button
+                key={b.name}
+                onClick={() => {
+                  onChangeBowler(b.name)
+                  closePopover()
+                }}
+              >
+                <span>{b.name}</span>
+                <small>
+                  {oversText(b.balls)} overs · {b.runs} runs · {b.wickets} wickets
+                </small>
+              </button>
+            ))}
           </div>
         )}
       </ScoringPopover>
