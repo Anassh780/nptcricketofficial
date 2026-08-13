@@ -89,6 +89,17 @@ function AndroidWalkthroughBottomSheet({
 }) {
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1)
 
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const scoreText = score.batting ? `${score.runs}/${score.wickets}` : "184/5"
