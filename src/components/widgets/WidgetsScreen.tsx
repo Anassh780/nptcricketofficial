@@ -234,7 +234,7 @@ function AndroidWalkthroughBottomSheet({
               </div>
 
               <div style={{ marginTop: "16px" }}>
-                <button className="action-btn-apk" onClick={downloadNativeApk}>
+                <button className="action-btn-apk" onClick={() => void downloadNativeApk(onActionTrigger)}>
                   <Download /> Download CricVault_Native_v1.0.apk (1.08 MB)
                 </button>
               </div>
@@ -432,7 +432,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
               Download and install <strong>CricVault_Native_v1.0.apk</strong> to launch floating heads over other apps.
             </p>
             <div style={{ marginTop: "10px" }}>
-              <button className="action-btn-apk" onClick={downloadNativeApk} style={{ display: "inline-flex", padding: "8px 14px", fontSize: "11px" }}>
+              <button className="action-btn-apk" onClick={() => void downloadNativeApk(setInstallNote)} style={{ display: "inline-flex", padding: "8px 14px", fontSize: "11px" }}>
                 <Download style={{ width: "14px", height: "14px" }} /> Download CricVault_Native_v1.0.apk (1.08 MB)
               </button>
             </div>
@@ -567,7 +567,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
         <div><RefreshCw /><span><b>LIVE SYNC</b><small>Updates every ball</small></span></div>
         <div><Maximize2 /><span><b>THREE SIZES</b><small>2×1 · 4×2 · 5×3</small></span></div>
         <div><Moon /><span><b>DARK MODE</b><small>Optimized for Android</small></span></div>
-        <button onClick={downloadNativeApk}><Download /> Download base.apk</button>
+        <button onClick={() => void downloadNativeApk(setInstallNote)}><Download /> Download base.apk</button>
       </section>
 
       {installNote && <p className="widget-install-note">{installNote}</p>}
@@ -579,7 +579,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
           <h2>Keep live cricket floating over every app.</h2>
           <p>Download CricVault_Native_v1.0.apk to unlock full floating live score bubble head mode and native Android home screen widgets for CricVault.</p>
           <div style={{ marginTop: "14px" }}>
-            <button className="action-btn-apk" onClick={downloadNativeApk} style={{ display: "inline-flex" }}>
+            <button className="action-btn-apk" onClick={() => void downloadNativeApk(setInstallNote)} style={{ display: "inline-flex" }}>
               <Download /> Download CricVault_Native_v1.0.apk (1.08 MB)
             </button>
           </div>
