@@ -89,18 +89,6 @@ function AndroidWalkthroughBottomSheet({
 }) {
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1)
 
-  // Body Scroll Locking while Bottom Sheet is active
-  useEffect(() => {
-    if (isOpen) {
-      document.body.classList.add("lock-body-scroll")
-    } else {
-      document.body.classList.remove("lock-body-scroll")
-    }
-    return () => {
-      document.body.classList.remove("lock-body-scroll")
-    }
-  }, [isOpen])
-
   if (!isOpen) return null
 
   const scoreText = score.batting ? `${score.runs}/${score.wickets}` : "184/5"
