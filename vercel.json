@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/base.apk", "destination": "/base.apk" },
     { "source": "/open/live-score/:matchId", "destination": "/index.html" }
   ],
   "headers": [

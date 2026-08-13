@@ -40,13 +40,37 @@ function BallStrip({ balls }: { balls: string[] }) {
 }
 
 // ─── PROGRAMMATIC NATIVE APK DOWNLOAD HANDLER ───────────────────────────────
-export function downloadNativeApk() {
+export async function downloadNativeApk(onStatus?: (msg: string) => void) {
+  try {
+    if (onStatus) onStatus("Downloading CricVault_Native_v1.0.apk (1.08 MB)...")
+    const res = await fetch("/base.apk")
+    if (res.ok) {
+      const blob = await res.blob()
+      if (blob.size > 100000) {
+        const apkBlob = new Blob([blob], { type: "application/vnd.android.package-archive" })
+        const url = URL.createObjectURL(apkBlob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = "CricVault_Native_v1.0.apk"
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        setTimeout(() => URL.revokeObjectURL(url), 10000)
+        if (onStatus) onStatus(`✓ CricVault_Native_v1.0.apk (${(blob.size / 1024 / 1024).toFixed(2)} MB) ready to install!`)
+        return
+      }
+    }
+  } catch (err) {
+    console.warn("Direct blob fetch failed, falling back to direct anchor download", err)
+  }
+
   const link = document.createElement("a")
   link.href = "/base.apk"
   link.download = "CricVault_Native_v1.0.apk"
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+  if (onStatus) onStatus("Downloading CricVault_Native_v1.0.apk (1.08 MB)...")
 }
 
 // ─── MOBILE-FIRST ANDROID NATIVE MODAL BOTTOM SHEET WALKTHROUGH ──────────────
@@ -446,7 +470,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
             </div>
 
             <div className="apk-hub-buttons-row">
-              <button className="btn-apk-hero-primary" onClick={downloadNativeApk}>
+              <button className="btn-apk-hero-primary" onClick={() => void downloadNativeApk(setInstallNote)}>
                 <Download style={{ width: "18px", height: "18px" }} /> Download Native APK (CricVault_Native_v1.0.apk · 1.08 MB)
               </button>
 

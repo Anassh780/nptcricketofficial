@@ -11,9 +11,12 @@ function serveApkDirectlyPlugin(): Plugin {
     name: 'serve-apk-directly',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url && (req.url === '/base.apk' || req.url.startsWith('/base.apk?'))) {
-          const apkPath = path.resolve(__dirname, 'public/base.apk')
-          if (fs.existsSync(apkPath)) {
+        if (req.url && (req.url === '/base.apk' || req.url.startsWith('/base.apk?') || req.url.endsWith('/base.apk'))) {
+          const publicApk = path.resolve(__dirname, 'public/base.apk')
+          const rootApk = path.resolve(__dirname, 'base.apk')
+          const apkPath = fs.existsSync(publicApk) ? publicApk : fs.existsSync(rootApk) ? rootApk : null
+
+          if (apkPath) {
             const stat = fs.statSync(apkPath)
             res.writeHead(200, {
               'Content-Type': 'application/vnd.android.package-archive',
@@ -39,6 +42,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/',
+    assetsInclude: ['**/*.apk'],
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
