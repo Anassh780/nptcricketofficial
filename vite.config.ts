@@ -2,8 +2,35 @@ import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import fs from 'node:fs'
 
 import siteConfiguration from './.figma/make/site.json'
+
+function serveApkDirectlyPlugin(): Plugin {
+  return {
+    name: 'serve-apk-directly',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && (req.url === '/base.apk' || req.url.startsWith('/base.apk?'))) {
+          const apkPath = path.resolve(__dirname, 'public/base.apk')
+          if (fs.existsSync(apkPath)) {
+            const stat = fs.statSync(apkPath)
+            res.writeHead(200, {
+              'Content-Type': 'application/vnd.android.package-archive',
+              'Content-Length': stat.size.toString(),
+              'Content-Disposition': 'attachment; filename="CricVault_Native_v1.0.apk"',
+              'Cache-Control': 'public, max-age=86400',
+            })
+            const readStream = fs.createReadStream(apkPath)
+            readStream.pipe(res)
+            return
+          }
+        }
+        next()
+      })
+    },
+  }
+}
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -19,6 +46,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
+      serveApkDirectlyPlugin(),
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),

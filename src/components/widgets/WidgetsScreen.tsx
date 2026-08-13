@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Download, Maximize2, Moon, MousePointerClick, Move, Pin, RefreshCw, Smartphone, Layers, CheckCircle2, ShieldCheck, Sparkles, X, ChevronRight, ChevronLeft, ArrowRight, Settings, Check } from "lucide-react"
+import { Download, Maximize2, Moon, MousePointerClick, Move, Pin, RefreshCw, Smartphone, Layers, CheckCircle2, ShieldCheck, Sparkles, X, ChevronRight, ChevronLeft, ArrowRight, Settings, Check, Lock, SmartphoneNfc } from "lucide-react"
 import { clearInstallPrompt, getInstallPrompt, subscribeInstallPrompt, type InstallPromptEvent } from "../../lib/pwaInstall"
 import { androidBridgeRequest, isAndroidBridgeFallback, openAndroidWidget, type AndroidWidgetSize } from "../../lib/androidBridge"
 import "./widgets.css"
@@ -39,8 +39,18 @@ function BallStrip({ balls }: { balls: string[] }) {
   return <div className="tech-ball-strip">{balls.length ? balls.map((mark, index) => <b key={`${mark}-${index}`} className={mark === "W" ? "wicket" : mark === "4" || mark === "6" ? "boundary" : mark === "WD" || mark === "NB" ? "extra" : ""}>{mark}</b>) : <span>Waiting for first ball</span>}</div>
 }
 
-// ─── MODERN RESPONSIVE STEP-BY-STEP POPOVER WALKTHROUGH ──────────────────
-function FloatingWidgetGuideModal({
+// ─── PROGRAMMATIC NATIVE APK DOWNLOAD HANDLER ───────────────────────────────
+export function downloadNativeApk() {
+  const link = document.createElement("a")
+  link.href = "/base.apk"
+  link.download = "CricVault_Native_v1.0.apk"
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+// ─── MOBILE-FIRST ANDROID NATIVE MODAL BOTTOM SHEET WALKTHROUGH ──────────────
+function AndroidWalkthroughBottomSheet({
   isOpen,
   onClose,
   score,
@@ -55,263 +65,245 @@ function FloatingWidgetGuideModal({
 }) {
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1)
 
+  // Body Scroll Locking while Bottom Sheet is active
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("lock-body-scroll")
+    } else {
+      document.body.classList.remove("lock-body-scroll")
+    }
+    return () => {
+      document.body.classList.remove("lock-body-scroll")
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const scoreText = score.batting ? `${score.runs}/${score.wickets}` : "184/5"
   const battingCode = score.batting ? initials(score.batting) : "IND"
   const oversText = overs(score.balls || 104)
 
-  const handleFloatLaunch = () => {
+  const handleFinish = () => {
+    localStorage.setItem("cricvault_onboarding_completed", "true")
     const result = openAndroidWidget(score.matchId || "live", selectedSize, "floating")
     onActionTrigger(result.message)
-  }
-
-  const handlePinLaunch = () => {
-    const result = openAndroidWidget(score.matchId || "live", selectedSize, "pin")
-    onActionTrigger(result.message)
+    onClose()
   }
 
   const handleNext = () => {
-    if (activeStep < 4) setActiveStep((prev) => (prev + 1) as any)
-    else handleFloatLaunch()
+    if (activeStep < 4) {
+      setActiveStep((prev) => (prev + 1) as any)
+    } else {
+      handleFinish()
+    }
   }
 
   const handlePrev = () => {
-    if (activeStep > 1) setActiveStep((prev) => (prev - 1) as any)
+    if (activeStep > 1) {
+      setActiveStep((prev) => (prev - 1) as any)
+    }
   }
 
+  const progressPercent = activeStep * 25
+
   return (
-    <div className="floating-guide-overlay" onClick={onClose}>
-      <div className="modern-popover-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="popover-header">
-          <div>
-            <small>ANDROID WIDGET & FLOATING SCORE WALKTHROUGH</small>
-            <h2>How to Use Floating Score & Widgets</h2>
+    <div className="android-bottom-sheet-overlay" onClick={onClose}>
+      <div className="android-bottom-sheet-container" onClick={(e) => e.stopPropagation()}>
+        {/* Drag Handle Capsule */}
+        <div className="bottom-sheet-drag-handle-bar">
+          <div className="bottom-sheet-drag-handle" />
+        </div>
+
+        {/* Sheet Top Header */}
+        <div className="sheet-header-bar">
+          <div className="sheet-header-title">
+            <small>STEP {activeStep} OF 4 • ANDROID FEATURE WALKTHROUGH</small>
+            <h2>CricVault Native App & Widgets</h2>
           </div>
-          <button className="guide-close-btn" onClick={onClose} aria-label="Close">
+          <button className="guide-close-btn" onClick={onClose} aria-label="Close walkthrough">
             <X />
           </button>
         </div>
 
-        {/* Dual Pane Grid Body */}
-        <div className="popover-body-grid">
-          {/* STEP SIDEBAR VISUAL REPRESENTATION */}
-          <div className="step-sidebar-visual">
-            <div className="visual-graphic-container">
-              {/* STEP 1 VISUAL: INSTALL APK */}
-              {activeStep === 1 && (
-                <div className="visual-apk-box">
-                  <div className="apk-file-badge">
-                    <Download style={{ width: '20px', height: '20px' }} />
-                    <span>base.apk</span>
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#94ed28', marginTop: '12px', fontFamily: 'Rajdhani', fontWeight: 800 }}>
-                    1.08 MB • Native Package
-                  </div>
-                  <div style={{ fontSize: '9px', color: '#7a8c94', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <ShieldCheck style={{ width: '12px', color: '#94ed28' }} /> Verified Safe Android App
+        {/* Linear Progress Bar */}
+        <div className="sheet-progress-track">
+          <div className="sheet-progress-fill" style={{ width: `${progressPercent}%` }} />
+        </div>
+
+        {/* SCROLLABLE INTERNAL CONTENT AREA ONLY */}
+        <div className="sheet-internal-content">
+          {/* STEP ILLUSTRATION SHOWCASE BOX */}
+          <div className="native-illustration-box">
+            {/* STEP 1 ILLUSTRATION */}
+            {activeStep === 1 && (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ background: "rgba(148,237,40,0.15)", border: "1.5px solid #94ed28", borderRadius: "14px", padding: "12px 20px", display: "inline-flex", alignItems: "center", gap: "10px", color: "#94ed28", fontFamily: "Rajdhani", fontWeight: 800 }}>
+                  <Download style={{ width: "22px", height: "22px" }} />
+                  <span>CricVault_Native_v1.0.apk</span>
+                </div>
+                <div style={{ fontSize: "11px", color: "#aeb8bd", marginTop: "10px", fontFamily: "monospace" }}>
+                  1.08 MB • Official Native APK • Verified Malware Free
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2 ILLUSTRATION */}
+            {activeStep === 2 && (
+              <div style={{ width: "80%", maxWidth: "320px" }}>
+                <div style={{ fontSize: "9px", color: "#7a8c94", marginBottom: "6px", fontFamily: "monospace" }}>ANDROID SYSTEM SETTINGS</div>
+                <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "12px", color: "#f4f7f8", fontFamily: "Rajdhani", fontWeight: 700 }}>Display over other apps</span>
+                  <div style={{ width: "42px", height: "22px", borderRadius: "11px", background: "rgba(148,237,40,0.25)", border: "1.5px solid #94ed28", display: "flex", alignItems: "center", padding: "2px" }}>
+                    <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#94ed28", marginLeft: "auto", boxShadow: "0 0 8px #94ed28" }} />
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* STEP 2 VISUAL: PERMISSION TOGGLE */}
-              {activeStep === 2 && (
-                <div className="visual-permission-box">
-                  <div style={{ fontSize: '10px', color: '#7a8c94', marginBottom: '8px', fontFamily: 'monospace' }}>SETTINGS → OVERLAY</div>
-                  <div className="toggle-switch-wrapper">
-                    <div style={{ textAlign: 'left' }}>
-                      <strong style={{ fontSize: '11px', color: '#f4f7f8', display: 'block', fontFamily: 'Rajdhani' }}>Display Over Apps</strong>
-                      <span style={{ fontSize: '8px', color: '#94ed28', fontFamily: 'monospace' }}>ALLOWED ●</span>
-                    </div>
-                    <div className="toggle-pill-active">
-                      <div className="toggle-knob-active" />
-                    </div>
-                  </div>
+            {/* STEP 3 ILLUSTRATION */}
+            {activeStep === 3 && (
+              <div style={{ display: "flex", gap: "10px", width: "90%" }}>
+                <div style={{ flex: 1, background: "rgba(16,23,32,0.9)", border: "1px dashed #94ed28", borderRadius: "10px", padding: "10px", textAlign: "center", font: "800 11px Rajdhani", color: "#94ed28" }}>
+                  2×1 Widget
                 </div>
-              )}
-
-              {/* STEP 3 VISUAL: PIN WIDGET */}
-              {activeStep === 3 && (
-                <div className="visual-pin-box">
-                  <div className="mini-widget-card-thumb">
-                    <span>2 × 1 Compact</span>
-                    <Pin style={{ width: '12px' }} />
-                  </div>
-                  <div className="mini-widget-card-thumb">
-                    <span>4 × 2 Standard</span>
-                    <Pin style={{ width: '12px' }} />
-                  </div>
-                  <div className="mini-widget-card-thumb">
-                    <span>5 × 3 Expanded</span>
-                    <Pin style={{ width: '12px' }} />
-                  </div>
+                <div style={{ flex: 1, background: "rgba(16,23,32,0.9)", border: "1px dashed #94ed28", borderRadius: "10px", padding: "10px", textAlign: "center", font: "800 11px Rajdhani", color: "#94ed28" }}>
+                  4×2 Widget
                 </div>
-              )}
-
-              {/* STEP 4 VISUAL: FLOAT WIDGET */}
-              {activeStep === 4 && (
-                <div className="visual-float-box">
-                  <div className="mini-float-bubble">
-                    <div style={{ fontSize: '8px', color: '#94ed28', fontWeight: 800, fontFamily: 'monospace', marginBottom: '3px' }}>
-                      ● LIVE FLOATING SCORE HEAD
-                    </div>
-                    <div style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'Rajdhani', color: '#FFF' }}>
-                      {battingCode} {scoreText}
-                    </div>
-                    <div style={{ fontSize: '9px', color: '#87979e', fontFamily: 'monospace', marginTop: '2px' }}>
-                      Over {oversText} • Real-time Sync
-                    </div>
-                  </div>
+                <div style={{ flex: 1, background: "rgba(16,23,32,0.9)", border: "1px dashed #94ed28", borderRadius: "10px", padding: "10px", textAlign: "center", font: "800 11px Rajdhani", color: "#94ed28" }}>
+                  5×3 Widget
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div style={{ fontSize: '10px', color: '#82939b', marginTop: '12px', fontFamily: 'Rajdhani', fontWeight: 700 }}>
-              {activeStep === 1 && "Package Download Visual"}
-              {activeStep === 2 && "Android Permission Visual"}
-              {activeStep === 3 && "Home Screen Grid Visual"}
-              {activeStep === 4 && "Floating Bubble Head Visual"}
-            </div>
+            {/* STEP 4 ILLUSTRATION */}
+            {activeStep === 4 && (
+              <div style={{ background: "linear-gradient(135deg, #0c1720, #050b10)", border: "1.5px solid #94ed28", borderRadius: "16px", padding: "12px 20px", boxShadow: "0 8px 24px rgba(148,237,40,0.4)" }}>
+                <div style={{ fontSize: "8px", color: "#94ed28", fontWeight: 800, fontFamily: "monospace", marginBottom: "4px" }}>
+                  ● REAL-TIME FLOATING SCORE HEAD
+                </div>
+                <div style={{ fontSize: "20px", fontWeight: 900, fontFamily: "Rajdhani", color: "#FFF" }}>
+                  {battingCode} {scoreText}
+                </div>
+                <div style={{ fontSize: "10px", color: "#87979e", fontFamily: "monospace", marginTop: "2px" }}>
+                  Over {oversText} • Real-time Sync Over All Apps
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* STEP DETAILS & INSTRUCTIONS PANE */}
-          <div className="step-content-pane">
+          {/* STEP DETAILS TEXT */}
+          {activeStep === 1 && (
             <div>
-              <span className="step-counter-tag">
-                STEP {activeStep} OF 4
-              </span>
+              <h3 style={{ margin: "0 0 6px", font: "900 22px Rajdhani", color: "#f4f7f8" }}>01. Download Native APK</h3>
+              <p style={{ margin: "0 0 16px", color: "#92a2a9", fontSize: "13px", lineHeight: "1.5" }}>
+                Download <strong>CricVault_Native_v1.0.apk</strong> (1.08 MB) directly to your Android device to activate real-time floating live score bubbles over other apps.
+              </p>
 
-              {/* STEP 1 DETAILS */}
-              {activeStep === 1 && (
-                <div>
-                  <h3 className="step-title-text">01. Install base.apk Package</h3>
-                  <p className="step-description-text">
-                    Download the official CricVault Android native package (base.apk · 1.08 MB) to enable floating live score bubble heads and home screen widgets.
-                  </p>
-
-                  <div className="step-bullet-list">
-                    <div className="step-bullet-item">
-                      <b>1</b>
-                      <span>Click <strong>Download base.apk</strong> below to save to your Android phone.</span>
-                    </div>
-                    <div className="step-bullet-item">
-                      <b>2</b>
-                      <span>Open Downloads and tap <i>Install</i> (allow unknown sources if prompted).</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '16px' }}>
-                    <a href="/base.apk" download="base.apk" className="action-btn-apk" style={{ display: 'inline-flex' }}>
-                      <Download /> Download base.apk (1.08 MB)
-                    </a>
-                  </div>
+              <div className="step-bullet-list">
+                <div className="step-bullet-item">
+                  <b>1</b>
+                  <span>Click <strong>Download Native APK</strong> below to save file cleanly.</span>
                 </div>
-              )}
-
-              {/* STEP 2 DETAILS */}
-              {activeStep === 2 && (
-                <div>
-                  <h3 className="step-title-text">02. Enable Overlay Permission</h3>
-                  <p className="step-description-text">
-                    Grant system overlay permission so the live score head can float above YouTube, WhatsApp, and gaming apps.
-                  </p>
-
-                  <div className="step-bullet-list">
-                    <div className="step-bullet-item">
-                      <b>1</b>
-                      <span>Open <strong>Android Settings → Apps → CricVault</strong>.</span>
-                    </div>
-                    <div className="step-bullet-item">
-                      <b>2</b>
-                      <span>Tap <strong>Display over other apps</strong>.</span>
-                    </div>
-                    <div className="step-bullet-item">
-                      <b>3</b>
-                      <span>Toggle the switch to <strong>ALLOW</strong>.</span>
-                    </div>
-                  </div>
+                <div className="step-bullet-item">
+                  <b>2</b>
+                  <span>Open Downloads on Android and select <i>Install</i>.</span>
                 </div>
-              )}
-
-              {/* STEP 3 DETAILS */}
-              {activeStep === 3 && (
-                <div>
-                  <h3 className="step-title-text">03. Pin Widget to Home Screen</h3>
-                  <p className="step-description-text">
-                    Add live match widgets directly onto your main Android desktop home screen in 3 custom sizes.
-                  </p>
-
-                  <div className="step-bullet-list">
-                    <div className="step-bullet-item">
-                      <b>1</b>
-                      <span>Touch and hold an empty space on your Android home screen.</span>
-                    </div>
-                    <div className="step-bullet-item">
-                      <b>2</b>
-                      <span>Select <strong>Widgets</strong> → scroll to <strong>CricVault</strong>.</span>
-                    </div>
-                    <div className="step-bullet-item">
-                      <b>3</b>
-                      <span>Drag 2x1, 4x2, or 5x3 widget size onto your screen.</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '12px' }}>
-                    <button className="action-btn-secondary" onClick={handlePinLaunch}>
-                      <Pin style={{ width: '14px' }} /> Test Pin Home Screen Intent
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 4 DETAILS */}
-              {activeStep === 4 && (
-                <div>
-                  <h3 className="step-title-text">04. Launch Floating Score Head</h3>
-                  <p className="step-description-text">
-                    Enjoy real-time score updates in a floating bubble head while multitasking or playing games.
-                  </p>
-
-                  <div className="step-bullet-list">
-                    <div className="step-bullet-item">
-                      <b>⚡</b>
-                      <span>Click <strong>Float Live Score</strong> to launch the floating head immediately.</span>
-                    </div>
-                    <div className="step-bullet-item">
-                      <b>🔄</b>
-                      <span>The bubble stays on top and updates automatically every ball!</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '14px' }}>
-                    <button className="action-btn-apk" onClick={handleFloatLaunch}>
-                      <Move style={{ width: '16px' }} /> 🚀 Launch Floating Score Head
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Progress & Action Step Navigation Bar */}
-            <div className="step-nav-bar">
-              <button className="btn-nav-prev" onClick={handlePrev} disabled={activeStep === 1}>
-                <ChevronLeft style={{ width: '14px' }} /> Back
-              </button>
-
-              {/* Progress Dots */}
-              <div className="step-dots-container">
-                <div className={`step-dot-pill ${activeStep === 1 ? "active" : ""}`} />
-                <div className={`step-dot-pill ${activeStep === 2 ? "active" : ""}`} />
-                <div className={`step-dot-pill ${activeStep === 3 ? "active" : ""}`} />
-                <div className={`step-dot-pill ${activeStep === 4 ? "active" : ""}`} />
               </div>
 
-              <button className="btn-nav-next" onClick={handleNext}>
-                {activeStep === 4 ? "Finish & Launch 🚀" : "Next Step →"}
-              </button>
+              <div style={{ marginTop: "16px" }}>
+                <button className="action-btn-apk" onClick={downloadNativeApk}>
+                  <Download /> Download CricVault_Native_v1.0.apk (1.08 MB)
+                </button>
+              </div>
             </div>
+          )}
+
+          {activeStep === 2 && (
+            <div>
+              <h3 style={{ margin: "0 0 6px", font: "900 22px Rajdhani", color: "#f4f7f8" }}>02. Enable Overlay Permission</h3>
+              <p style={{ margin: "0 0 16px", color: "#92a2a9", fontSize: "13px", lineHeight: "1.5" }}>
+                Grant system overlay permission so the live score bubble head can hover continuously above YouTube, WhatsApp, games, and other apps.
+              </p>
+
+              <div className="step-bullet-list">
+                <div className="step-bullet-item">
+                  <b>1</b>
+                  <span>Go to <strong>Android Settings → Apps → CricVault</strong>.</span>
+                </div>
+                <div className="step-bullet-item">
+                  <b>2</b>
+                  <span>Tap <strong>Display over other apps</strong>.</span>
+                </div>
+                <div className="step-bullet-item">
+                  <b>3</b>
+                  <span>Switch toggle to <strong>ALLOW</strong>.</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeStep === 3 && (
+            <div>
+              <h3 style={{ margin: "0 0 6px", font: "900 22px Rajdhani", color: "#f4f7f8" }}>03. Pin Widget to Android Home</h3>
+              <p style={{ margin: "0 0 16px", color: "#92a2a9", fontSize: "13px", lineHeight: "1.5" }}>
+                Pin live match widgets directly onto your main Android desktop home screen in 3 custom responsive sizes (2×1, 4×2, or 5×3).
+              </p>
+
+              <div className="step-bullet-list">
+                <div className="step-bullet-item">
+                  <b>1</b>
+                  <span>Touch and hold an empty space on your Android desktop screen.</span>
+                </div>
+                <div className="step-bullet-item">
+                  <b>2</b>
+                  <span>Select <strong>Widgets</strong> → scroll to <strong>CricVault</strong>.</span>
+                </div>
+                <div className="step-bullet-item">
+                  <b>3</b>
+                  <span>Drag 2x1, 4x2, or 5x3 widget onto your home screen.</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeStep === 4 && (
+            <div>
+              <h3 style={{ margin: "0 0 6px", font: "900 22px Rajdhani", color: "#f4f7f8" }}>04. Launch Floating Live Score</h3>
+              <p style={{ margin: "0 0 16px", color: "#92a2a9", fontSize: "13px", lineHeight: "1.5" }}>
+                Enjoy uninterrupted live score tracking hovering on top of your screen while playing games or using any other app!
+              </p>
+
+              <div className="step-bullet-list">
+                <div className="step-bullet-item">
+                  <b>⚡</b>
+                  <span>Tap <strong>Launch Floating Score Head</strong> to launch instantly.</span>
+                </div>
+                <div className="step-bullet-item">
+                  <b>🔄</b>
+                  <span>Updates automatically every single ball in real-time!</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* FIXED BOTTOM NAVIGATION BAR */}
+        <div className="fixed-sheet-footer">
+          <button className="btn-nav-prev" onClick={handlePrev} disabled={activeStep === 1}>
+            <ChevronLeft style={{ width: "14px" }} /> Back
+          </button>
+
+          {/* Progress Dots */}
+          <div className="step-dots-container">
+            <div className={`step-dot-pill ${activeStep === 1 ? "active" : ""}`} />
+            <div className={`step-dot-pill ${activeStep === 2 ? "active" : ""}`} />
+            <div className={`step-dot-pill ${activeStep === 3 ? "active" : ""}`} />
+            <div className={`step-dot-pill ${activeStep === 4 ? "active" : ""}`} />
           </div>
+
+          <button className="btn-nav-next" onClick={handleNext}>
+            {activeStep === 4 ? "Finish / Got It 🚀" : "Next Step →"}
+          </button>
         </div>
       </div>
     </div>
@@ -349,9 +341,17 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(() => getInstallPrompt())
   const [installNote, setInstallNote] = useState("")
 
-  // Floating Visual Guide State
+  // Floating Visual Walkthrough Bottom Sheet State
   const [guideOpen, setGuideOpen] = useState(false)
   const [selectedGuideSize, setSelectedGuideSize] = useState<AndroidWidgetSize>("standard")
+
+  // First time visitor detection using localStorage
+  useEffect(() => {
+    const seen = localStorage.getItem("cricvault_onboarding_completed")
+    if (seen !== "true") {
+      setGuideOpen(true)
+    }
+  }, [])
 
   const battingTeam = teams.find((team) => team.name === score.batting)
   const bowlingTeam = teams.find((team) => team.name === score.bowling)
@@ -373,13 +373,12 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
 
   const install = async () => {
     if (!installPrompt) {
-      setInstallNote("On Android, open the browser menu and choose Add to Home screen, or download base.apk below.")
-      setGuideOpen(true)
+      downloadNativeApk()
       return
     }
     await installPrompt.prompt()
     const choice = await installPrompt.userChoice
-    setInstallNote(choice.outcome === "accepted" ? "CricVault was added to your home screen." : "You can install base.apk directly below.")
+    setInstallNote(choice.outcome === "accepted" ? "CricVault was added to your home screen." : "Downloading native APK...")
     clearInstallPrompt()
   }
 
@@ -407,12 +406,12 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
             <strong>CricVault Android companion required</strong>
             <p>
               {bridgeRequest ? `Your ${bridgeRequest.size} ${bridgeRequest.mode === "pin" ? "home-screen" : "floating"} score request for match ${bridgeRequest.matchId} is ready.` : "This Android request is ready."}{" "}
-              Download and install <strong>base.apk</strong> to launch floating heads over other apps.
+              Download and install <strong>CricVault_Native_v1.0.apk</strong> to launch floating heads over other apps.
             </p>
-            <div style={{ marginTop: '10px' }}>
-              <a href="/base.apk" download="base.apk" className="action-btn-apk" style={{ display: 'inline-flex', padding: '8px 14px', fontSize: '11px' }}>
-                <Download style={{ width: '14px', height: '14px' }} /> Download base.apk (1.08 MB)
-              </a>
+            <div style={{ marginTop: "10px" }}>
+              <button className="action-btn-apk" onClick={downloadNativeApk} style={{ display: "inline-flex", padding: "8px 14px", fontSize: "11px" }}>
+                <Download style={{ width: "14px", height: "14px" }} /> Download CricVault_Native_v1.0.apk (1.08 MB)
+              </button>
             </div>
           </div>
         </section>
@@ -433,13 +432,28 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
           <h1>Match intelligence,<br />wherever you are.</h1>
           <p>Three precise widget sizes. One real-time DPL scoring source. Float above other apps or pin to the Android home screen with <strong>base.apk</strong>.</p>
 
-          <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <a href="/base.apk" download="base.apk" className="action-btn-apk" style={{ textDecoration: 'none' }}>
-              <Download /> Download Native APK (base.apk)
-            </a>
-            <button className="action-btn-secondary" onClick={() => handleTriggerGuide("standard")}>
-              <Sparkles style={{ width: '14px', color: '#91e521' }} /> Visual Guide Walkthrough
-            </button>
+          {/* FUTURISTIC HERO APK COMMAND HUB (FIXING THE DULL UI IN IMAGE 1) */}
+          <div className="hero-apk-command-hub">
+            <div className="apk-hub-meta-bar">
+              <span className="apk-badge-tag">
+                <ShieldCheck style={{ width: "13px" }} /> ANDROID NATIVE APP • v1.0.0 PRO
+              </span>
+              <div className="apk-stats-pill-group">
+                <span>📦 1.08 MB</span>
+                <span>⚡ Floating Score</span>
+                <span>📌 2×1, 4×2, 5×3 Widgets</span>
+              </div>
+            </div>
+
+            <div className="apk-hub-buttons-row">
+              <button className="btn-apk-hero-primary" onClick={downloadNativeApk}>
+                <Download style={{ width: "18px", height: "18px" }} /> Download Native APK (CricVault_Native_v1.0.apk · 1.08 MB)
+              </button>
+
+              <button className="btn-walkthrough-hero-secondary" onClick={() => handleTriggerGuide("standard")}>
+                <Sparkles style={{ width: "16px", color: "#91e521" }} /> ✨ Open Android Walkthrough
+              </button>
+            </div>
           </div>
         </div>
 
@@ -530,7 +544,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
         <div><RefreshCw /><span><b>LIVE SYNC</b><small>Updates every ball</small></span></div>
         <div><Maximize2 /><span><b>THREE SIZES</b><small>2×1 · 4×2 · 5×3</small></span></div>
         <div><Moon /><span><b>DARK MODE</b><small>Optimized for Android</small></span></div>
-        <button onClick={() => void install()}><Download /> Download base.apk</button>
+        <button onClick={downloadNativeApk}><Download /> Download base.apk</button>
       </section>
 
       {installNote && <p className="widget-install-note">{installNote}</p>}
@@ -540,22 +554,22 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
         <div>
           <small>ANDROID INSTALLATION & BASE.APK</small>
           <h2>Keep live cricket floating over every app.</h2>
-          <p>Download base.apk to unlock full floating live score bubble head mode and native Android home screen widgets for CricVault.</p>
-          <div style={{ marginTop: '14px' }}>
-            <a href="/base.apk" download="base.apk" className="action-btn-apk" style={{ display: 'inline-flex' }}>
-              <Download /> Download base.apk (1.08 MB)
-            </a>
+          <p>Download CricVault_Native_v1.0.apk to unlock full floating live score bubble head mode and native Android home screen widgets for CricVault.</p>
+          <div style={{ marginTop: "14px" }}>
+            <button className="action-btn-apk" onClick={downloadNativeApk} style={{ display: "inline-flex" }}>
+              <Download /> Download CricVault_Native_v1.0.apk (1.08 MB)
+            </button>
           </div>
         </div>
         <ol>
-          <li><b>01</b><span>Download and install <strong>base.apk</strong> on your Android phone.</span></li>
+          <li><b>01</b><span>Download and install <strong>CricVault_Native_v1.0.apk</strong> on your Android phone.</span></li>
           <li><b>02</b><span>Allow <i>"Display over other apps"</i> overlay permission.</span></li>
           <li><b>03</b><span>Tap <strong>Float Live Score</strong> to launch floating score bubble!</span></li>
         </ol>
       </section>
 
-      {/* MODERN RESPONSIVE POPOVER STEP WALKTHROUGH */}
-      <FloatingWidgetGuideModal
+      {/* MOBILE-FIRST ANDROID NATIVE MODAL BOTTOM SHEET WALKTHROUGH */}
+      <AndroidWalkthroughBottomSheet
         isOpen={guideOpen}
         onClose={() => setGuideOpen(false)}
         score={score}
