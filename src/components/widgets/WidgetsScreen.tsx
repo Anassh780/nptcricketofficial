@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Download, Maximize2, Moon, MousePointerClick, Move, Pin, RefreshCw, Smartphone, Layers, CheckCircle2, ShieldCheck, Sparkles, X, ChevronRight } from "lucide-react"
+import { Download, Maximize2, Moon, MousePointerClick, Move, Pin, RefreshCw, Smartphone, Layers, CheckCircle2, ShieldCheck, Sparkles, X, ChevronRight, ChevronLeft, ArrowRight, Settings, Check } from "lucide-react"
 import { clearInstallPrompt, getInstallPrompt, subscribeInstallPrompt, type InstallPromptEvent } from "../../lib/pwaInstall"
 import { androidBridgeRequest, isAndroidBridgeFallback, openAndroidWidget, type AndroidWidgetSize } from "../../lib/androidBridge"
 import "./widgets.css"
@@ -39,7 +39,7 @@ function BallStrip({ balls }: { balls: string[] }) {
   return <div className="tech-ball-strip">{balls.length ? balls.map((mark, index) => <b key={`${mark}-${index}`} className={mark === "W" ? "wicket" : mark === "4" || mark === "6" ? "boundary" : mark === "WD" || mark === "NB" ? "extra" : ""}>{mark}</b>) : <span>Waiting for first ball</span>}</div>
 }
 
-// ─── CREATIVE PRO FLOATING VISUAL GUIDE POPUP MODAL ─────────────────────────
+// ─── MODERN RESPONSIVE STEP-BY-STEP POPOVER WALKTHROUGH ──────────────────
 function FloatingWidgetGuideModal({
   isOpen,
   onClose,
@@ -71,182 +71,246 @@ function FloatingWidgetGuideModal({
     onActionTrigger(result.message)
   }
 
+  const handleNext = () => {
+    if (activeStep < 4) setActiveStep((prev) => (prev + 1) as any)
+    else handleFloatLaunch()
+  }
+
+  const handlePrev = () => {
+    if (activeStep > 1) setActiveStep((prev) => (prev - 1) as any)
+  }
+
   return (
     <div className="floating-guide-overlay" onClick={onClose}>
-      <div className="floating-guide-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modern-popover-card" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="guide-modal-header">
+        <div className="popover-header">
           <div>
-            <small>CRICVAULT ANDROID COMPANION • NATIVE APK & FLOATING WIDGET GUIDE</small>
-            <h2>Floating Score & Home Screen Widget Guide</h2>
+            <small>ANDROID WIDGET & FLOATING SCORE WALKTHROUGH</small>
+            <h2>How to Use Floating Score & Widgets</h2>
           </div>
-          <button className="guide-close-btn" onClick={onClose} aria-label="Close guide">
+          <button className="guide-close-btn" onClick={onClose} aria-label="Close">
             <X />
           </button>
         </div>
 
-        {/* Modal Content Body */}
-        <div className="guide-modal-body">
-          {/* Animated Smartphone Phone Screen Mockup */}
-          <div className="phone-mockup-frame">
-            <div className="phone-notch" />
-
-            <div className="phone-screen-wallpaper">
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#87979e', fontFamily: 'monospace' }}>
-                <span>16:20</span>
-                <span>5G ⚡ 98%</span>
-              </div>
-
-              {/* Grid of Dummy Apps */}
-              <div className="app-icons-grid">
-                <div className="dummy-app-icon cricvault-app-icon">
-                  CV
-                  <span>CricVault</span>
-                </div>
-                <div className="dummy-app-icon">💬<span>Chat</span></div>
-                <div className="dummy-app-icon">▶️<span>Video</span></div>
-                <div className="dummy-app-icon">🌐<span>Browser</span></div>
-                <div className="dummy-app-icon">📷<span>Camera</span></div>
-                <div className="dummy-app-icon">🎵<span>Music</span></div>
-                <div className="dummy-app-icon">🎮<span>Games</span></div>
-                <div className="dummy-app-icon">📁<span>Files</span></div>
-              </div>
-
-              {/* FLOATING LIVE SCORE BUBBLE HEAD OVER APPS */}
-              <div className="floating-bubble-head">
-                <div className="bubble-head-top">
-                  <span>● LIVE SCORE HEAD</span>
-                  <span>T20 · {oversText} OV</span>
-                </div>
-                <div className="bubble-head-score">
-                  <div>
-                    <strong>{battingCode} {scoreText}</strong>
-                    <small style={{ display: 'block', marginTop: '2px' }}>Live Updates Above Apps</small>
+        {/* Dual Pane Grid Body */}
+        <div className="popover-body-grid">
+          {/* STEP SIDEBAR VISUAL REPRESENTATION */}
+          <div className="step-sidebar-visual">
+            <div className="visual-graphic-container">
+              {/* STEP 1 VISUAL: INSTALL APK */}
+              {activeStep === 1 && (
+                <div className="visual-apk-box">
+                  <div className="apk-file-badge">
+                    <Download style={{ width: '20px', height: '20px' }} />
+                    <span>base.apk</span>
                   </div>
-                  <span style={{ fontSize: '18px' }}>🏏</span>
+                  <div style={{ fontSize: '11px', color: '#94ed28', marginTop: '12px', fontFamily: 'Rajdhani', fontWeight: 800 }}>
+                    1.08 MB • Native Package
+                  </div>
+                  <div style={{ fontSize: '9px', color: '#7a8c94', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ShieldCheck style={{ width: '12px', color: '#94ed28' }} /> Verified Safe Android App
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div style={{ textAlign: 'center', fontSize: '9px', color: '#87979e', fontFamily: 'monospace' }}>
-                Swipe up to go Home
-              </div>
+              {/* STEP 2 VISUAL: PERMISSION TOGGLE */}
+              {activeStep === 2 && (
+                <div className="visual-permission-box">
+                  <div style={{ fontSize: '10px', color: '#7a8c94', marginBottom: '8px', fontFamily: 'monospace' }}>SETTINGS → OVERLAY</div>
+                  <div className="toggle-switch-wrapper">
+                    <div style={{ textAlign: 'left' }}>
+                      <strong style={{ fontSize: '11px', color: '#f4f7f8', display: 'block', fontFamily: 'Rajdhani' }}>Display Over Apps</strong>
+                      <span style={{ fontSize: '8px', color: '#94ed28', fontFamily: 'monospace' }}>ALLOWED ●</span>
+                    </div>
+                    <div className="toggle-pill-active">
+                      <div className="toggle-knob-active" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3 VISUAL: PIN WIDGET */}
+              {activeStep === 3 && (
+                <div className="visual-pin-box">
+                  <div className="mini-widget-card-thumb">
+                    <span>2 × 1 Compact</span>
+                    <Pin style={{ width: '12px' }} />
+                  </div>
+                  <div className="mini-widget-card-thumb">
+                    <span>4 × 2 Standard</span>
+                    <Pin style={{ width: '12px' }} />
+                  </div>
+                  <div className="mini-widget-card-thumb">
+                    <span>5 × 3 Expanded</span>
+                    <Pin style={{ width: '12px' }} />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4 VISUAL: FLOAT WIDGET */}
+              {activeStep === 4 && (
+                <div className="visual-float-box">
+                  <div className="mini-float-bubble">
+                    <div style={{ fontSize: '8px', color: '#94ed28', fontWeight: 800, fontFamily: 'monospace', marginBottom: '3px' }}>
+                      ● LIVE FLOATING SCORE HEAD
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'Rajdhani', color: '#FFF' }}>
+                      {battingCode} {scoreText}
+                    </div>
+                    <div style={{ fontSize: '9px', color: '#87979e', fontFamily: 'monospace', marginTop: '2px' }}>
+                      Over {oversText} • Real-time Sync
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontSize: '10px', color: '#82939b', marginTop: '12px', fontFamily: 'Rajdhani', fontWeight: 700 }}>
+              {activeStep === 1 && "Package Download Visual"}
+              {activeStep === 2 && "Android Permission Visual"}
+              {activeStep === 3 && "Home Screen Grid Visual"}
+              {activeStep === 4 && "Floating Bubble Head Visual"}
             </div>
           </div>
 
-          {/* Interactive Steps Right Pane */}
-          <div>
-            {/* Step Navigation Tabs */}
-            <div className="guide-tabs-nav">
-              <button className={`guide-tab-btn ${activeStep === 1 ? "active" : ""}`} onClick={() => setActiveStep(1)}>
-                01. Install APK
-              </button>
-              <button className={`guide-tab-btn ${activeStep === 2 ? "active" : ""}`} onClick={() => setActiveStep(2)}>
-                02. Permission
-              </button>
-              <button className={`guide-tab-btn ${activeStep === 3 ? "active" : ""}`} onClick={() => setActiveStep(3)}>
-                03. Pin Widget
-              </button>
-              <button className={`guide-tab-btn ${activeStep === 4 ? "active" : ""}`} onClick={() => setActiveStep(4)}>
-                04. Float Head
-              </button>
+          {/* STEP DETAILS & INSTRUCTIONS PANE */}
+          <div className="step-content-pane">
+            <div>
+              <span className="step-counter-tag">
+                STEP {activeStep} OF 4
+              </span>
+
+              {/* STEP 1 DETAILS */}
+              {activeStep === 1 && (
+                <div>
+                  <h3 className="step-title-text">01. Install base.apk Package</h3>
+                  <p className="step-description-text">
+                    Download the official CricVault Android native package (base.apk · 1.08 MB) to enable floating live score bubble heads and home screen widgets.
+                  </p>
+
+                  <div className="step-bullet-list">
+                    <div className="step-bullet-item">
+                      <b>1</b>
+                      <span>Click <strong>Download base.apk</strong> below to save to your Android phone.</span>
+                    </div>
+                    <div className="step-bullet-item">
+                      <b>2</b>
+                      <span>Open Downloads and tap <i>Install</i> (allow unknown sources if prompted).</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '16px' }}>
+                    <a href="/base.apk" download="base.apk" className="action-btn-apk" style={{ display: 'inline-flex' }}>
+                      <Download /> Download base.apk (1.08 MB)
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2 DETAILS */}
+              {activeStep === 2 && (
+                <div>
+                  <h3 className="step-title-text">02. Enable Overlay Permission</h3>
+                  <p className="step-description-text">
+                    Grant system overlay permission so the live score head can float above YouTube, WhatsApp, and gaming apps.
+                  </p>
+
+                  <div className="step-bullet-list">
+                    <div className="step-bullet-item">
+                      <b>1</b>
+                      <span>Open <strong>Android Settings → Apps → CricVault</strong>.</span>
+                    </div>
+                    <div className="step-bullet-item">
+                      <b>2</b>
+                      <span>Tap <strong>Display over other apps</strong>.</span>
+                    </div>
+                    <div className="step-bullet-item">
+                      <b>3</b>
+                      <span>Toggle the switch to <strong>ALLOW</strong>.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3 DETAILS */}
+              {activeStep === 3 && (
+                <div>
+                  <h3 className="step-title-text">03. Pin Widget to Home Screen</h3>
+                  <p className="step-description-text">
+                    Add live match widgets directly onto your main Android desktop home screen in 3 custom sizes.
+                  </p>
+
+                  <div className="step-bullet-list">
+                    <div className="step-bullet-item">
+                      <b>1</b>
+                      <span>Touch and hold an empty space on your Android home screen.</span>
+                    </div>
+                    <div className="step-bullet-item">
+                      <b>2</b>
+                      <span>Select <strong>Widgets</strong> → scroll to <strong>CricVault</strong>.</span>
+                    </div>
+                    <div className="step-bullet-item">
+                      <b>3</b>
+                      <span>Drag 2x1, 4x2, or 5x3 widget size onto your screen.</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '12px' }}>
+                    <button className="action-btn-secondary" onClick={handlePinLaunch}>
+                      <Pin style={{ width: '14px' }} /> Test Pin Home Screen Intent
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4 DETAILS */}
+              {activeStep === 4 && (
+                <div>
+                  <h3 className="step-title-text">04. Launch Floating Score Head</h3>
+                  <p className="step-description-text">
+                    Enjoy real-time score updates in a floating bubble head while multitasking or playing games.
+                  </p>
+
+                  <div className="step-bullet-list">
+                    <div className="step-bullet-item">
+                      <b>⚡</b>
+                      <span>Click <strong>Float Live Score</strong> to launch the floating head immediately.</span>
+                    </div>
+                    <div className="step-bullet-item">
+                      <b>🔄</b>
+                      <span>The bubble stays on top and updates automatically every ball!</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '14px' }}>
+                    <button className="action-btn-apk" onClick={handleFloatLaunch}>
+                      <Move style={{ width: '16px' }} /> 🚀 Launch Floating Score Head
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Step Cards */}
-            {activeStep === 1 && (
-              <div className="step-content-card">
-                <h3>Step 1: Download & Install base.apk</h3>
-                <p>Download the official CricVault Android native package (base.apk - 1.08 MB) to enable floating score bubbles above YouTube, games, and other apps.</p>
-                <div className="step-bullet-list">
-                  <div className="step-bullet-item">
-                    <b>✓</b>
-                    <span>Click the <strong>Download base.apk</strong> button below to save the APK to your device.</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>✓</b>
-                    <span>Open Downloads on Android and allow <i>"Install from Unknown Sources"</i> when prompted.</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>✓</b>
-                    <span>Launch CricVault Native to activate real-time widget synchronization.</span>
-                  </div>
-                </div>
+            {/* Bottom Progress & Action Step Navigation Bar */}
+            <div className="step-nav-bar">
+              <button className="btn-nav-prev" onClick={handlePrev} disabled={activeStep === 1}>
+                <ChevronLeft style={{ width: '14px' }} /> Back
+              </button>
+
+              {/* Progress Dots */}
+              <div className="step-dots-container">
+                <div className={`step-dot-pill ${activeStep === 1 ? "active" : ""}`} />
+                <div className={`step-dot-pill ${activeStep === 2 ? "active" : ""}`} />
+                <div className={`step-dot-pill ${activeStep === 3 ? "active" : ""}`} />
+                <div className={`step-dot-pill ${activeStep === 4 ? "active" : ""}`} />
               </div>
-            )}
 
-            {activeStep === 2 && (
-              <div className="step-content-card">
-                <h3>Step 2: Enable "Draw Over Other Apps"</h3>
-                <p>To let the live score head float smoothly over other apps, grant the Overlay Permission in Android system settings.</p>
-                <div className="step-bullet-list">
-                  <div className="step-bullet-item">
-                    <b>1</b>
-                    <span>Go to <strong>Android Settings → Apps → CricVault</strong>.</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>2</b>
-                    <span>Select <strong>Display over other apps</strong> (or <i>Draw over other apps</i>).</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>3</b>
-                    <span>Toggle switch to <strong>ALLOW</strong>.</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeStep === 3 && (
-              <div className="step-content-card">
-                <h3>Step 3: Add Widget to Android Home Screen</h3>
-                <p>Pin the 2x1 Compact, 4x2 Standard, or 5x3 Expanded widget to your main screen for instant score viewing.</p>
-                <div className="step-bullet-list">
-                  <div className="step-bullet-item">
-                    <b>1</b>
-                    <span>Touch and hold any empty area on your Android home screen.</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>2</b>
-                    <span>Tap <strong>Widgets</strong> and scroll to <strong>CricVault</strong>.</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>3</b>
-                    <span>Drag your preferred size (2x1, 4x2, or 5x3) onto your home screen!</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeStep === 4 && (
-              <div className="step-content-card">
-                <h3>Step 4: Launch Floating Score Mode</h3>
-                <p>Enjoy continuous live ball-by-ball score tracking floating on top of your screen while using any app or playing games.</p>
-                <div className="step-bullet-list">
-                  <div className="step-bullet-item">
-                    <b>⚡</b>
-                    <span>Tap <strong>Float Live Score</strong> below to trigger the floating head immediately.</span>
-                  </div>
-                  <div className="step-bullet-item">
-                    <b>🔄</b>
-                    <span>The score updates automatically in real-time on every ball.</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Modal Actions Footer Bar */}
-        <div className="guide-modal-actions">
-          <a href="/base.apk" download="base.apk" className="action-btn-apk">
-            <Download /> Download Native APK (base.apk · 1.08 MB)
-          </a>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="action-btn-secondary" onClick={handleFloatLaunch}>
-              <Move style={{ width: '14px' }} /> Float Live Score
-            </button>
-            <button className="action-btn-secondary" onClick={handlePinLaunch}>
-              <Pin style={{ width: '14px' }} /> Pin to Home Screen
-            </button>
+              <button className="btn-nav-next" onClick={handleNext}>
+                {activeStep === 4 ? "Finish & Launch 🚀" : "Next Step →"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -374,7 +438,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
               <Download /> Download Native APK (base.apk)
             </a>
             <button className="action-btn-secondary" onClick={() => handleTriggerGuide("standard")}>
-              <Sparkles style={{ width: '14px', color: '#91e521' }} /> Visual Guide & Instructions
+              <Sparkles style={{ width: '14px', color: '#91e521' }} /> Visual Guide Walkthrough
             </button>
           </div>
         </div>
@@ -490,7 +554,7 @@ export default function WidgetsScreen({ score, teams, matchOvers }: { score: Liv
         </ol>
       </section>
 
-      {/* FLOATING VISUAL GUIDE POPUP MODAL */}
+      {/* MODERN RESPONSIVE POPOVER STEP WALKTHROUGH */}
       <FloatingWidgetGuideModal
         isOpen={guideOpen}
         onClose={() => setGuideOpen(false)}

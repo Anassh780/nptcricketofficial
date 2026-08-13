@@ -13,24 +13,23 @@
 .android-widget-actions{width:min(920px,100%);margin:14px auto 0;display:flex;justify-content:center;gap:9px}.android-widget-actions button{min-height:42px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(145,229,33,.28);border-radius:11px;background:rgba(10,18,24,.82);color:#dfe8e2;font:800 9px Rajdhani;letter-spacing:.055em;cursor:pointer;transition:border-color .18s ease,background .18s ease,color .18s ease}.android-widget-actions button:first-child{background:#91e521;color:#071006}.android-widget-actions button:hover{border-color:#91e521}.android-widget-actions svg{width:14px;height:14px}.android-companion-fallback{width:min(920px,100%);margin:0 auto 24px;padding:17px;display:flex;align-items:flex-start;gap:13px;border:1px solid rgba(145,229,33,.3);border-radius:15px;background:linear-gradient(135deg,rgba(145,229,33,.1),rgba(6,16,23,.96));color:#dce6e1}.android-companion-fallback>svg{width:25px;flex:none;color:#91e521}.android-companion-fallback strong{font:800 14px Rajdhani;letter-spacing:.04em}.android-companion-fallback p{margin:4px 0 0;color:#91a2aa;font-size:10px;line-height:1.55}
 @media(max-width:520px){.android-widget-actions{display:grid;grid-template-columns:1fr}.android-widget-actions button{width:100%}.android-companion-fallback{padding:14px}.android-companion-fallback p{font-size:9px}}
 
-/* ─── Creative Pro Floating Visual Guide Modal & Phone Simulation ───────────────── */
+/* ─── MODERN RESPONSIVE CONTEXTUAL POPOVER CARD & STEP WALKTHROUGH ──────────────── */
 
-@keyframes pulse-bubble-head {
-  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 8px 24px rgba(148,237,40,0.45)); }
-  50% { transform: translateY(-8px) scale(1.04); filter: drop-shadow(0 14px 36px rgba(148,237,40,0.7)); }
-}
-
-@keyframes float-trigger-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(148,237,40,0.4), 0 0 0 1px rgba(148,237,40,0.5); }
-  50% { box-shadow: 0 0 35px rgba(148,237,40,0.8), 0 0 0 3px rgba(148,237,40,0.8); }
-}
-
-@keyframes pop-in-scale {
-  from { opacity: 0; transform: scale(0.92) translateY(18px); }
+@keyframes popover-fade-enter {
+  from { opacity: 0; transform: scale(0.96) translateY(12px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Floating HUD Trigger Pill */
+@keyframes visual-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes toggle-switch-slide {
+  0% { transform: translateX(0); background: #3a4b54; }
+  100% { transform: translateX(24px); background: #94ed28; }
+}
+
 .floating-quick-trigger {
   position: fixed;
   bottom: 24px;
@@ -48,18 +47,12 @@
   border: none;
   box-shadow: 0 12px 32px rgba(148,237,40,0.4);
   cursor: pointer;
-  animation: float-trigger-glow 3s infinite ease-in-out;
   transition: transform 0.2s ease;
 }
 .floating-quick-trigger:hover {
   transform: translateY(-3px) scale(1.02);
 }
-.floating-quick-trigger svg {
-  width: 18px;
-  height: 18px;
-}
 
-/* Overlay & Modal backdrop */
 .floating-guide-overlay {
   position: fixed;
   inset: 0;
@@ -68,300 +61,268 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(1, 7, 12, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(1, 7, 12, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
-.floating-guide-modal {
+/* Modern Popover Card Container */
+.modern-popover-card {
   position: relative;
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  border-radius: 26px;
+  width: min(780px, 95vw);
+  max-height: min(580px, 86vh);
+  border-radius: 24px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at 10% 0%, rgba(148,237,40,0.12), transparent 300px), linear-gradient(145deg, #07131b, #02080d 70%);
-  border: 1px solid rgba(148,237,40,0.35);
-  box-shadow: 0 30px 100px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(255,255,255,0.06);
-  animation: pop-in-scale 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: radial-gradient(circle at 10% 0%, rgba(148,237,40,0.14), transparent 280px), linear-gradient(145deg, #07131b, #02080d 75%);
+  border: 1px solid rgba(148,237,40,0.4);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(255,255,255,0.06);
+  animation: popover-fade-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.guide-modal-header {
-  padding: 20px 26px;
+.popover-header {
+  padding: 16px 24px;
   border-bottom: 1px solid rgba(255,255,255,0.09);
-  background: rgba(7, 16, 23, 0.9);
+  background: rgba(7, 16, 23, 0.92);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.guide-modal-header h2 {
-  margin: 2px 0 0;
-  font: 900 24px Rajdhani;
+.popover-header h2 {
+  margin: 0;
+  font: 900 20px Rajdhani;
   color: #f4f7f8;
   letter-spacing: -0.01em;
 }
-.guide-modal-header small {
+.popover-header small {
   color: var(--tech-lime);
   font: 800 10px Rajdhani;
   letter-spacing: 0.16em;
-}
-.guide-close-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #f4f7f8;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-.guide-close-btn:hover {
-  background: rgba(255,255,255,0.15);
+  display: block;
 }
 
-.guide-modal-body {
-  padding: 24px 26px;
-  overflow-y: auto;
-  flex: 1;
+.popover-body-grid {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 28px;
-  align-items: start;
-}
-
-/* Phone Mockup Screen */
-.phone-mockup-frame {
-  position: relative;
-  width: 100%;
-  height: 420px;
-  border-radius: 36px;
-  background: #09121a;
-  border: 4px solid #1c2b36;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(148,237,40,0.25);
+  grid-template-columns: 270px 1fr;
+  flex: 1;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
 }
-.phone-notch {
-  width: 90px;
-  height: 18px;
-  background: #1c2b36;
-  margin: 0 auto;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  z-index: 10;
-}
-.phone-screen-wallpaper {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 30%, #152535 0%, #060b10 100%);
-  padding: 30px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.app-icons-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-top: 20px;
-}
-.dummy-app-icon {
-  aspect-ratio: 1;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
+
+/* Step Sidebar Visual Pane */
+.step-sidebar-visual {
+  background: rgba(3, 9, 15, 0.85);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-}
-.dummy-app-icon span {
-  font: 700 7px Rajdhani;
-  color: #7d8e95;
-  margin-top: 2px;
-}
-.cricvault-app-icon {
-  background: linear-gradient(135deg, var(--tech-lime), #5ea610);
-  color: #071006;
-  font: 900 12px Rajdhani;
-  border: none;
-  box-shadow: 0 4px 14px rgba(148,237,40,0.4);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Floating Live Score Bubble Head on Phone Screen */
-.floating-bubble-head {
-  position: absolute;
-  top: 120px;
-  left: 20px;
-  right: 20px;
-  z-index: 20;
-  padding: 10px 14px;
+.visual-graphic-container {
+  width: 100%;
+  height: 220px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(12,23,32,0.96), rgba(5,11,16,0.98));
-  border: 1.5px solid var(--tech-lime);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.8), 0 0 20px rgba(148,237,40,0.3);
-  animation: pulse-bubble-head 3s ease-in-out infinite;
-}
-.bubble-head-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font: 800 9px monospace;
-  color: var(--tech-lime);
-  margin-bottom: 4px;
-}
-.bubble-head-score {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.bubble-head-score strong {
-  font: 900 20px Rajdhani;
-  color: #f4f7f8;
-  line-height: 1;
-}
-.bubble-head-score small {
-  font: 700 10px monospace;
-  color: #8da0a8;
-}
-
-/* Steps Tabs & Copy */
-.guide-tabs-nav {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  overflow-x: auto;
-}
-.guide-tab-btn {
-  flex: 1;
-  min-width: 90px;
-  padding: 10px 8px;
-  border-radius: 10px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
-  color: #87979e;
-  font: 700 11px Rajdhani;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-.guide-tab-btn.active {
-  background: rgba(148,237,40,0.15);
-  border-color: var(--tech-lime);
-  color: var(--tech-lime);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
 }
 
-.step-content-card {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 20px;
+/* Step 1 Graphic (APK Install) */
+.visual-apk-box {
+  animation: visual-bounce 3s infinite ease-in-out;
 }
-.step-content-card h3 {
+.apk-file-badge {
+  background: linear-gradient(135deg, rgba(148,237,40,0.2), rgba(94,166,16,0.1));
+  border: 1.5px solid var(--tech-lime);
+  border-radius: 14px;
+  padding: 12px 18px;
+  color: var(--tech-lime);
+  font: 900 15px Rajdhani;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Step 2 Graphic (Permission Toggle) */
+.visual-permission-box {
+  width: 100%;
+}
+.toggle-switch-wrapper {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 12px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.toggle-pill-active {
+  width: 48px;
+  height: 24px;
+  background: rgba(148,237,40,0.25);
+  border: 1.5px solid var(--tech-lime);
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+.toggle-knob-active {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--tech-lime);
+  margin-left: auto;
+  box-shadow: 0 0 10px var(--tech-lime);
+}
+
+/* Step 3 Graphic (Pin Widget) */
+.visual-pin-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.mini-widget-card-thumb {
+  background: rgba(16,23,32,0.9);
+  border: 1px dashed var(--tech-lime);
+  border-radius: 8px;
+  padding: 8px;
+  font: 800 10px Rajdhani;
+  color: var(--tech-lime);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Step 4 Graphic (Float Head) */
+.visual-float-box {
+  position: relative;
+  width: 100%;
+}
+.mini-float-bubble {
+  background: linear-gradient(135deg, #0c1720, #050b10);
+  border: 1.5px solid var(--tech-lime);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(148,237,40,0.4);
+}
+
+/* Right Content Step Details Pane */
+.step-content-pane {
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: auto;
+}
+.step-counter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(148,237,40,0.12);
+  border: 1px solid rgba(148,237,40,0.3);
+  color: var(--tech-lime);
+  font: 800 10px Rajdhani;
+  letter-spacing: 0.14em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.step-title-text {
   margin: 0 0 8px;
-  font: 800 20px Rajdhani;
+  font: 900 22px Rajdhani;
   color: #f4f7f8;
 }
-.step-content-card p {
+.step-description-text {
   margin: 0 0 16px;
   color: #92a2a9;
   font-size: 13px;
-  line-height: 1.55;
-}
-.step-bullet-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.step-bullet-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 12px;
-  color: #c7d4d9;
-}
-.step-bullet-item b {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: rgba(148,237,40,0.15);
-  color: var(--tech-lime);
-  font: 800 11px Rajdhani;
-  display: grid;
-  place-items: center;
-  flex: none;
+  line-height: 1.5;
 }
 
-/* Modal Actions Bar */
-.guide-modal-actions {
-  padding: 16px 26px;
+/* Bottom Navigation Bar */
+.step-nav-bar {
+  padding: 14px 26px;
   border-top: 1px solid rgba(255,255,255,0.09);
-  background: rgba(5, 11, 16, 0.95);
+  background: rgba(5, 11, 16, 0.96);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
 }
-.action-btn-apk {
-  background: linear-gradient(135deg, #b5ff34, #5ea610);
-  color: #071006;
-  font: 900 13px Rajdhani;
-  padding: 12px 22px;
-  border-radius: 11px;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(148,237,40,0.35);
-  text-decoration: none;
-}
-.action-btn-apk svg {
-  width: 16px;
-  height: 16px;
-}
-.action-btn-secondary {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #f4f7f8;
-  font: 800 12px Rajdhani;
-  padding: 12px 18px;
-  border-radius: 11px;
-  cursor: pointer;
+
+.step-dots-container {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.action-btn-secondary:hover {
-  background: rgba(255,255,255,0.1);
+.step-dot-pill {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
+}
+.step-dot-pill.active {
+  width: 24px;
+  background: var(--tech-lime);
 }
 
-/* Media Queries for Visual Guide */
-@media (max-width: 768px) {
-  .guide-modal-body {
+.btn-nav-prev {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #c7d4d9;
+  font: 800 12px Rajdhani;
+  padding: 8px 16px;
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-nav-prev:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-nav-next {
+  background: linear-gradient(135deg, #b5ff34, #5ea610);
+  color: #071006;
+  font: 900 13px Rajdhani;
+  padding: 9px 20px;
+  border-radius: 9px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(148,237,40,0.35);
+}
+
+/* Media Queries for Modern Popover */
+@media (max-width: 680px) {
+  .popover-body-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
   }
-  .phone-mockup-frame {
-    height: 280px;
+  .step-sidebar-visual {
+    display: none;
   }
-  .floating-bubble-head {
-    top: 70px;
-  }
-  .floating-quick-trigger {
-    bottom: 16px;
-    right: 16px;
-    padding: 10px 16px;
-    font-size: 11px;
+  .modern-popover-card {
+    max-height: 90vh;
   }
 }
