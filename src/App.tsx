@@ -2150,13 +2150,12 @@ export default function App() {
     setAdminRevision((revision) => revision + 1)
   }), [])
 
-  useEffect(() => subscribeCloudData<LeagueMatch[] | Record<string, LeagueMatch>>(
+  useEffect(() => subscribeCloudData<unknown>(
     "matches",
-    (onlineMatches) => setScheduledMatches(
-      Array.isArray(onlineMatches)
-        ? onlineMatches.filter(Boolean)
-        : Object.values(onlineMatches || {}),
-    ),
+    (onlineMatches) => {
+      const rawList: any[] = Array.isArray(onlineMatches) ? onlineMatches : Object.values(onlineMatches || {})
+      setScheduledMatches(rawList.filter((m) => m && typeof m === "object" && m.id && m.teamA && m.teamB))
+    },
   ), [])
 
   useEffect(() => subscribeTeamProfiles((onlineTeams) => {

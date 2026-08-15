@@ -7,7 +7,7 @@ import {
   signOut,
   type User,
 } from "firebase/auth"
-import { get, getDatabase, onValue, ref, remove, set } from "firebase/database"
+import { get, getDatabase, onValue, ref, remove, set, update } from "firebase/database"
 import { optimizeUploadedImage } from "../components/teams/imageUpload"
 
 const firebaseConfig = {
@@ -40,6 +40,13 @@ export const loginWithGoogle = () =>
   signInWithPopup(auth, new GoogleAuthProvider())
 
 export const logoutFirebase = () => signOut(auth)
+
+export const observeConnectionState = (callback: (connected: boolean) => void) =>
+  onValue(
+    ref(database, ".info/connected"),
+    (snapshot) => callback(Boolean(snapshot.val())),
+    () => callback(false),
+  )
 
 export const observeFirebaseUser = (callback: (user: User | null) => void) => {
   let stopRole: (() => void) | undefined
@@ -140,22 +147,116 @@ export const saveCloudData = async (path: string, value: unknown) => {
   }
 }
 
+export const saveCloudItem = async (collection: string, id: string, value: unknown) => {
+  if (!isLeagueAdmin(auth.currentUser)) throw new Error("DPL 6 administrator access is required.")
+  try {
+    await set(ref(database, `dpl6/${collection}/${id}`), cleanForFirebase(value))
+  } catch (error) {
+    console.error(`Firebase Realtime Database save item failed at dpl6/${collection}/${id}`, error)
+    throw new Error("Firebase save failed. Check your internet connection and try again.")
+  }
+}
+
+export const deleteCloudItem = async (collection: string, id: string) => {
+  if (!isLeagueAdmin(auth.currentUser)) throw new Error("DPL 6 administrator access is required.")
+  try {
+    await remove(ref(database, `dpl6/${collection}/${id}`))
+  } catch (error) {
+    console.error(`Firebase Realtime Database remove failed at dpl6/${collection}/${id}`, error)
+    throw new Error("Firebase delete failed. Check your internet connection and try again.")
+  }
+}
+
+export const updateCloudItem = async (collection: string, id: string, partial: Record<string, unknown>) => {
+  if (!isLeagueAdmin(auth.currentUser)) throw new Error("DPL 6 administrator access is required.")
+  try {
+    await update(ref(database, `dpl6/${collection}/${id}`), cleanForFirebase(partial))
+  } catch (error) {
+    console.error(`Firebase Realtime Database update failed at dpl6/${collection}/${id}`, error)
+    throw new Error("Firebase update failed. Check your internet connection and try again.")
+  }
+}
+
+export const fetchCloudData = async <T,>(path: string): Promise<T | null> => {
+  try {
+    const snapshot = await get(ref(database, `dpl6/${path}`))
+    return snapshot.exists() ? (snapshot.val() as T) : null
+  } catch (error) {
+    console.warn(`Direct fetch failed for dpl6/${path}:`, error)
+    return null
+  }
+}
+
 export const subscribeCloudData = <T,>(
   path: string,
   callback: (value: T) => void,
-) => onValue(
-  ref(database, `dpl6/${path}`),
-  (snapshot) => {
-    callback((snapshot.exists() ? snapshot.val() : null) as T)
-  },
-  () => undefined,
-)
+  onError?: (error: Error) => void,
+) => {
+  const dbRef = ref(database, `dpl6/${path}`)
+  let initialReceived = false
+
+  const performFetch = async () => {
+    try {
+      const snapshot = await get(dbRef)
+      if (snapshot.exists()) {
+        callback(snapshot.val() as T)
+      }
+    } catch (err) {
+      console.warn(`Auto-sync fetch failed for dpl6/${path}:`, err)
+    }
+  }
+
+  // Fast cold-start fetch via get()
+  void performFetch()
+
+  // Realtime subscription
+  const unsubscribe = onValue(
+    dbRef,
+    (snapshot) => {
+      initialReceived = true
+      callback((snapshot.exists() ? snapshot.val() : null) as T)
+    },
+    (error) => {
+      console.error(`Firebase Realtime Database subscription error for dpl6/${path}:`, error)
+      onError?.(error)
+    },
+  )
+
+  // Auto-sync recovery: Re-sync automatically on tab focus, network reconnect, visibility change, and periodic heartbeat
+  const handleAutoSync = () => {
+    if (document.visibilityState === "visible") {
+      void performFetch()
+    }
+  }
+
+  const handleOnline = () => {
+    void performFetch()
+  }
+
+  window.addEventListener("focus", handleAutoSync)
+  window.addEventListener("visibilitychange", handleAutoSync)
+  window.addEventListener("online", handleOnline)
+
+  // Periodic 25s auto-sync heartbeat in background to guarantee zero missing data
+  const heartbeat = window.setInterval(() => {
+    if (document.visibilityState === "visible" && navigator.onLine) {
+      void performFetch()
+    }
+  }, 25000)
+
+  return () => {
+    unsubscribe()
+    window.removeEventListener("focus", handleAutoSync)
+    window.removeEventListener("visibilitychange", handleAutoSync)
+    window.removeEventListener("online", handleOnline)
+    window.clearInterval(heartbeat)
+  }
+}
 
 export const uploadLeagueImage = async (file: File, folder: string) => {
   const user = auth.currentUser
   if (!isLeagueAdmin(user)) throw new Error("DPL 6 administrator access is required.")
-  // This Firebase project does not currently have a working Storage bucket.
-  // Keep profile images small and save them with their Realtime Database record
-  // so team logos and player portraits remain available everywhere in the app.
-  return optimizeUploadedImage(file, folder.includes("players") ? 480 : 1000, folder.includes("players") ? 0.84 : 0.88)
+  // Compress images to lightweight WebP data (under 20KB) so Realtime Database payloads remain small and fast on all mobile connections.
+  const isPlayer = folder.includes("players")
+  return optimizeUploadedImage(file, isPlayer ? 280 : 400, isPlayer ? 0.72 : 0.75)
 }

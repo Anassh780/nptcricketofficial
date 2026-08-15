@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { saveTeamProfiles, subscribeTeamProfiles, type SharedTeamProfile } from "../../data/teamStore"
-import { uploadLeagueImage } from "../../lib/firebase"
+import { observeConnectionState, uploadLeagueImage } from "../../lib/firebase"
 import "./teams.css"
 
 type PlayerProfile = { id: string; name: string; photo: string }
@@ -24,8 +24,9 @@ const customPlayerName = (value: unknown) => {
 }
 
 function normalizeStoredTeams(value: unknown): TeamProfile[] {
-  if (!Array.isArray(value)) return []
-  return value.map((raw: any, index) => {
+  if (!value) return []
+  const rawList: any[] = Array.isArray(value) ? value : Object.values(value)
+  return rawList.map((raw: any, index) => {
     const storedName = typeof raw.name === "string" ? raw.name : ""
     const name = /^(?:new\s+)?team\s+\d+$/i.test(storedName.trim()) ? "" : storedName
     return {
@@ -203,8 +204,11 @@ function TeamCard({
 export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
   const [teams, setTeams] = useState<TeamProfile[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [connected, setConnected] = useState(true)
   const [query, setQuery] = useState("")
   const [message, setMessage] = useState("Ready to manage tournament squads.")
+
+  useEffect(() => observeConnectionState(setConnected), [])
 
   useEffect(() => subscribeTeamProfiles((onlineTeams) => {
     const normalized = normalizeStoredTeams(onlineTeams)
@@ -256,19 +260,38 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
     <main className="teams-hub-page">
       <section className="teams-hub-shell">
         <header className="teams-hub-hero">
-          <div><span>DPL 6 TEAM CENTER</span><h1>Teams &amp; Players</h1><p>{isAdmin ? "Administrator controls for names, logos and player portraits." : "Official Diamond Premier League 6 squads and player rosters."}</p></div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span>DPL 6 TEAM CENTER</span>
+              <span className={`sync-pill ${connected ? "online" : "offline"}`}>
+                <i /> {connected ? "Live Synced" : "Reconnecting"}
+              </span>
+            </div>
+            <h1>Teams &amp; Players</h1>
+            <p>{isAdmin ? "Administrator controls for names, logos and player portraits." : "Official Diamond Premier League 6 squads and player rosters."}</p>
+          </div>
           {isAdmin && <button onClick={addTeam}>+ Add team</button>}
         </header>
         <div className="teams-hub-tools">
           <label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search teams..." /></label>
           <p>{message}</p>
-          <b>{visibleTeams.length} TEAMS</b>
+          <b>{!loaded ? "LOADING TEAMS…" : `${visibleTeams.length} TEAMS`}</b>
         </div>
-        <section className="teams-card-grid" aria-label="Tournament teams">
-          {visibleTeams.map((team) => (
-            <TeamCard key={team.id} team={team} onUpdate={(updater) => updateTeam(team.id, updater)} onMessage={setMessage} isAdmin={isAdmin} onDelete={() => deleteTeam(team.id)} />
-          ))}
-        </section>
+        {!loaded ? (
+          <section className="teams-card-grid" aria-label="Loading teams">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <article className="team-flip-card skeleton-card" key={`team-skel-${i}`} style={{ height: "320px", borderRadius: "16px" }}>
+                <div className="skeleton-shimmer" style={{ width: "100%", height: "100%", borderRadius: "16px" }} />
+              </article>
+            ))}
+          </section>
+        ) : (
+          <section className="teams-card-grid" aria-label="Tournament teams">
+            {visibleTeams.map((team) => (
+              <TeamCard key={team.id} team={team} onUpdate={(updater) => updateTeam(team.id, updater)} onMessage={setMessage} isAdmin={isAdmin} onDelete={() => deleteTeam(team.id)} />
+            ))}
+          </section>
+        )}
       </section>
     </main>
   )

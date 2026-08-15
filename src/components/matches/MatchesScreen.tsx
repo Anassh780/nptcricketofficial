@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import type { SharedTeamProfile } from "../../data/teamStore"
 import type { FirebaseUser } from "../../lib/firebase"
-import { saveCloudData, subscribeCloudData } from "../../lib/firebase"
+import {
+  deleteCloudItem,
+  observeConnectionState,
+  saveCloudItem,
+  subscribeCloudData,
+} from "../../lib/firebase"
 import MatchReportModal from "../report/MatchReportModal"
 import type { Batter, Bowler, ScoreState, Team } from "../scoring/ScoringControls"
 import "./matches.css"
@@ -38,6 +43,12 @@ const oversText = (balls = 0) => `${Math.floor(balls / 6)}.${balls % 6}`
 import { deriveScorecards, type BattingLine, type BowlingLine } from "../../utils/scorecardHelpers"
 export { deriveScorecards, type BattingLine, type BowlingLine }
 
+const normalizeMatches = (value: unknown): LeagueMatch[] => {
+  if (!value) return []
+  const rawList: any[] = Array.isArray(value) ? value : Object.values(value)
+  return rawList.filter((m) => m && typeof m === "object" && m.id && m.teamA && m.teamB)
+}
+
 const matchStatus = (match: LeagueMatch) => {
   const now = Date.now()
   if (match.result || now > match.startsAt + 4 * 60 * 60 * 1000) return "ENDED"
@@ -59,6 +70,8 @@ export default function MatchesScreen({
   onResumeMatch?: (match: LeagueMatch) => void
 }) {
   const [matches, setMatches] = useState<LeagueMatch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [connected, setConnected] = useState(true)
   const [teamA, setTeamA] = useState(teams[0]?.id || "")
   const [teamB, setTeamB] = useState(teams[1]?.id || "")
   const [date, setDate] = useState("")
@@ -68,6 +81,8 @@ export default function MatchesScreen({
   const [busy, setBusy] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState<LeagueMatch | null>(null)
   const [reportModalState, setReportModalState] = useState<ScoreState | null>(null)
+
+  useEffect(() => observeConnectionState(setConnected), [])
 
   const convertMatchToScoreState = (match: LeagueMatch): ScoreState => {
     const innings = match.record?.innings || []
@@ -126,17 +141,28 @@ export default function MatchesScreen({
         : [],
       events: (match.record?.events || []).map((e) => ({
         id: e.id,
-        mark: e.mark,
-        runs: e.runs || 0,
+        innings: e.innings || 1,
+        over: e.over || "0.1",
+        mark: e.mark || "0",
+        tone: "neutral",
+        text: e.text || "Delivery",
         legal: e.legal ?? true,
+        runs: e.runs || 0,
       })),
     }
   }
 
-  useEffect(() => subscribeCloudData<LeagueMatch[] | Record<string, LeagueMatch>>(
-    "matches",
-    (value) => setMatches(Array.isArray(value) ? value.filter(Boolean) : Object.values(value || {})),
-  ), [])
+  useEffect(() => {
+    setLoading(true)
+    return subscribeCloudData<unknown>(
+      "matches",
+      (value) => {
+        setMatches(normalizeMatches(value))
+        setLoading(false)
+      },
+      () => setLoading(false),
+    )
+  }, [])
 
   useEffect(() => {
     if (!teams.some((team) => team.id === teamA)) setTeamA(teams[0]?.id || "")
@@ -163,12 +189,17 @@ export default function MatchesScreen({
     }
     setBusy(true)
     try {
-      const next = [
-        ...matches,
-        { id: crypto.randomUUID(), teamA, teamB, startsAt: new Date(`${date}T${time}`).getTime(), venue: venue.trim() || "DPL Cricket Ground", createdBy: user.uid },
-      ]
-      await saveCloudData("matches", next)
-      setMatches(next)
+      const id = crypto.randomUUID()
+      const newMatch: LeagueMatch = {
+        id,
+        teamA,
+        teamB,
+        startsAt: new Date(`${date}T${time}`).getTime(),
+        venue: venue.trim() || "DPL Cricket Ground",
+        createdBy: user.uid,
+      }
+      setMatches((current) => [newMatch, ...current.filter((m) => m.id !== id)])
+      await saveCloudItem("matches", id, newMatch)
       setMessage("Match published to the DPL 6 schedule.")
       setDate("")
       setTime("")
@@ -179,12 +210,12 @@ export default function MatchesScreen({
       setBusy(false)
     }
   }
+
   const deleteMatch = async (id: string) => {
     if (!isAdmin || !window.confirm("Delete this DPL 6 fixture?")) return
-    const next = matches.filter((match) => match.id !== id)
-    setMatches(next)
+    setMatches((current) => current.filter((match) => match.id !== id))
     try {
-      await saveCloudData("matches", next)
+      await deleteCloudItem("matches", id)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not delete this fixture.")
     }
@@ -194,7 +225,16 @@ export default function MatchesScreen({
 
   return (
     <main className="dpl-matches-page">
-      <header className="dpl-section-hero match-hero"><span>DIAMOND PREMIER LEAGUE · SEASON 6</span><h1>Match Center</h1><p>Publish fixtures once. Team names and logos are fetched directly from the online team registry.</p></header>
+      <header className="dpl-section-hero match-hero">
+        <div className="flex items-center gap-2 mb-1">
+          <span>DIAMOND PREMIER LEAGUE · SEASON 6</span>
+          <span className={`sync-pill ${connected ? "online" : "offline"}`}>
+            <i /> {connected ? "Live Synced" : "Reconnecting"}
+          </span>
+        </div>
+        <h1>Match Center</h1>
+        <p>Publish fixtures once. Team names and logos are fetched directly from the online team registry.</p>
+      </header>
       {isAdmin && <section className="match-publisher">
         <div><small>CREATE FIXTURE</small><h2>Schedule a DPL 6 match</h2><p>The system automatically moves fixtures from upcoming to live and ended.</p></div>
         <form onSubmit={createMatch}>
