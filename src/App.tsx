@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
-import { subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
+import { PLAYING_XI_SIZE, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import { deriveScorecards, type BattingLine, type BowlingLine } from "./utils/scorecardHelpers"
@@ -2105,7 +2105,9 @@ export default function App() {
           (typeof player === "string" ? player : player?.name || "").trim(),
         )
         .filter(Boolean)
-      const players = namedPlayers
+      // The 12th roster member is an emergency reserve and is deliberately
+      // excluded from match setup and scoring until substitution is supported.
+      const players = namedPlayers.slice(0, PLAYING_XI_SIZE)
       return {
         code: profile.code || profile.name.slice(0, 2).toUpperCase(),
         name: profile.name,

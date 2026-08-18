@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { saveTeamProfiles, subscribeTeamProfiles, type SharedTeamProfile } from "../../data/teamStore"
+import {
+  PLAYING_XI_SIZE,
+  TEAM_ROSTER_SIZE,
+  saveTeamProfiles,
+  subscribeTeamProfiles,
+  syncTeamPlayersToDirectory,
+  type SharedTeamProfile,
+} from "../../data/teamStore"
 import { observeConnectionState, uploadLeagueImage } from "../../lib/firebase"
 import "./teams.css"
 
@@ -7,15 +14,15 @@ type PlayerProfile = { id: string; name: string; photo: string }
 type TeamProfile = SharedTeamProfile
 
 const makePlayers = () =>
-  Array.from({ length: 11 }, () => ({
+  Array.from({ length: TEAM_ROSTER_SIZE }, () => ({
     id: crypto.randomUUID(),
     name: "",
     photo: "",
   }))
 
-const ensureEleven = (players: PlayerProfile[] = []) =>
-  Array.from({ length: 11 }, (_, index) =>
-    players[index] || { id: crypto.randomUUID(), name: "", photo: "" },
+const ensureRoster = (players: PlayerProfile[] = [], teamId: string) =>
+  Array.from({ length: TEAM_ROSTER_SIZE }, (_, index) =>
+    players[index] || { id: `${teamId}-player-${index + 1}`, name: "", photo: "" },
   )
 
 const customPlayerName = (value: unknown) => {
@@ -29,23 +36,23 @@ function normalizeStoredTeams(value: unknown): TeamProfile[] {
   return rawList.map((raw: any, index) => {
     const storedName = typeof raw.name === "string" ? raw.name : ""
     const name = /^(?:new\s+)?team\s+\d+$/i.test(storedName.trim()) ? "" : storedName
+    const teamId = String(raw.id || `${raw.code || "team"}-${index}`)
+    const storedPlayers = (raw.playerDetails || raw.players || []).map((player: any, playerIndex: number) =>
+      typeof player === "string"
+        ? { id: `${teamId}-player-${playerIndex + 1}`, name: customPlayerName(player), photo: "" }
+        : {
+            id: player.id || `${teamId}-player-${playerIndex + 1}`,
+            name: customPlayerName(player.name),
+            photo: player.photo || player.avatarUrl || "",
+          },
+    )
     return {
-      id: raw.id || `${raw.code || "team"}-${index}`,
+      id: teamId,
       name,
       code: typeof raw.code === "string" ? raw.code : "",
       color: raw.color || "#9df22f",
       logo: raw.logo || raw.logoUrl || "",
-      players: ensureEleven(
-      (raw.playerDetails || raw.players || []).map((player: any) =>
-        typeof player === "string"
-          ? { id: crypto.randomUUID(), name: customPlayerName(player), photo: "" }
-          : {
-              id: player.id || crypto.randomUUID(),
-              name: customPlayerName(player.name),
-              photo: player.photo || player.avatarUrl || "",
-            },
-      ),
-      ),
+      players: ensureRoster(storedPlayers, teamId),
     }
   })
 }
@@ -143,7 +150,7 @@ function TeamCard({
                   const name = event.target.value
                   onUpdate((current) => ({ ...current, name }))
                 }} aria-label="Team name" /> : <h3>{team.name || "Unnamed Team"}</h3>}
-                <small>{team.code} · 11 registered players</small>
+                <small>{team.code} · {PLAYING_XI_SIZE} playing XI + 1 reserve</small>
               </div>
             </div>
             <p>{isAdmin ? "Hover to edit the team name, team picture, player names and player photos." : "Open the card to view the complete registered squad."}</p>
@@ -183,6 +190,9 @@ function TeamCard({
                   transitionDelay: `${index * 38 + 120}ms`,
                 }}
               >
+                <b className={index === PLAYING_XI_SIZE ? "reserve-label" : ""}>
+                  {index === PLAYING_XI_SIZE ? "12 · RESERVE" : index + 1}
+                </b>
                 <label className={`player-photo-control ${!isAdmin ? "read-only" : ""}`} title={isAdmin ? "Upload player photo" : "Player photo"}>
                   {isAdmin && <input type="file" accept="image/*" onChange={(event) => {
                     const file = event.currentTarget.files?.[0]
@@ -222,7 +232,8 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
     if (!isAdmin || !loaded) return
     const timer = window.setTimeout(() => {
       void saveTeamProfiles(teams)
-        .then(() => setMessage("All team changes are synced online."))
+        .then(() => syncTeamPlayersToDirectory(teams))
+        .then(() => setMessage("Team changes and player directory are synced online."))
         .catch((error) => {
           setMessage(error instanceof Error ? error.message : "Online team sync failed.")
         })
