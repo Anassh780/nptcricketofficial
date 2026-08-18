@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { FirebaseUser } from "../../lib/firebase"
 import {
   mergeTeamPlayersIntoDirectory,
@@ -78,7 +78,7 @@ export default function PlayersScreen({
   teams: SharedTeamProfile[]
 }) {
   const [players, setPlayers] = useState<LeaguePlayer[]>(loadCachedPlayers)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => loadCachedPlayers().length === 0)
   const [connected, setConnected] = useState(true)
   const [name, setName] = useState("")
   const [city, setCity] = useState("")
@@ -86,6 +86,8 @@ export default function PlayersScreen({
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [refreshKey, setRefreshKey] = useState(0)
+  const teamsRef = useRef(teams)
+  teamsRef.current = teams
 
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date())
   const [autoSyncMsg, setAutoSyncMsg] = useState<string>("")
@@ -107,7 +109,7 @@ export default function PlayersScreen({
     const cloudPlayers = normalizePlayers(value)
     // Overlay the current roster before rendering so an older listener value
     // cannot briefly roll back an optimistic team edit.
-    const normalized = normalizePlayers(mergeTeamPlayersIntoDirectory(cloudPlayers, teams))
+    const normalized = normalizePlayers(mergeTeamPlayersIntoDirectory(cloudPlayers, teamsRef.current))
     setPlayers((prev) => {
       if (prev.length < normalized.length && prev.length > 0) {
         setAutoSyncMsg(`Auto-synced: Restored ${normalized.length - prev.length} cloud records`)
@@ -118,10 +120,19 @@ export default function PlayersScreen({
     cachePlayers(normalized)
     setLoading(false)
     setLastSyncedAt(new Date())
+  }, [])
+
+  // When teams update, merge roster players into existing directory
+  useEffect(() => {
+    if (teams.length > 0) {
+      setPlayers((current) => {
+        const merged = normalizePlayers(mergeTeamPlayersIntoDirectory(current, teams))
+        return JSON.stringify(merged) === JSON.stringify(current) ? current : merged
+      })
+    }
   }, [teams])
 
   useEffect(() => {
-    setLoading(true)
     const unsubscribe = subscribeCloudData<unknown>(
       "players",
       handleCloudData,

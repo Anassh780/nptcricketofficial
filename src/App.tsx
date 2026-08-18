@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
-import { PLAYING_XI_SIZE, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
+import { PLAYING_XI_SIZE, loadTeamProfiles, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
 import { deriveScorecards, type BattingLine, type BowlingLine } from "./utils/scorecardHelpers"
@@ -880,20 +880,35 @@ const TABLE_COLORS = [
 function HomeScreen({ onNavigate, isAdmin }: { onNavigate: (screen: Screen) => void; isAdmin: boolean }) {
   useEffect(() => {
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"))
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      elements.forEach((element) => element.classList.add("is-revealed"))
+    if (!elements.length) return
+
+    const revealAll = () => elements.forEach((el) => el.classList.add("is-revealed"))
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      revealAll()
       return
     }
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-revealed")
-          observer.unobserve(entry.target)
-        }
-      })
-    }, { threshold: 0.14, rootMargin: "0px 0px -7%" })
-    elements.forEach((element) => observer.observe(element))
-    return () => observer.disconnect()
+
+    // Safety fallback: ensure all data is visible even if scroll events or intersection observer fails on mobile
+    const safetyTimer = window.setTimeout(revealAll, 350)
+
+    try {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed")
+            observer.unobserve(entry.target)
+          }
+        })
+      }, { threshold: 0.05, rootMargin: "50px 0px" })
+      elements.forEach((element) => observer.observe(element))
+      return () => {
+        window.clearTimeout(safetyTimer)
+        observer.disconnect()
+      }
+    } catch {
+      revealAll()
+    }
   }, [])
 
   return (
@@ -1522,8 +1537,9 @@ function SeriesScreen({
   }), [])
 
   useEffect(() => {
+    if (!allTeamNames.length) return
     setSelections((current) => {
-      const cleanValue = (value: string) => allTeamNames.includes(value) ? value : ""
+      const cleanValue = (value: string) => (!value || allTeamNames.includes(value)) ? value : ""
       const sourceGroups = current.groups?.length ? current.groups : initialSelections.groups
       const groupCount = Math.max(1, sourceGroups.length)
       const groups = Array.from({ length: groupCount }, (_, groupIndex) => {
@@ -2093,10 +2109,17 @@ export default function App() {
   const admin = useMemo(() => isLeagueAdmin(user), [user, adminRevision])
   const [overs, setOvers] = useState(20)
   const [teamProfiles, setTeamProfiles] = useState<SharedTeamProfile[]>(() =>
-    DEFAULT_TEAM_PROFILES,
+    loadTeamProfiles(DEFAULT_TEAM_PROFILES),
   )
-  const [teamsLoaded, setTeamsLoaded] = useState(false)
-  const [scheduledMatches, setScheduledMatches] = useState<LeagueMatch[]>([])
+  const [teamsLoaded, setTeamsLoaded] = useState(() => loadTeamProfiles([]).length > 0)
+  const [scheduledMatches, setScheduledMatches] = useState<LeagueMatch[]>(() => {
+    try {
+      const cached = localStorage.getItem("cricvault-matches-cache")
+      return cached ? JSON.parse(cached) : []
+    } catch {
+      return []
+    }
+  })
   const scoringTeams = useMemo<Team[]>(() => {
     const mapped = teamProfiles.map((profile) => {
       const savedPlayers = Array.isArray(profile.players) ? profile.players : []
@@ -2156,7 +2179,13 @@ export default function App() {
     "matches",
     (onlineMatches) => {
       const rawList: any[] = Array.isArray(onlineMatches) ? onlineMatches : Object.values(onlineMatches || {})
-      setScheduledMatches(rawList.filter((m) => m && typeof m === "object" && m.id && m.teamA && m.teamB))
+      const parsed = rawList.filter((m) => m && typeof m === "object" && m.id && m.teamA && m.teamB)
+      if (parsed.length > 0 || Array.isArray(onlineMatches)) {
+        setScheduledMatches(parsed)
+        try {
+          localStorage.setItem("cricvault-matches-cache", JSON.stringify(parsed))
+        } catch {}
+      }
     },
   ), [])
 
@@ -2168,17 +2197,17 @@ export default function App() {
   }), [])
 
   useEffect(() => subscribeCloudData<Standing[] | null>("standings", (onlineTable) => {
-    const currentNames = new Set(scoringTeams.map((team) => team.name))
-    const validRows = Array.isArray(onlineTable)
-      ? onlineTable.filter((row) => currentNames.has(row.team))
-      : []
+    if (!onlineTable) return
+    const rawList: Standing[] = Array.isArray(onlineTable) ? onlineTable : Object.values(onlineTable || {})
+    const validRows = rawList.filter((row) => row && typeof row === "object" && typeof row.team === "string" && row.team.trim().length > 0)
+    if (!validRows.length) return
     const nextTable = dedupeStandings(validRows)
     setState((current) =>
       JSON.stringify(current.table) === JSON.stringify(nextTable)
         ? current
         : { ...current, table: nextTable },
     )
-  }), [scoringTeams])
+  }), [])
 
   useEffect(() => {
     if (admin) return
@@ -2207,6 +2236,7 @@ export default function App() {
     previousProfiles.current = teamProfiles
 
     setState((current) => {
+      if (!scoringTeams.length) return current
       const existingNames = new Set(
         current.table.map((row) => renamed.get(row.team) || row.team),
       )
@@ -2216,7 +2246,6 @@ export default function App() {
       const activeNames = new Set(scoringTeams.map((team) => team.name))
       const nextTable = current.table
         .map((row) => ({ ...row, team: renamed.get(row.team) || row.team }))
-        .filter((row) => activeNames.has(row.team))
       const renamedBatting = renamed.get(current.batting) || current.batting
       const renamedBowling = renamed.get(current.bowling) || current.bowling
       const nextBatting = activeNames.has(renamedBatting) ? renamedBatting : ""

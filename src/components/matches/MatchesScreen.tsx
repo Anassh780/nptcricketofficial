@@ -56,6 +56,15 @@ const matchStatus = (match: LeagueMatch) => {
   return "UPCOMING"
 }
 
+const loadCachedMatches = (): LeagueMatch[] => {
+  try {
+    const cached = localStorage.getItem("cricvault-matches-cache") || localStorage.getItem("cricvault-matches-gallery-v2")
+    return cached ? normalizeMatches(JSON.parse(cached)) : []
+  } catch {
+    return []
+  }
+}
+
 export default function MatchesScreen({
   teams,
   user,
@@ -69,8 +78,8 @@ export default function MatchesScreen({
   isAdmin: boolean
   onResumeMatch?: (match: LeagueMatch) => void
 }) {
-  const [matches, setMatches] = useState<LeagueMatch[]>([])
-  const [loading, setLoading] = useState(true)
+  const [matches, setMatches] = useState<LeagueMatch[]>(loadCachedMatches)
+  const [loading, setLoading] = useState(false)
   const [connected, setConnected] = useState(true)
   const [teamA, setTeamA] = useState(teams[0]?.id || "")
   const [teamB, setTeamB] = useState(teams[1]?.id || "")
@@ -153,12 +162,16 @@ export default function MatchesScreen({
   }
 
   useEffect(() => {
-    setLoading(true)
     return subscribeCloudData<unknown>(
       "matches",
       (value) => {
-        setMatches(normalizeMatches(value))
+        const normalized = normalizeMatches(value)
+        setMatches(normalized)
         setLoading(false)
+        try {
+          localStorage.setItem("cricvault-matches-cache", JSON.stringify(normalized))
+          localStorage.setItem("cricvault-matches-gallery-v2", JSON.stringify(normalized))
+        } catch {}
       },
       () => setLoading(false),
     )
@@ -221,7 +234,16 @@ export default function MatchesScreen({
     }
   }
 
-  const team = (id: string) => teams.find((item) => item.id === id)
+  const team = (idOrName: string) => {
+    if (!idOrName) return undefined
+    const norm = idOrName.trim().toLowerCase()
+    return teams.find(
+      (item) =>
+        item.id === idOrName ||
+        item.name.trim().toLowerCase() === norm ||
+        item.code.trim().toLowerCase() === norm,
+    )
+  }
 
   return (
     <main className="dpl-matches-page">

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {
   PLAYING_XI_SIZE,
   TEAM_ROSTER_SIZE,
+  loadTeamProfiles,
   saveTeamProfiles,
   subscribeTeamProfiles,
   syncTeamPlayersToDirectory,
@@ -219,8 +220,8 @@ export default function TeamsScreen({
   isAdmin: boolean
   onTeamsChange?: (teams: TeamProfile[]) => void
 }) {
-  const [teams, setTeams] = useState<TeamProfile[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [teams, setTeams] = useState<TeamProfile[]>(() => normalizeStoredTeams(loadTeamProfiles([])))
+  const [loaded, setLoaded] = useState(() => loadTeamProfiles([]).length > 0)
   const [connected, setConnected] = useState(true)
   const [query, setQuery] = useState("")
   const [message, setMessage] = useState("Ready to manage tournament squads.")

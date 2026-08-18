@@ -17,9 +17,27 @@ type AboutData = {
   management: ManagementMember[]
 }
 
+const ABOUT_STORAGE_KEY = "cricvault-about-content-v2"
+
 const DEFAULT_ABOUT: AboutData = {
   socials: { facebook: "", instagram: "", youtube: "" },
   management: [],
+}
+
+const loadCachedAbout = (): AboutData => {
+  try {
+    const cached = localStorage.getItem(ABOUT_STORAGE_KEY)
+    if (!cached) return DEFAULT_ABOUT
+    const parsed = JSON.parse(cached)
+    return {
+      socials: { ...DEFAULT_ABOUT.socials, ...(parsed.socials || {}) },
+      management: Array.isArray(parsed.management)
+        ? parsed.management.filter(Boolean)
+        : Object.values(parsed.management || {}),
+    }
+  } catch {
+    return DEFAULT_ABOUT
+  }
 }
 
 const FacebookLogo = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14 8.5V7c0-.8.5-1 1.1-1H18V2.2C17.5 2.1 15.8 2 14.2 2 11 2 8.8 4 8.8 7.6v.9H5v4.3h3.8V22H14v-9.2h3.5l.6-4.3H14Z" /></svg>
@@ -32,15 +50,21 @@ const whatsappUrl = (phone: string) => {
 }
 
 export default function AboutSection({ isAdmin }: { isAdmin: boolean }) {
-  const [data, setData] = useState<AboutData>(DEFAULT_ABOUT)
+  const [data, setData] = useState<AboutData>(loadCachedAbout)
   const [status, setStatus] = useState("")
 
   useEffect(() => subscribeCloudData<AboutData | null>("about", (online) => {
     if (!online) return
-    setData({
+    const updated: AboutData = {
       socials: { ...DEFAULT_ABOUT.socials, ...(online.socials || {}) },
-      management: Array.isArray(online.management) ? online.management.filter(Boolean) : Object.values(online.management || {}),
-    })
+      management: Array.isArray(online.management)
+        ? online.management.filter(Boolean)
+        : Object.values(online.management || {}),
+    }
+    setData(updated)
+    try {
+      localStorage.setItem(ABOUT_STORAGE_KEY, JSON.stringify(updated))
+    } catch {}
   }), [])
 
   const persist = async (next: AboutData, message: string) => {

@@ -17,8 +17,11 @@
 .landing-hero-enter { animation: hero-copy-enter var(--motion-slow) var(--motion-enter) .08s both; }
 @keyframes hero-copy-enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
-[data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity var(--motion-slow) var(--motion-enter), transform var(--motion-slow) var(--motion-enter); }
-[data-reveal].is-revealed { opacity: 1; transform: none; }
+[data-reveal] { opacity: 1; transform: none; transition: opacity var(--motion-slow) var(--motion-enter), transform var(--motion-slow) var(--motion-enter); }
+@media (min-width: 761px) {
+  [data-reveal]:not(.is-revealed) { opacity: 0; transform: translateY(28px); }
+  [data-reveal].is-revealed { opacity: 1; transform: none; }
+}
 
 .home-metrics {
   width: min(1180px, calc(100% - 36px));
