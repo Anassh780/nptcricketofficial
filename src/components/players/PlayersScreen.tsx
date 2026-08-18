@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { FirebaseUser } from "../../lib/firebase"
 import {
+  mergeTeamPlayersIntoDirectory,
+  PLAYER_DIRECTORY_STORAGE_KEY,
+  PLAYER_DIRECTORY_UPDATE_EVENT,
+  type SharedTeamProfile,
+} from "../../data/teamStore"
+import {
   deleteCloudItem,
   observeConnectionState,
   saveCloudItem,
@@ -18,8 +24,6 @@ export type LeaguePlayer = {
   createdBy: string
 }
 
-const PLAYER_STORAGE_KEY = "dpl6-player-gallery-v2"
-
 const normalizePlayers = (value: unknown): LeaguePlayer[] => {
   if (!value) return []
   const rawList: any[] = Array.isArray(value) ? value : Object.values(value)
@@ -35,7 +39,7 @@ const normalizePlayers = (value: unknown): LeaguePlayer[] => {
       id,
       name,
       city: String(raw.city || "DPL 6").trim(),
-      photo: String(raw.photo || raw.photoURL || raw.avatarUrl || ""),
+      photo: String(raw.photo || raw.picture || raw.photoURL || raw.avatarUrl || ""),
       createdAt: typeof raw.createdAt === "number" ? raw.createdAt : Date.now() - idx * 1000,
       createdBy: String(raw.createdBy || "admin"),
     })
@@ -46,7 +50,7 @@ const normalizePlayers = (value: unknown): LeaguePlayer[] => {
 
 const loadCachedPlayers = (): LeaguePlayer[] => {
   try {
-    const cached = localStorage.getItem(PLAYER_STORAGE_KEY)
+    const cached = localStorage.getItem(PLAYER_DIRECTORY_STORAGE_KEY)
     return cached ? normalizePlayers(JSON.parse(cached)) : []
   } catch {
     return []
@@ -56,7 +60,7 @@ const loadCachedPlayers = (): LeaguePlayer[] => {
 const cachePlayers = (players: LeaguePlayer[]) => {
   try {
     // Only cache essential data to prevent localStorage quota issues
-    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(players))
+    localStorage.setItem(PLAYER_DIRECTORY_STORAGE_KEY, JSON.stringify(players))
   } catch (error) {
     console.warn("Player cache quota reached; running in live memory", error)
   }
@@ -66,10 +70,12 @@ export default function PlayersScreen({
   user,
   onLogin,
   isAdmin,
+  teams,
 }: {
   user: FirebaseUser | null
   onLogin: () => void
   isAdmin: boolean
+  teams: SharedTeamProfile[]
 }) {
   const [players, setPlayers] = useState<LeaguePlayer[]>(loadCachedPlayers)
   const [loading, setLoading] = useState(true)
@@ -86,8 +92,22 @@ export default function PlayersScreen({
 
   useEffect(() => observeConnectionState(setConnected), [])
 
+  useEffect(() => {
+    const applyLocalUpdate = (event: Event) => {
+      const updated = normalizePlayers((event as CustomEvent<unknown>).detail)
+      setPlayers(updated)
+      cachePlayers(updated)
+      setLoading(false)
+    }
+    window.addEventListener(PLAYER_DIRECTORY_UPDATE_EVENT, applyLocalUpdate)
+    return () => window.removeEventListener(PLAYER_DIRECTORY_UPDATE_EVENT, applyLocalUpdate)
+  }, [])
+
   const handleCloudData = useCallback((value: unknown) => {
-    const normalized = normalizePlayers(value)
+    const cloudPlayers = normalizePlayers(value)
+    // Overlay the current roster before rendering so an older listener value
+    // cannot briefly roll back an optimistic team edit.
+    const normalized = normalizePlayers(mergeTeamPlayersIntoDirectory(cloudPlayers, teams))
     setPlayers((prev) => {
       if (prev.length < normalized.length && prev.length > 0) {
         setAutoSyncMsg(`Auto-synced: Restored ${normalized.length - prev.length} cloud records`)
@@ -98,7 +118,7 @@ export default function PlayersScreen({
     cachePlayers(normalized)
     setLoading(false)
     setLastSyncedAt(new Date())
-  }, [])
+  }, [teams])
 
   useEffect(() => {
     setLoading(true)

@@ -22,10 +22,15 @@ export type SharedTeamProfile = {
 }
 
 export const TEAM_STORAGE_KEY = "cricvault-teams-gallery-v2"
+export const PLAYER_DIRECTORY_STORAGE_KEY = "dpl6-player-gallery-v2"
 export const TEAM_UPDATE_EVENT = "cricvault:teams-updated"
+export const PLAYER_DIRECTORY_UPDATE_EVENT = "cricvault:players-updated"
 
 const normalizePlayerName = (name: string) =>
   name.trim().toLocaleLowerCase().replace(/\s+/g, " ")
+
+const playerPhoto = (player: Record<string, unknown>) =>
+  String(player.photo || player.picture || player.photoURL || player.avatarUrl || "")
 
 export type TeamLinkedLeaguePlayer = {
   id: string
@@ -36,21 +41,20 @@ export type TeamLinkedLeaguePlayer = {
   createdBy: string
   teamId: string
   teamName: string
-  source: "team-roster"
+  source?: string
+  [key: string]: unknown
 }
 
-/**
- * Upserts only roster-owned player records. Existing gallery metadata is
- * preserved, unrelated records are never replaced, and repeated calls are
- * idempotent.
- */
-export async function syncTeamPlayersToDirectory(teams: SharedTeamProfile[]) {
-  if (!isLeagueAdmin(auth.currentUser)) return
-
-  const stored = await fetchCloudData<Record<string, Partial<TeamLinkedLeaguePlayer>> | TeamLinkedLeaguePlayer[]>("players")
-  const existing = stored && typeof stored === "object"
-    ? (Array.isArray(stored) ? stored : Object.values(stored)).filter(Boolean)
-    : []
+/** Merge roster fields into the directory while retaining directory metadata. */
+export function mergeTeamPlayersIntoDirectory(
+  players: Partial<TeamLinkedLeaguePlayer>[],
+  teams: SharedTeamProfile[],
+  createdAt = Date.now(),
+) {
+  const merged = players.filter(Boolean).map((player) => ({
+    ...player,
+    photo: playerPhoto(player),
+  }))
 
   for (const team of teams) {
     for (const rosterPlayer of team.players || []) {
@@ -58,37 +62,75 @@ export async function syncTeamPlayersToDirectory(teams: SharedTeamProfile[]) {
       if (!name) continue
 
       const normalizedName = normalizePlayerName(name)
-      const byId = existing.find((player) => player.id === rosterPlayer.id)
-      const byTeamAndName = existing.find((player) =>
-        player.teamId === team.id && normalizePlayerName(player.name || "") === normalizedName,
-      )
+      const byId = merged.find((player) => String(player.id || "") === rosterPlayer.id)
+      const byTeamAndName = merged.find((player) => {
+        const storedTeamName = String(player.teamName || (player as Record<string, unknown>).team || "")
+        const sameTeam = player.teamId === team.id || (
+          !player.teamId && normalizePlayerName(storedTeamName) === normalizePlayerName(team.name)
+        )
+        return sameTeam && normalizePlayerName(String(player.name || "")) === normalizedName
+      })
       const current = byId || byTeamAndName
-      const id = current?.id || rosterPlayer.id
+      const id = String(current?.id || rosterPlayer.id || "")
       if (!id) continue
 
       const next: TeamLinkedLeaguePlayer = {
-        ...(current as TeamLinkedLeaguePlayer | undefined),
+        ...current,
         id,
         name,
-        city: current?.city || team.name || "DPL 6",
-        photo: rosterPlayer.photo || current?.photo || "",
-        createdAt: current?.createdAt || Date.now(),
-        createdBy: current?.createdBy || auth.currentUser?.uid || "admin",
+        city: String(current?.city || team.name || "DPL 6"),
+        // A selected roster photo is explicit and wins; otherwise retain the
+        // existing directory portrait, including legacy picture field shapes.
+        photo: rosterPlayer.photo || playerPhoto(current || {}),
+        createdAt: typeof current?.createdAt === "number" ? current.createdAt : createdAt,
+        createdBy: String(current?.createdBy || auth.currentUser?.uid || "admin"),
         teamId: team.id,
         teamName: team.name,
-        source: "team-roster",
+        source: current?.source || "team-roster",
       }
 
-      const unchanged = current && Object.entries(next).every(
-        ([key, value]) => current[key as keyof typeof current] === value,
-      )
-      if (!unchanged) {
-        await saveCloudItem("players", id, next)
-        const index = existing.indexOf(current || {})
-        if (index >= 0) existing[index] = next
-        else existing.push(next)
-      }
+      const index = current ? merged.indexOf(current) : -1
+      if (index >= 0) merged[index] = next
+      else merged.push(next)
     }
+  }
+
+  return merged as TeamLinkedLeaguePlayer[]
+}
+
+export function updateLocalPlayerDirectory(teams: SharedTeamProfile[]) {
+  let existing: Partial<TeamLinkedLeaguePlayer>[] = []
+  try {
+    const cached = localStorage.getItem(PLAYER_DIRECTORY_STORAGE_KEY)
+    existing = cached ? JSON.parse(cached) : []
+  } catch {
+    existing = []
+  }
+  const merged = mergeTeamPlayersIntoDirectory(existing, teams)
+  try {
+    localStorage.setItem(PLAYER_DIRECTORY_STORAGE_KEY, JSON.stringify(merged))
+  } catch (error) {
+    console.warn("Could not cache the optimistic player directory", error)
+  }
+  window.dispatchEvent(new CustomEvent(PLAYER_DIRECTORY_UPDATE_EVENT, { detail: merged }))
+}
+
+/** Persist exactly the same duplicate-safe merge used by the optimistic UI. */
+export async function syncTeamPlayersToDirectory(teams: SharedTeamProfile[]) {
+  if (!isLeagueAdmin(auth.currentUser)) return
+
+  const stored = await fetchCloudData<Record<string, Partial<TeamLinkedLeaguePlayer>> | TeamLinkedLeaguePlayer[]>("players")
+  const existing = stored && typeof stored === "object"
+    ? (Array.isArray(stored) ? stored : Object.values(stored)).filter(Boolean)
+    : []
+  const merged = mergeTeamPlayersIntoDirectory(existing, teams)
+
+  for (const next of merged) {
+    const current = existing.find((player) => player.id === next.id)
+    const unchanged = current && Object.entries(next).every(
+      ([key, value]) => current[key as keyof typeof current] === value,
+    )
+    if (!unchanged && next.teamId) await saveCloudItem("players", next.id, next)
   }
 }
 

@@ -2754,12 +2754,12 @@ export default function App() {
       {screen === "series" && <SeriesScreen table={state.table} teams={scoringTeams} result={state.result} isAdmin={admin} />}
       {screen === "teams" && (
         <Suspense fallback={<main className="teams-loading">Loading team center…</main>}>
-          <LazyTeamsScreen isAdmin={admin} />
+          <LazyTeamsScreen isAdmin={admin} onTeamsChange={setTeamProfiles} />
         </Suspense>
       )}
       {screen === "players" && (
         <Suspense fallback={<main className="players-loading">Loading DPL 6 players…</main>}>
-          <LazyPlayersScreen user={user} isAdmin={admin} onLogin={handleGoogleLogin} />
+          <LazyPlayersScreen user={user} isAdmin={admin} onLogin={handleGoogleLogin} teams={teamProfiles} />
         </Suspense>
       )}
       {screen === "widgets" && <WidgetsScreen score={state} teams={scoringTeams} matchOvers={overs} />}

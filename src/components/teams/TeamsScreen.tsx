@@ -5,6 +5,7 @@ import {
   saveTeamProfiles,
   subscribeTeamProfiles,
   syncTeamPlayersToDirectory,
+  updateLocalPlayerDirectory,
   type SharedTeamProfile,
 } from "../../data/teamStore"
 import { observeConnectionState, uploadLeagueImage } from "../../lib/firebase"
@@ -43,7 +44,7 @@ function normalizeStoredTeams(value: unknown): TeamProfile[] {
         : {
             id: player.id || `${teamId}-player-${playerIndex + 1}`,
             name: customPlayerName(player.name),
-            photo: player.photo || player.avatarUrl || "",
+            photo: player.photo || player.picture || player.photoURL || player.avatarUrl || "",
           },
     )
     return {
@@ -211,7 +212,13 @@ function TeamCard({
   )
 }
 
-export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
+export default function TeamsScreen({
+  isAdmin,
+  onTeamsChange,
+}: {
+  isAdmin: boolean
+  onTeamsChange?: (teams: TeamProfile[]) => void
+}) {
   const [teams, setTeams] = useState<TeamProfile[]>([])
   const [loaded, setLoaded] = useState(false)
   const [connected, setConnected] = useState(true)
@@ -246,7 +253,12 @@ export default function TeamsScreen({ isAdmin }: { isAdmin: boolean }) {
     [query, teams],
   )
   const updateTeam = (teamId: string, updater: (team: TeamProfile) => TeamProfile) =>
-    setTeams((current) => current.map((team) => team.id === teamId ? updater(team) : team))
+    setTeams((current) => {
+      const next = current.map((team) => team.id === teamId ? updater(team) : team)
+      updateLocalPlayerDirectory(next)
+      onTeamsChange?.(next)
+      return next
+    })
   const addTeam = () => {
     const number = teams.length + 1
     setTeams((current) => [...current, {
