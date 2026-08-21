@@ -14,17 +14,23 @@ const PDFPage: React.FC<{
   children: React.ReactNode
 }> = ({ pageClass, scale, children }) => {
   if (scale && scale < 0.98) {
+    const scaledW = Math.round(794 * scale)
+    const scaledH = Math.round(1123 * scale)
     return (
       <div
         className="pdf-page-scaler"
         style={{
-          width: `${Math.round(794 * scale)}px`,
-          height: `${Math.round(1123 * scale)}px`,
+          width: `${scaledW}px`,
+          height: `${scaledH}px`,
+          minWidth: `${scaledW}px`,
+          maxWidth: `${scaledW}px`,
+          minHeight: `${scaledH}px`,
+          maxHeight: `${scaledH}px`,
           overflow: "hidden",
           position: "relative",
           flexShrink: 0,
-          borderRadius: `${Math.max(6, Math.round(16 * scale))}px`,
-          boxShadow: "0 10px 32px rgba(0, 0, 0, 0.75)",
+          borderRadius: `${Math.max(4, Math.round(12 * scale))}px`,
+          boxShadow: "0 10px 32px rgba(0, 0, 0, 0.85)",
           margin: "0 auto",
         }}
       >
@@ -32,10 +38,17 @@ const PDFPage: React.FC<{
           className={`pdf-page ${pageClass}`}
           style={{
             transform: `scale(${scale})`,
-            transformOrigin: "top left",
+            transformOrigin: "0 0",
             width: "794px",
+            minWidth: "794px",
+            maxWidth: "794px",
             height: "1123px",
+            minHeight: "1123px",
+            maxHeight: "1123px",
             boxShadow: "none",
+            flexShrink: 0,
+            boxSizing: "border-box",
+            margin: 0,
           }}
         >
           {children}

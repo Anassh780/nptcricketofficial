@@ -33,17 +33,24 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
     document.body.style.overflow = "hidden"
 
     const updateScale = () => {
-      if (!modalBodyRef.current) return
-      const availableWidth = modalBodyRef.current.clientWidth - 20
-      if (availableWidth > 0 && availableWidth < 794) {
-        setScale(Math.max(0.32, availableWidth / 794))
+      const screenW = window.innerWidth
+      const bodyW = modalBodyRef.current ? modalBodyRef.current.clientWidth : screenW
+      const isMobile = screenW <= 768
+      const padding = isMobile ? 16 : 40
+      const available = Math.min(
+        screenW - padding,
+        bodyW > 0 ? bodyW - padding : screenW - padding,
+      )
+      if (available > 0 && available < 794) {
+        setScale(Math.min(1, Math.max(0.3, available / 794)))
       } else {
         setScale(1)
       }
     }
 
     updateScale()
-    const timer = setTimeout(updateScale, 60)
+    const timer = setTimeout(updateScale, 50)
+    const timer2 = setTimeout(updateScale, 200)
     window.addEventListener("resize", updateScale)
 
     return () => {
@@ -51,6 +58,7 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
       document.body.style.touchAction = originalTouchAction
       window.removeEventListener("resize", updateScale)
       clearTimeout(timer)
+      clearTimeout(timer2)
     }
   }, [isOpen])
 
@@ -148,25 +156,45 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
     <div className="report-modal-backdrop" onClick={onClose}>
       <div className="report-modal-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="report-modal-header">
-          <h3>
-            📄 MATCH REPORT <span>PREVIEW</span>
-          </h3>
+          <div className="report-header-title">
+            <span className="report-header-icon">📄</span>
+            <h3>
+              MATCH REPORT <span className="hide-mobile-sub">PREVIEW</span>
+            </h3>
+          </div>
           <div className="report-modal-actions">
             {isGenerating ? (
-              <span style={{ fontSize: "12px", color: "#91e521", fontWeight: 600 }}>
-                {progressText}
+              <span className="report-progress-pill">
+                ⏳ {progressText}
               </span>
             ) : (
               <>
-                <button className="report-btn report-btn-secondary" onClick={handleSharePDF}>
-                  📲 Share Report
+                <button
+                  type="button"
+                  className="report-btn report-btn-secondary"
+                  onClick={handleSharePDF}
+                  title="Share PDF Report"
+                >
+                  <span>📲</span>
+                  <span>Share</span>
                 </button>
-                <button className="report-btn report-btn-primary" onClick={handleDownloadPDF}>
-                  ⬇ Download PDF
+                <button
+                  type="button"
+                  className="report-btn report-btn-primary"
+                  onClick={handleDownloadPDF}
+                  title="Download PDF"
+                >
+                  <span>⬇</span>
+                  <span>PDF</span>
                 </button>
               </>
             )}
-            <button className="report-close-btn" onClick={onClose} aria-label="Close modal">
+            <button
+              type="button"
+              className="report-close-btn"
+              onClick={onClose}
+              aria-label="Close modal"
+            >
               ×
             </button>
           </div>

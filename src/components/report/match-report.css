@@ -28,36 +28,47 @@
 }
 
 .report-modal-header {
-  height: 60px;
-  padding: 0 20px;
+  height: 56px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 20, 28, 0.95);
-}
-
-.report-modal-header h3 {
-  margin: 0;
-  font-family: Rajdhani, sans-serif;
-  font-weight: 800;
-  font-size: 18px;
-  color: #fff;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
+  background: rgba(6, 20, 28, 0.96);
+  flex-shrink: 0;
   gap: 8px;
 }
 
-.report-modal-header h3 span {
+.report-header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.report-header-title h3 {
+  margin: 0;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-header-title h3 span {
   color: var(--lime, #91e521);
 }
 
 .report-modal-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .report-btn {
@@ -129,8 +140,12 @@
 }
 
 .pdf-page {
-  width: 794px;
-  height: 1123px;
+  width: 794px !important;
+  min-width: 794px !important;
+  max-width: 794px !important;
+  height: 1123px !important;
+  min-height: 1123px !important;
+  max-height: 1123px !important;
   background: radial-gradient(circle at 50% 10%, #08212e 0%, #030d13 70%);
   color: #e7eff1;
   font-family: Inter, system-ui, sans-serif;
@@ -139,9 +154,9 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   padding: 40px;
-  flex-shrink: 0;
+  flex-shrink: 0 !important;
 }
 
 /* Stadium Lights Background Effect */
@@ -724,24 +739,26 @@
 /* Android & Mobile Viewport Responsiveness for PDF Match Report */
 /* ============================================================ */
 .pdf-page-scaler {
-  transition: width 0.2s ease, height 0.2s ease;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block !important;
+  margin: 0 auto !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  box-sizing: content-box !important;
 }
 
 @media (max-width: 768px) {
   .report-modal-backdrop {
     padding: 0 !important;
     align-items: stretch !important;
-    justify-content: stretch !important;
+    justify-content: flex-start !important;
     height: 100dvh !important;
     width: 100vw !important;
+    overflow: hidden !important;
   }
 
   .report-modal-dialog {
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
     border-radius: 0 !important;
@@ -751,14 +768,17 @@
   }
 
   .report-modal-header {
-    height: 56px !important;
-    padding: 0 12px !important;
-    flex-shrink: 0 !important;
+    height: 52px !important;
+    padding: 0 10px !important;
+    gap: 6px !important;
   }
 
-  .report-modal-header h3 {
+  .report-header-title h3 {
     font-size: 13px !important;
-    gap: 4px !important;
+  }
+
+  .hide-mobile-sub {
+    display: none !important;
   }
 
   .report-modal-actions {
@@ -766,28 +786,44 @@
   }
 
   .report-btn {
-    height: 30px !important;
+    height: 32px !important;
     padding: 0 8px !important;
     font-size: 11px !important;
-    border-radius: 6px !important;
+    border-radius: 7px !important;
+    gap: 4px !important;
   }
 
   .report-close-btn {
     font-size: 22px !important;
-    padding: 0 4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin-left: 2px !important;
   }
 
   .report-modal-body {
-    padding: 12px 6px max(24px, env(safe-area-inset-bottom)) 6px !important;
+    padding: 12px 0 max(28px, env(safe-area-inset-bottom)) 0 !important;
     gap: 16px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    align-items: center !important;
   }
 
   .pdf-export-container {
     width: 100% !important;
     gap: 16px !important;
     align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .pdf-page-scaler {
+    margin: 0 auto !important;
   }
 }
