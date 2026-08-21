@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { PLAYING_XI_SIZE, loadTeamProfiles, subscribeTeamProfiles, TEAM_UPDATE_EVENT, type SharedTeamProfile } from "./data/teamStore"
 import { isLeagueAdmin, loginWithGoogle, logoutFirebase, observeFirebaseUser, saveCloudData, subscribeCloudData, type FirebaseUser } from "./lib/firebase"
 import type { LeagueMatch } from "./components/matches/MatchesScreen"
@@ -865,7 +866,17 @@ function SecondInningsModal({
   const isValid = Boolean(activeStriker && activeNonStriker && activeBowler && activeStriker !== activeNonStriker)
   const rrr = ((target) / Math.max(1, overs)).toFixed(2)
 
-  return (
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+    }
+  }, [])
+
+  return createPortal(
     <div className="modal-backdrop second-innings-backdrop">
       <div className="choice-modal second-innings-dialog">
         <div className="sheet-handle" />
@@ -1025,7 +1036,8 @@ function SecondInningsModal({
           ▶ Start 2nd Innings & Resume Scoring →
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

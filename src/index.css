@@ -1192,8 +1192,38 @@
 .paused-match-players-preview div b{display:block;color:#e4edf0;font:700 8px Rajdhani;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .paused-card-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;width:100%}
 
-/* Second Innings Transition Pop-Up */
-.second-innings-dialog{width:min(540px,calc(100vw - 24px))!important;max-width:540px!important;padding:0 20px 20px!important}
+/* Second Innings Transition Pop-Up & Backdrop */
+.second-innings-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 9999 !important;
+  background: rgba(1, 8, 13, 0.88) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.second-innings-dialog {
+  width: min(540px, calc(100vw - 24px)) !important;
+  max-width: 540px !important;
+  max-height: 88dvh !important;
+  padding: 0 20px 20px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  z-index: 10000 !important;
+}
+
 .second-innings-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .second-innings-title span{color:var(--lime);font:800 7px Rajdhani;letter-spacing:.15em}
 .target-pill{padding:4px 10px;border-radius:6px;background:rgba(145,229,33,.14);border:1px solid rgba(145,229,33,.4);color:var(--lime);font:800 10px Rajdhani}
@@ -1209,6 +1239,45 @@
 .label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 .toggle-custom-link{border:0;background:transparent;color:var(--lime);font:700 7.5px Rajdhani;cursor:pointer;padding:0;text-decoration:underline}
 .second-innings-confirm-btn{height:44px;font-size:13px;font-weight:800;letter-spacing:.04em}
+
+@media(max-width:768px){
+  .second-innings-backdrop {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .second-innings-dialog {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 88dvh !important;
+    border-radius: 24px 24px 0 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-bottom: 0 !important;
+    background: linear-gradient(180deg, #09202b 0%, #041219 100%) !important;
+    box-shadow: 0 -16px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(145, 229, 33, 0.1) !important;
+    padding: 0 16px max(24px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    z-index: 10000 !important;
+    animation: bottom-sheet-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  }
+
+  .second-innings-dialog .sheet-handle {
+    display: block !important;
+    width: 44px !important;
+    height: 5px !important;
+    border-radius: 100px !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    margin: 12px auto 8px !important;
+    flex-shrink: 0 !important;
+  }
+}
 
 @media(max-width:680px){
   .setup-panel-header{padding:12px}
