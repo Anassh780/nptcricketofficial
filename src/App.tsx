@@ -282,8 +282,9 @@ function loadActiveMatchState(): {
   history: ScoreState[]
 } {
   try {
+    const isReady = localStorage.getItem("cricvault-match-ready") === "true"
     const raw = localStorage.getItem("cricvault-active-session")
-    if (raw) {
+    if (isReady && raw) {
       const parsed = JSON.parse(raw)
       if (
         parsed?.state &&
@@ -1035,6 +1036,152 @@ function SecondInningsModal({
         >
           ▶ Start 2nd Innings & Resume Scoring →
         </button>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function FinalMatchResultModal({
+  state,
+  teams,
+  overs,
+  onOpenReport,
+  onExit,
+  onClose,
+}: {
+  state: ScoreState
+  teams: Team[]
+  overs: number
+  onOpenReport: () => void
+  onExit: () => void
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+    }
+  }, [])
+
+  const first = state.summaries[0]
+  const second = state.summaries[1] || inningsSnapshot(state)
+
+  return createPortal(
+    <div className="innings-result-backdrop" onClick={onClose}>
+      <div
+        className="innings-result-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          border: "1.5px solid var(--lime, #91e521)",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.95), 0 0 35px rgba(145,229,33,0.2)",
+        }}
+      >
+        <button className="innings-result-close" onClick={onClose} aria-label="Close modal">
+          ×
+        </button>
+
+        <div className="innings-result-kicker">
+          <i /> FINAL MATCH RESULT · DPL 6
+        </div>
+
+        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+          <h2
+            style={{
+              margin: "0 0 6px",
+              font: "800 24px Rajdhani, sans-serif",
+              color: "var(--lime, #91e521)",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            🏆 {state.result || "MATCH CONCLUDED"}
+          </h2>
+          <p style={{ margin: 0, color: "#8da0a7", fontSize: "11px" }}>
+            Points table and league standings have been automatically updated and synced.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", margin: "16px 0" }}>
+          {first && (
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "10px",
+                background: "rgba(4, 18, 25, 0.8)",
+                border: "1px solid var(--line2, #24434e)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <TeamBadge team={teamByName(first.team, teams)} />
+                <strong style={{ fontSize: "12px", color: "#fff" }}>{first.team}</strong>
+              </div>
+              <div style={{ font: "800 22px Rajdhani, sans-serif", color: "#e7eff1" }}>
+                {first.runs}/{first.wickets}{" "}
+                <small style={{ fontSize: "11px", color: "#7f929a" }}>({oversText(first.balls)} ov)</small>
+              </div>
+              <small style={{ color: "var(--lime, #91e521)", fontSize: "10px" }}>1st Innings</small>
+            </div>
+          )}
+
+          {second && (
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "10px",
+                background: "rgba(4, 18, 25, 0.8)",
+                border: "1px solid var(--line2, #24434e)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <TeamBadge team={teamByName(second.team, teams)} />
+                <strong style={{ fontSize: "12px", color: "#fff" }}>{second.team}</strong>
+              </div>
+              <div style={{ font: "800 22px Rajdhani, sans-serif", color: "#e7eff1" }}>
+                {second.runs}/{second.wickets}{" "}
+                <small style={{ fontSize: "11px", color: "#7f929a" }}>({oversText(second.balls)} ov)</small>
+              </div>
+              <small style={{ color: "var(--lime, #91e521)", fontSize: "10px" }}>2nd Innings</small>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "20px" }}>
+          <button
+            type="button"
+            className="continue-chase-button"
+            style={{
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              fontSize: "13px",
+            }}
+            onClick={onOpenReport}
+          >
+            📄 View & Share Full Match PDF Report →
+          </button>
+          <button
+            type="button"
+            className="report-btn report-btn-secondary"
+            style={{
+              height: "44px",
+              justifyContent: "center",
+              fontSize: "13px",
+              fontWeight: 800,
+              borderRadius: "9px",
+              borderColor: "rgba(255, 52, 45, 0.4)",
+              color: "#ff5e57",
+            }}
+            onClick={onExit}
+          >
+            🏁 Exit Match & Start New Match
+          </button>
+        </div>
       </div>
     </div>,
     document.body,
@@ -2824,6 +2971,36 @@ export default function App() {
   }), [])
 
   useEffect(() => {
+    if (!scoringTeams.length) return
+    setState((current) => {
+      const existing = current.table || []
+      const existingTeamNames = new Set(existing.map((row) => row.team))
+      const missing = scoringTeams
+        .filter((t) => t.name && !existingTeamNames.has(t.name))
+        .map((t) => ({
+          team: t.name,
+          p: 0,
+          w: 0,
+          l: 0,
+          t: 0,
+          nr: 0,
+          pts: 0,
+          forRuns: 0,
+          forBalls: 0,
+          againstRuns: 0,
+          againstBalls: 0,
+        }))
+      if (missing.length > 0) {
+        return {
+          ...current,
+          table: [...existing, ...missing],
+        }
+      }
+      return current
+    })
+  }, [scoringTeams])
+
+  useEffect(() => {
     if (admin) return
     return subscribeCloudData<ScoreState | null>("liveScore", (onlineScore) => {
       if (!onlineScore) return
@@ -2926,8 +3103,8 @@ export default function App() {
       striker: state.striker,
       nonStriker: state.nonStriker,
       bowler: state.bowler,
-      state,
-      history,
+      state: clone(state),
+      history: clone(history),
       updatedAt: Date.now(),
     }
     const currentList = loadPausedMatches().filter(
@@ -2936,19 +3113,15 @@ export default function App() {
     currentList.unshift(sessionObj)
     savePausedMatches(currentList)
     setPausedMatches(currentList)
-    localStorage.setItem(
-      "cricvault-active-session",
-      JSON.stringify({
-        state,
-        history,
-        matchReady: true,
-        overs,
-        updatedAt: Date.now(),
-      }),
-    )
-    alert("Match paused & saved to Paused Matches list! You can resume it or any other match anytime.")
+
+    try {
+      localStorage.removeItem("cricvault-active-session")
+      localStorage.setItem("cricvault-match-ready", "false")
+    } catch {}
+
     setMatchReady(false)
     setIsEditingActiveMatch(false)
+    alert("Match paused & saved to Paused Matches list! You can resume it anytime.")
   }
 
   const handleResumeSession = (session: PausedMatchSession) => {
@@ -2958,12 +3131,44 @@ export default function App() {
       setOvers(session.overs || 20)
       setMatchReady(true)
       setIsEditingActiveMatch(false)
+      try {
+        localStorage.setItem("cricvault-match-ready", "true")
+        localStorage.setItem(
+          "cricvault-active-session",
+          JSON.stringify({
+            state: session.state,
+            history: session.history,
+            matchReady: true,
+            overs: session.overs || 20,
+            updatedAt: Date.now(),
+          }),
+        )
+      } catch {}
       void saveCloudData("liveScore", {
         ...session.state,
         matchOvers: session.overs || 20,
         updatedAt: Date.now(),
       }).catch(() => undefined)
     }
+  }
+
+  const handleEndMatch = () => {
+    if (!window.confirm("Are you sure you want to end this match? Final results will be calculated and saved.")) return
+    endMatch()
+    setInningsResultOpen(true)
+  }
+
+  const handleExitMatch = () => {
+    try {
+      localStorage.removeItem("cricvault-active-session")
+      localStorage.setItem("cricvault-match-ready", "false")
+    } catch {}
+    setMatchReady(false)
+    setIsEditingActiveMatch(false)
+    setInningsResultOpen(false)
+    setHistory([])
+    setState(INITIAL)
+    navigate("matches")
   }
 
   const handleDeletePausedMatch = (id: string) => {
@@ -3329,6 +3534,9 @@ export default function App() {
           nrrSummary(second, overs * 6),
           winner,
         )
+        setTimeout(() => {
+          setInningsResultOpen(true)
+        }, 200)
       }
       return
     }
@@ -3844,6 +4052,20 @@ export default function App() {
                     </button>
                   )}
                   <button
+                    className="report-btn report-btn-secondary"
+                    style={{
+                      height: "28px",
+                      fontSize: "11px",
+                      padding: "0 10px",
+                      borderColor: "rgba(255, 77, 77, 0.4)",
+                      color: "#ff5e57",
+                    }}
+                    onClick={handleEndMatch}
+                    title="Conclude and end match"
+                  >
+                    ⏹ End Match
+                  </button>
+                  <button
                     className="report-btn report-btn-primary"
                     style={{ height: "28px", fontSize: "11px", padding: "0 12px" }}
                     onClick={() => setIsReportModalOpen(true)}
@@ -3901,6 +4123,16 @@ export default function App() {
           pending={pendingSecondInnings}
           overs={overs}
           onConfirm={handleConfirmSecondInnings}
+        />
+      )}
+      {inningsResultOpen && Boolean(state.result) && (
+        <FinalMatchResultModal
+          state={state}
+          teams={scoringTeams}
+          overs={overs}
+          onOpenReport={() => setIsReportModalOpen(true)}
+          onExit={handleExitMatch}
+          onClose={() => setInningsResultOpen(false)}
         />
       )}
       <MatchReportModal
