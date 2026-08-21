@@ -274,6 +274,40 @@ function savePausedMatches(list: PausedMatchSession[]) {
   }
 }
 
+function loadActiveMatchState(): {
+  state: ScoreState
+  matchReady: boolean
+  overs: number
+  history: ScoreState[]
+} {
+  try {
+    const raw = localStorage.getItem("cricvault-active-session")
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (
+        parsed?.state &&
+        parsed.state.striker &&
+        parsed.state.nonStriker &&
+        parsed.state.bowler &&
+        !parsed.state.result
+      ) {
+        return {
+          state: parsed.state,
+          matchReady: true,
+          overs: parsed.overs || 20,
+          history: Array.isArray(parsed.history) ? parsed.history : [],
+        }
+      }
+    }
+  } catch {}
+  return {
+    state: INITIAL,
+    matchReady: false,
+    overs: 20,
+    history: [],
+  }
+}
+
 function SetupPanel({
   onStart,
   teams,
@@ -2558,7 +2592,8 @@ export default function App() {
     if (routeTimeoutRef.current) window.clearTimeout(routeTimeoutRef.current)
   }, [])
   const admin = useMemo(() => isLeagueAdmin(user), [user, adminRevision])
-  const [overs, setOvers] = useState(20)
+  const initialSession = useMemo(() => loadActiveMatchState(), [])
+  const [overs, setOvers] = useState(initialSession.overs)
   const [scoringTheme, setScoringTheme] = useState<"dark" | "sun-light" | "high-contrast-dark">(() => {
     try {
       const saved = localStorage.getItem("cricvault-scoring-theme")
@@ -2631,10 +2666,8 @@ export default function App() {
     )
     return unique
   }, [teamProfiles])
-  const [matchReady, setMatchReady] = useState(
-    () => localStorage.getItem("cricvault-match-ready") === "true",
-  )
-  const [state, setState] = useState<ScoreState>(INITIAL)
+  const [matchReady, setMatchReady] = useState(initialSession.matchReady)
+  const [state, setState] = useState<ScoreState>(initialSession.state)
   const [pendingSecondInnings, setPendingSecondInnings] = useState<{
     first: InningsSummary
     target: number
@@ -2728,7 +2761,7 @@ export default function App() {
 
     setPendingSecondInnings(null)
   }
-  const [history, setHistory] = useState<ScoreState[]>([])
+  const [history, setHistory] = useState<ScoreState[]>(initialSession.history)
   const [inningsResultOpen, setInningsResultOpen] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const previousInnings = useRef(state.innings)

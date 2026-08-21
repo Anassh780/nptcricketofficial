@@ -256,12 +256,82 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 
   return (
     <section className="panel scoring-controls">
+      {/* Ball-by-ball scoring header */}
       <div className="panel-label">
         <span>Ball-by-ball scoring</span>
         <small>
           {state.freeHit ? "FREE HIT ACTIVE" : "6 legal balls per over"}
         </small>
       </div>
+
+      {/* Inline Over Complete Bowler Selector */}
+      {state.needsBowler && (
+        <div
+          className="over-complete-bowler-prompt"
+          style={{
+            margin: "8px 0 12px",
+            padding: "10px 14px",
+            background: "rgba(145, 229, 33, 0.12)",
+            border: "1.5px solid var(--lime, #91e521)",
+            borderRadius: "8px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <strong style={{ color: "var(--lime, #91e521)", fontSize: "12px", letterSpacing: "0.06em", fontFamily: "Rajdhani, sans-serif" }}>
+              ⚡ OVER COMPLETE — CHOOSE NEXT BOWLER
+            </strong>
+            <small style={{ color: "#c9dbdf", fontSize: "10px" }}>Previous: {state.bowler}</small>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {Object.values(state.bowlers || {})
+              .filter((b) => b && b.name !== state.bowler)
+              .map((b) => (
+                <button
+                  key={b.name}
+                  type="button"
+                  style={{
+                    padding: "6px 12px",
+                    background: "#081d28",
+                    border: "1px solid rgba(145, 229, 33, 0.5)",
+                    borderRadius: "6px",
+                    color: "#fff",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleSelectBowler(b.name)}
+                >
+                  {b.name} ({oversText(b.balls || 0)})
+                </button>
+              ))}
+            {(bowlingTeamPlayers || [])
+              .filter((name) => !state.bowlers?.[name])
+              .slice(0, 4)
+              .map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  style={{
+                    padding: "6px 12px",
+                    background: "rgba(145, 229, 33, 0.18)",
+                    border: "1px dashed var(--lime, #91e521)",
+                    borderRadius: "6px",
+                    color: "var(--lime, #91e521)",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleSelectBowler(name)}
+                >
+                  + {name}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Run Buttons (0, 1, 2, 3, 4, 6) & Wicket (W) */}
       <div className="run-buttons">
