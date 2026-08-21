@@ -1,4 +1,5 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 import MatchReportPDF from "./MatchReportPDF"
@@ -21,6 +22,37 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [progressText, setProgressText] = useState("")
+  const [scale, setScale] = useState(1)
+  const modalBodyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = "hidden"
+
+    const updateScale = () => {
+      if (!modalBodyRef.current) return
+      const availableWidth = modalBodyRef.current.clientWidth - 20
+      if (availableWidth > 0 && availableWidth < 794) {
+        setScale(Math.max(0.32, availableWidth / 794))
+      } else {
+        setScale(1)
+      }
+    }
+
+    updateScale()
+    const timer = setTimeout(updateScale, 60)
+    window.addEventListener("resize", updateScale)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+      window.removeEventListener("resize", updateScale)
+      clearTimeout(timer)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -42,12 +74,22 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
       setProgressText(`Rendering page ${i + 1} of ${pages.length}...`)
       const pageEl = pages[i]
 
+      const prevTransform = pageEl.style.transform
+      const prevOrigin = pageEl.style.transformOrigin
+      pageEl.style.transform = "none"
+
       const canvas = await html2canvas(pageEl, {
         scale: 2, // High resolution export
         useCORS: true,
         backgroundColor: "#030d13",
         logging: false,
+        width: 794,
+        height: 1123,
+        windowWidth: 1200,
       })
+
+      pageEl.style.transform = prevTransform
+      pageEl.style.transformOrigin = prevOrigin
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92)
       if (i > 0) pdf.addPage()
@@ -92,19 +134,17 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
           text: `Official match report for ${state.batting} vs ${state.bowling}.`,
         })
       } else {
-        // Fallback to direct download
         pdf.save(filename)
       }
     } catch (err) {
       console.error("Sharing failed:", err)
-      // Fallback download if user cancelled share or error occurred
     } finally {
       setIsGenerating(false)
       setProgressText("")
     }
   }
 
-  return (
+  return createPortal(
     <div className="report-modal-backdrop" onClick={onClose}>
       <div className="report-modal-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="report-modal-header">
@@ -132,11 +172,12 @@ export const MatchReportModal: React.FC<MatchReportModalProps> = ({
           </div>
         </div>
 
-        <div className="report-modal-body">
-          <MatchReportPDF state={state} teams={teams} overs={overs} />
+        <div className="report-modal-body" ref={modalBodyRef}>
+          <MatchReportPDF state={state} teams={teams} overs={overs} scale={scale} />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

@@ -719,3 +719,75 @@
   color: #91e521;
   margin-top: 2px;
 }
+
+/* ============================================================ */
+/* Android & Mobile Viewport Responsiveness for PDF Match Report */
+/* ============================================================ */
+.pdf-page-scaler {
+  transition: width 0.2s ease, height 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .report-modal-backdrop {
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    height: 100dvh !important;
+    width: 100vw !important;
+  }
+
+  .report-modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .report-modal-header {
+    height: 56px !important;
+    padding: 0 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .report-modal-header h3 {
+    font-size: 13px !important;
+    gap: 4px !important;
+  }
+
+  .report-modal-actions {
+    gap: 6px !important;
+  }
+
+  .report-btn {
+    height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    border-radius: 6px !important;
+  }
+
+  .report-close-btn {
+    font-size: 22px !important;
+    padding: 0 4px !important;
+  }
+
+  .report-modal-body {
+    padding: 12px 6px max(24px, env(safe-area-inset-bottom)) 6px !important;
+    gap: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .pdf-export-container {
+    width: 100% !important;
+    gap: 16px !important;
+    align-items: center !important;
+  }
+}
