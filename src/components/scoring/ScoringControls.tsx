@@ -192,13 +192,13 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
     setActivePopover({ type: "wicket" })
   }
 
-  // Handle clicking Run buttons (0, 1, 2, 3, 4, 6)
+  // Handle clicking Run buttons (0, 1, 2, 3, 4, 6) - Instant responsive scoring
   const handleRunClick = (
-    e: React.MouseEvent<HTMLButtonElement>,
+    _e: React.MouseEvent<HTMLButtonElement>,
     runs: number,
   ) => {
-    setAnchorEl(e.currentTarget)
-    setActivePopover({ type: "run", runs })
+    closePopover()
+    onRuns(runs)
   }
 
   // Confirm Extra runs selection
@@ -215,12 +215,6 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
       runOutBatter,
       runsCompleted: runOutCompletedRuns,
     })
-    closePopover()
-  }
-
-  // Confirm Run scoring
-  const handleConfirmRuns = (runs: number) => {
-    onRuns(runs)
     closePopover()
   }
 
@@ -505,33 +499,6 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
           </div>
         )}
 
-        {activePopover?.type === "run" && (
-          <div className="popover-run-confirm-body">
-            <div className="shot-chips-row">
-              {["Straight", "Cover Drive", "Pull Shot", "Lofted", "Swept", "Flick"].map(
-                (shot) => (
-                  <button
-                    key={shot}
-                    className={`shot-chip ${selectedShot === shot ? "selected" : ""}`}
-                    onClick={() => setSelectedShot(shot)}
-                  >
-                    {shot}
-                  </button>
-                ),
-              )}
-            </div>
-            <button
-              className="popover-confirm-btn"
-              onClick={() => handleConfirmRuns(activePopover.runs)}
-            >
-              {activePopover.runs === 0
-                ? "Record Dot Ball (0)"
-                : activePopover.runs >= 4
-                  ? `Confirm Boundary (${activePopover.runs})`
-                  : `Score ${activePopover.runs} Run${activePopover.runs > 1 ? "s" : ""}`}
-            </button>
-          </div>
-        )}
 
         {activePopover?.type === "bowler" && (
           <div className="bowler-list">

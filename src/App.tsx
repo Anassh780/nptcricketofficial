@@ -259,39 +259,8 @@ const PAUSED_MATCHES_KEY = "cricvault-paused-matches"
 function loadPausedMatches(): PausedMatchSession[] {
   try {
     const raw = localStorage.getItem(PAUSED_MATCHES_KEY)
-    let list: PausedMatchSession[] = raw ? JSON.parse(raw) : []
-    const legacyRaw = localStorage.getItem("cricvault-active-session")
-    if (legacyRaw) {
-      try {
-        const legacy = JSON.parse(legacyRaw)
-        if (legacy?.state && !legacy.state.result) {
-          const matchId = legacy.state.matchId || "legacy-session"
-          if (!list.some((m) => m.id === matchId || m.matchId === matchId)) {
-            list.unshift({
-              id: matchId,
-              matchId: legacy.state.matchId,
-              teamA: legacy.state.batting || "Team A",
-              teamB: legacy.state.bowling || "Team B",
-              batting: legacy.state.batting || "Team A",
-              bowling: legacy.state.bowling || "Team B",
-              runs: legacy.state.runs || 0,
-              wickets: legacy.state.wickets || 0,
-              balls: legacy.state.balls || 0,
-              overs: legacy.overs || 20,
-              innings: legacy.state.innings || 1,
-              target: legacy.state.target ?? null,
-              striker: legacy.state.striker || "",
-              nonStriker: legacy.state.nonStriker || "",
-              bowler: legacy.state.bowler || "",
-              state: legacy.state,
-              history: Array.isArray(legacy.history) ? legacy.history : [],
-              updatedAt: legacy.updatedAt || Date.now(),
-            })
-          }
-        }
-      } catch {}
-    }
-    return list
+    const list: PausedMatchSession[] = raw ? JSON.parse(raw) : []
+    return Array.isArray(list) ? list : []
   } catch {
     return []
   }
@@ -2868,60 +2837,30 @@ export default function App() {
     })
   }, [teamProfiles, scoringTeams])
   useEffect(() => {
-    localStorage.setItem("cricvault-score", JSON.stringify(state))
-    if (matchReady && liveScoreReady && !state.result) {
-      const activeMatchId = state.matchId || "live-match"
-      const sessionObj: PausedMatchSession = {
-        id: activeMatchId,
-        matchId: state.matchId,
-        teamA: state.batting,
-        teamB: state.bowling,
-        batting: state.batting,
-        bowling: state.bowling,
-        runs: state.runs,
-        wickets: state.wickets,
-        balls: state.balls,
-        overs,
-        innings: state.innings,
-        target: state.target,
-        striker: state.striker,
-        nonStriker: state.nonStriker,
-        bowler: state.bowler,
-        state,
-        history,
-        updatedAt: Date.now(),
-      }
-      localStorage.setItem(
-        "cricvault-active-session",
-        JSON.stringify({
-          state,
-          history,
-          matchReady: true,
-          overs,
-          updatedAt: Date.now(),
-        }),
-      )
-      const currentList = loadPausedMatches()
-      const idx = currentList.findIndex(
-        (m) => m.id === activeMatchId || m.matchId === activeMatchId,
-      )
-      if (idx >= 0) {
-        currentList[idx] = sessionObj
-      } else {
-        currentList.unshift(sessionObj)
-      }
-      savePausedMatches(currentList)
-      setPausedMatches(currentList)
-    } else if (state.result) {
-      localStorage.removeItem("cricvault-active-session")
-      if (state.matchId) {
-        const currentList = loadPausedMatches().filter(
-          (m) => m.id !== state.matchId && m.matchId !== state.matchId,
+    try {
+      localStorage.setItem("cricvault-score", JSON.stringify(state))
+      if (matchReady && liveScoreReady && !state.result) {
+        localStorage.setItem(
+          "cricvault-active-session",
+          JSON.stringify({
+            state,
+            history,
+            matchReady: true,
+            overs,
+            updatedAt: Date.now(),
+          }),
         )
-        savePausedMatches(currentList)
-        setPausedMatches(currentList)
+      } else if (state.result) {
+        localStorage.removeItem("cricvault-active-session")
+        if (state.matchId) {
+          const currentList = loadPausedMatches().filter(
+            (m) => m.id !== state.matchId && m.matchId !== state.matchId,
+          )
+          savePausedMatches(currentList)
+          setPausedMatches(currentList)
+        }
       }
-    }
+    } catch {}
   }, [state, history, matchReady, overs, liveScoreReady])
 
   const handlePauseMatch = () => {
@@ -3357,14 +3296,19 @@ export default function App() {
 
   const scoreRuns = (runs: number) =>
     commit((draft) => {
-      const batter = draft.batters[draft.striker],
-        bowler = draft.bowlers[draft.bowler]
-      batter.runs += runs
-      batter.balls++
-      if (runs === 4) batter.fours++
-      if (runs === 6) batter.sixes++
-      bowler.runs += runs
-      bowler.balls++
+      ensureRosterIntegrity(draft)
+      const batter = draft.batters[draft.striker]
+      const bowler = draft.bowlers[draft.bowler]
+      if (batter) {
+        batter.runs += runs
+        batter.balls++
+        if (runs === 4) batter.fours++
+        if (runs === 6) batter.sixes++
+      }
+      if (bowler) {
+        bowler.runs += runs
+        bowler.balls++
+      }
       draft.runs += runs
       draft.balls++
       draft.partnershipRuns += runs
@@ -3385,24 +3329,27 @@ export default function App() {
 
   const scoreExtra = (type: "wd" | "nb" | "b" | "lb", amount: number) => {
     commit((draft) => {
-      const bowler = draft.bowlers[draft.bowler],
-        batter = draft.batters[draft.striker]
+      ensureRosterIntegrity(draft)
+      const bowler = draft.bowlers[draft.bowler]
+      const batter = draft.batters[draft.striker]
       const isIllegal = type === "wd" || type === "nb"
       const total = isIllegal ? amount + 1 : amount
       draft.runs += total
       draft.extras[type] += total
       draft.partnershipRuns += total
-      if (type === "wd" || type === "nb") bowler.runs += total
+      if (bowler && (type === "wd" || type === "nb")) bowler.runs += total
       if (!isIllegal) {
         draft.balls++
-        bowler.balls++
-        batter.balls++
+        if (bowler) bowler.balls++
+        if (batter) batter.balls++
         draft.partnershipBalls++
       }
       if (type === "nb") {
-        batter.runs += amount
-        if (amount === 4) batter.fours++
-        if (amount === 6) batter.sixes++
+        if (batter) {
+          batter.runs += amount
+          if (amount === 4) batter.fours++
+          if (amount === 6) batter.sixes++
+        }
         draft.freeHit = true
       } else if (!isIllegal) draft.freeHit = false
       addEvent(
@@ -3563,6 +3510,41 @@ export default function App() {
     const bt = teamByName(batting, scoringTeams),
       bw = teamByName(bowling, scoringTeams)
     const next = clone(INITIAL)
+    const batters = freshBatters(bt)
+    const bowlers = freshBowlers(bw)
+
+    if (striker && !batters[striker]) {
+      batters[striker] = {
+        name: striker,
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        sixes: 0,
+        out: false,
+        dismissal: "",
+      }
+    }
+    if (nonStriker && !batters[nonStriker]) {
+      batters[nonStriker] = {
+        name: nonStriker,
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        sixes: 0,
+        out: false,
+        dismissal: "",
+      }
+    }
+    if (bowler && !bowlers[bowler]) {
+      bowlers[bowler] = {
+        name: bowler,
+        balls: 0,
+        runs: 0,
+        wickets: 0,
+        maidens: 0,
+      }
+    }
+
     Object.assign(next, {
       matchId: crypto.randomUUID(),
       batting,
@@ -3571,8 +3553,8 @@ export default function App() {
       striker,
       nonStriker,
       bowler,
-      batters: freshBatters(bt),
-      bowlers: freshBowlers(bw),
+      batters,
+      bowlers,
     })
     setState(next)
     setHistory([])
