@@ -1230,9 +1230,13 @@
 .scoring-theme-sun-light{background:#ffffff!important;color:#000000!important}
 .scoring-theme-sun-light .guided-flow-page,
 .scoring-theme-sun-light .screen-scoring,
-.scoring-theme-sun-light .scoring-focus-dashboard{background:#ffffff!important;color:#000000!important}
+.scoring-theme-sun-light .scoring-focus-dashboard,
+.scoring-theme-sun-light .scoring-main,
+.scoring-theme-sun-light .scorecards-left,
+.scoring-theme-sun-light .right-rail{background:#ffffff!important;color:#000000!important}
 .scoring-theme-sun-light .panel,
 .scoring-theme-sun-light .setup-panel,
+.scoring-theme-sun-light .setup-panel-header,
 .scoring-theme-sun-light .score-head,
 .scoring-theme-sun-light .scoring-controls,
 .scoring-theme-sun-light .player-card,
@@ -1241,6 +1245,8 @@
 .scoring-theme-sun-light .scoring-focus-toolbar,
 .scoring-theme-sun-light .paused-match-card,
 .scoring-theme-sun-light .event-log,
+.scoring-theme-sun-light .event-head,
+.scoring-theme-sun-light .worm-card,
 .scoring-theme-sun-light .over-strip{background:#ffffff!important;border:2px solid #000000!important;color:#000000!important;box-shadow:none!important}
 .scoring-theme-sun-light h1,
 .scoring-theme-sun-light h2,
@@ -1251,37 +1257,81 @@
 .scoring-theme-sun-light .big-score b,
 .scoring-theme-sun-light .score-title,
 .scoring-theme-sun-light .paused-score-num,
+.scoring-theme-sun-light .setup-panel-top-row h2,
+.scoring-theme-sun-light .scorecards-left-head strong,
 .scoring-theme-sun-light .score-line strong{color:#000000!important;font-weight:900!important}
 .scoring-theme-sun-light p,
 .scoring-theme-sun-light span,
 .scoring-theme-sun-light small,
 .scoring-theme-sun-light .helper,
-.scoring-theme-sun-light label{color:#111111!important;font-weight:700!important}
+.scoring-theme-sun-light .scorecards-left-head span,
+.scoring-theme-sun-light .panel-label span,
+.scoring-theme-sun-light .panel-label small,
+.scoring-theme-sun-light .rate-line span,
+.scoring-theme-sun-light label{color:#000000!important;font-weight:700!important}
 .scoring-theme-sun-light input,
 .scoring-theme-sun-light select{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important;font-weight:800!important}
+
+/* Scoring Controls in Sun Mode */
 .scoring-theme-sun-light .run-buttons button{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important;font-weight:900!important}
-.scoring-theme-sun-light .run-buttons button.boundary{background:#91e521!important;color:#000000!important;border:2.5px solid #000000!important}
-.scoring-theme-sun-light .run-buttons button.wicket{background:#dc2626!important;color:#ffffff!important;border:2.5px solid #000000!important}
+.scoring-theme-sun-light .run-buttons button.boundary{background:#d5ff99!important;color:#000000!important;border:2.5px solid #000000!important}
+.scoring-theme-sun-light .run-buttons button.wicket{background:#000000!important;color:#ffffff!important;border:2.5px solid #000000!important}
 .scoring-theme-sun-light .extra-buttons button{background:#ffffff!important;color:#000000!important;border:1.5px solid #000000!important;font-weight:800!important}
-.scoring-theme-sun-light .extra-buttons .swap-batters{background:#ddffc4!important;color:#000000!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .extra-buttons .swap-batters{background:#e7fbd1!important;color:#000000!important;border:2px solid #000000!important}
 .scoring-theme-sun-light .report-btn-secondary,
 .scoring-theme-sun-light .setup-theme-btn,
 .scoring-theme-sun-light .scoring-focus-toolbar button{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important;font-weight:800!important}
 .scoring-theme-sun-light .report-btn-primary,
 .scoring-theme-sun-light button.lime{background:#000000!important;color:#ffffff!important;border:2px solid #000000!important;font-weight:900!important}
+
+/* Tables in Sun Mode */
 .scoring-theme-sun-light .data-table table th{background:#000000!important;color:#ffffff!important;border-bottom:2px solid #000000!important}
 .scoring-theme-sun-light .data-table table td{background:#ffffff!important;color:#000000!important;border-bottom:1.5px solid #000000!important;font-weight:700!important}
 .scoring-theme-sun-light .striker-row td{background:#e2f8cc!important;color:#000000!important;box-shadow:inset 4px 0 #000000!important}
-.scoring-theme-sun-light .scoring-popover-container{background:#ffffff!important;color:#000000!important;border:3px solid #000000!important;box-shadow:0 12px 36px rgba(0,0,0,.4)!important}
+
+/* Player Cards & Stat Rows in Sun Mode */
+.scoring-theme-sun-light .player-card .stat-row{background:#ffffff!important;border-top:1.5px solid #000000!important}
+.scoring-theme-sun-light .player-card .stat-row div{border-right:1px solid #000000!important}
+.scoring-theme-sun-light .player-card .stat-row div:last-child{border-right:none!important}
+.scoring-theme-sun-light .player-card .avatar{background:#000000!important;color:#ffffff!important}
+.scoring-theme-sun-light .player-card h3{color:#000000!important}
+.scoring-theme-sun-light .metric b{color:#000000!important}
+.scoring-theme-sun-light .metric small{color:#222222!important}
+
+/* Event Log in Sun Mode */
+.scoring-theme-sun-light .event-item{background:#ffffff!important;border-bottom:1px solid #000000!important;color:#000000!important}
+.scoring-theme-sun-light .event-item b,
+.scoring-theme-sun-light .event-item strong,
+.scoring-theme-sun-light .event-item span{color:#000000!important}
+.scoring-theme-sun-light .event-pill{background:#000000!important;color:#ffffff!important}
+
+/* Popover & Dialogs in Sun Mode */
+.scoring-theme-sun-light .popover-backdrop{background:rgba(0,0,0,.2)!important}
+.scoring-theme-sun-light .scoring-popover-container{background:#ffffff!important;color:#000000!important;border:2.5px solid #000000!important;box-shadow:0 12px 36px rgba(0,0,0,.25)!important}
 .scoring-theme-sun-light .scoring-popover-container select,
 .scoring-theme-sun-light .scoring-popover-container input{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .popover-header{border-bottom:1.5px solid #000000!important}
 .scoring-theme-sun-light .popover-header h4{color:#000000!important}
+.scoring-theme-sun-light .popover-close-btn{color:#000000!important}
+.scoring-theme-sun-light .bowler-list button{background:#f8fafc!important;border:1.5px solid #000000!important;color:#000000!important}
+.scoring-theme-sun-light .bowler-list button span,
+.scoring-theme-sun-light .bowler-list button small{color:#000000!important}
+.scoring-theme-sun-light .bowler-section-label{color:#000000!important;font-weight:800!important}
+.scoring-theme-sun-light .add-custom-bowler-trigger{background:#ffffff!important;border:2px dashed #000000!important;color:#000000!important}
+.scoring-theme-sun-light .custom-bowler-form{background:#f1f5f9!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .custom-bowler-form input{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .popover-confirm-btn{background:#000000!important;color:#ffffff!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .popover-run-chip{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .shot-chip{background:#ffffff!important;color:#000000!important;border:1.5px solid #000000!important}
+.scoring-theme-sun-light .shot-chip.selected{background:#000000!important;color:#ffffff!important}
 .scoring-theme-sun-light .runout-details-box{background:#f1f5f9!important;border:2px solid #000000!important}
 .scoring-theme-sun-light .runout-choice-btn,
 .scoring-theme-sun-light .runout-run-btn{background:#ffffff!important;color:#000000!important;border:1.5px solid #000000!important}
 .scoring-theme-sun-light .runout-choice-btn.selected,
 .scoring-theme-sun-light .runout-run-btn.selected{background:#000000!important;color:#ffffff!important}
-.scoring-theme-sun-light .setup-tabs-header{background:#eeeeee!important;border:2px solid #000000!important}
+
+/* Setup & 2nd Innings in Sun Mode */
+.scoring-theme-sun-light .setup-tabs-header{background:#f1f5f9!important;border:2px solid #000000!important}
 .scoring-theme-sun-light .setup-tab-nav{color:#000000!important}
 .scoring-theme-sun-light .setup-tab-nav.active{background:#000000!important;color:#ffffff!important}
 .scoring-theme-sun-light .tab-counter{background:#000000!important;color:#ffffff!important}
@@ -1290,6 +1340,13 @@
 .scoring-theme-sun-light .steps button.done{background:#e2f8cc!important;color:#000000!important}
 .scoring-theme-sun-light .paused-match-score-row,
 .scoring-theme-sun-light .paused-match-players-preview{background:#ffffff!important;border:1.5px solid #000000!important}
+.scoring-theme-sun-light .choice-modal,
+.scoring-theme-sun-light .second-innings-dialog{background:#ffffff!important;color:#000000!important;border:3px solid #000000!important}
+.scoring-theme-sun-light .innings-summary-card,
+.scoring-theme-sun-light .setup-group{background:#f8fafc!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .summary-target-note{background:#e2f8cc!important;color:#000000!important;border-left:4px solid #000000!important}
+.scoring-theme-sun-light .target-pill{background:#000000!important;color:#ffffff!important}
+.scoring-theme-sun-light .toggle-custom-link{color:#000000!important;font-weight:900!important}
 
 /* ========================================================= */
 /* High Contrast Dark Mode */

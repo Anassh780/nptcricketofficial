@@ -14,8 +14,7 @@ interface PositionState {
   top: number
   left: number
   arrowLeft: number
-  placement: "above" | "below"
-  isMeasured: boolean
+  placement: "above" | "below" | "center"
 }
 
 export const ScoringPopover: React.FC<ScoringPopoverProps> = ({
@@ -27,38 +26,60 @@ export const ScoringPopover: React.FC<ScoringPopoverProps> = ({
 }) => {
   const popoverRef = useRef<HTMLDivElement | null>(null)
   const [pos, setPos] = useState<PositionState>({
-    top: 0,
-    left: 0,
-    arrowLeft: 0,
-    placement: "above",
-    isMeasured: false,
+    top: window.innerHeight ? Math.max(20, Math.floor(window.innerHeight / 3)) : 140,
+    left: window.innerWidth ? Math.max(12, Math.floor(window.innerWidth / 2 - 160)) : 20,
+    arrowLeft: 160,
+    placement: "below",
   })
 
   const updatePosition = () => {
-    if (!anchorEl || !popoverRef.current) return
+    const popoverEl = popoverRef.current
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 360
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 640
+
+    if (!anchorEl || !popoverEl) {
+      // Safe center fallback
+      setPos({
+        top: Math.max(20, Math.floor(viewportHeight * 0.2)),
+        left: Math.max(12, Math.floor((viewportWidth - 320) / 2)),
+        arrowLeft: 160,
+        placement: "center",
+      })
+      return
+    }
 
     const anchorRect = anchorEl.getBoundingClientRect()
-    const popoverRect = popoverRef.current.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
+    const popoverRect = popoverEl.getBoundingClientRect()
 
-    const popoverWidth = popoverRect.width || 260
-    const popoverHeight = popoverRect.height || 180
+    const popoverWidth = popoverRect.width || 320
+    const popoverHeight = popoverRect.height || 220
 
-    const gap = 10
-    const viewportMargin = 12
+    const gap = 8
+    const viewportMargin = 10
 
-    // Intelligent vertical positioning: choose above if space allows, else below
+    // Check if on very small screen / mobile -> center dialog
+    if (viewportWidth <= 520) {
+      const top = Math.max(viewportMargin, Math.min(Math.floor(viewportHeight * 0.15), viewportHeight - popoverHeight - viewportMargin))
+      const left = Math.max(viewportMargin, Math.floor((viewportWidth - Math.min(popoverWidth, viewportWidth - 20)) / 2))
+      setPos({
+        top,
+        left,
+        arrowLeft: Math.floor(popoverWidth / 2),
+        placement: "center",
+      })
+      return
+    }
+
+    // Vertical positioning
     const spaceAbove = anchorRect.top - gap
     const spaceBelow = viewportHeight - anchorRect.bottom - gap
 
-    let placement: "above" | "below" = "above"
+    let placement: "above" | "below" | "center" = "above"
     if (spaceAbove >= popoverHeight) {
       placement = "above"
     } else if (spaceBelow >= popoverHeight) {
       placement = "below"
     } else {
-      // Pick whichever side has more space
       placement = spaceAbove > spaceBelow ? "above" : "below"
     }
 
@@ -72,39 +93,36 @@ export const ScoringPopover: React.FC<ScoringPopoverProps> = ({
     // Clamp vertical position so it stays inside viewport
     top = Math.max(viewportMargin, Math.min(top, viewportHeight - popoverHeight - viewportMargin))
 
-    // Horizontal centering & collision detection
+    // Horizontal centering relative to anchor
     const anchorCenter = anchorRect.left + anchorRect.width / 2
     let left = anchorCenter - popoverWidth / 2
 
-    // Clamp horizontal position to avoid hiding outside screen edges
+    // Clamp horizontal position
     left = Math.max(viewportMargin, Math.min(left, viewportWidth - popoverWidth - viewportMargin))
 
-    // Calculate relative arrow position pointing to anchor center
     let arrowLeft = anchorCenter - left
-    arrowLeft = Math.max(20, Math.min(arrowLeft, popoverWidth - 20))
+    arrowLeft = Math.max(16, Math.min(arrowLeft, popoverWidth - 16))
 
     setPos({
       top,
       left,
       arrowLeft,
       placement,
-      isMeasured: true,
     })
   }
 
   useLayoutEffect(() => {
-    if (!isOpen || !anchorEl) return
+    if (!isOpen) return
 
     let animationFrameId: number
-
     const handleUpdate = () => {
       animationFrameId = requestAnimationFrame(updatePosition)
     }
 
-    // Initial position calculation
+    // Execute immediately and in next frame
     updatePosition()
+    animationFrameId = requestAnimationFrame(updatePosition)
 
-    // Recalculate position on scroll (capture phase catches inner container scrolls) and window resize
     window.addEventListener("scroll", handleUpdate, true)
     window.addEventListener("resize", handleUpdate)
 
@@ -115,14 +133,14 @@ export const ScoringPopover: React.FC<ScoringPopoverProps> = ({
     }
   }, [isOpen, anchorEl])
 
-  // Recalculate when children change layout height
   useEffect(() => {
-    if (isOpen && anchorEl) {
-      updatePosition()
+    if (isOpen) {
+      const timer = setTimeout(updatePosition, 10)
+      return () => clearTimeout(timer)
     }
-  }, [children])
+  }, [isOpen, children])
 
-  // ESC key handler to close popover
+  // ESC key handler
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -134,7 +152,7 @@ export const ScoringPopover: React.FC<ScoringPopoverProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isOpen, onClose])
 
-  if (!isOpen || !anchorEl) return null
+  if (!isOpen) return null
 
   return createPortal(
     <>
@@ -145,14 +163,15 @@ export const ScoringPopover: React.FC<ScoringPopoverProps> = ({
         style={{
           top: `${pos.top}px`,
           left: `${pos.left}px`,
-          opacity: pos.isMeasured ? 1 : 0,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className={`popover-arrow placement-${pos.placement}`}
-          style={{ left: `${pos.arrowLeft}px` }}
-        />
+        {pos.placement !== "center" && (
+          <div
+            className={`popover-arrow placement-${pos.placement}`}
+            style={{ left: `${pos.arrowLeft}px` }}
+          />
+        )}
         {title && (
           <div className="popover-header">
             <h4>{title}</h4>
