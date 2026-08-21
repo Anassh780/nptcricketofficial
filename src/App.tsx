@@ -418,12 +418,12 @@ function SetupPanel({
 
   return (
     <section className="panel setup-panel">
-      <div className="panel-title setup-panel-title">
-        <div>
-          <h2>Match setup</h2>
-          <span>{isEditingActiveMatch ? "EDITING ONGOING MATCH" : "GUIDED FLOW"}</span>
-        </div>
-        <div className="setup-header-controls">
+      <div className="setup-panel-header">
+        <div className="setup-panel-top-row">
+          <div>
+            <h2>Match setup</h2>
+            <span>{isEditingActiveMatch ? "EDITING ONGOING MATCH" : "GUIDED FLOW"}</span>
+          </div>
           {onToggleTheme && (
             <button
               type="button"
@@ -434,25 +434,25 @@ function SetupPanel({
               {scoringTheme === "sun-light" ? "☀️ Sun (B&W)" : scoringTheme === "high-contrast-dark" ? "⚫ High Contrast" : "🌙 Dark"}
             </button>
           )}
-          {!isEditingActiveMatch && (
-            <div className="setup-tabs-header">
-              <button
-                type="button"
-                className={`setup-tab-nav ${activeTab === "guided" ? "active" : ""}`}
-                onClick={() => setActiveTab("guided")}
-              >
-                ⚡ Guided Setup
-              </button>
-              <button
-                type="button"
-                className={`setup-tab-nav ${activeTab === "paused" ? "active" : ""}`}
-                onClick={() => setActiveTab("paused")}
-              >
-                ⏸ Paused Matches {pausedMatches.length > 0 && <span className="tab-counter">{pausedMatches.length}</span>}
-              </button>
-            </div>
-          )}
         </div>
+        {!isEditingActiveMatch && (
+          <div className="setup-tabs-header">
+            <button
+              type="button"
+              className={`setup-tab-nav ${activeTab === "guided" ? "active" : ""}`}
+              onClick={() => setActiveTab("guided")}
+            >
+              ⚡ Guided Setup
+            </button>
+            <button
+              type="button"
+              className={`setup-tab-nav ${activeTab === "paused" ? "active" : ""}`}
+              onClick={() => setActiveTab("paused")}
+            >
+              ⏸ Paused Matches {pausedMatches.length > 0 && <span className="tab-counter">{pausedMatches.length}</span>}
+            </button>
+          </div>
+        )}
       </div>
 
       {isEditingActiveMatch && activeMatchState && (
@@ -470,119 +470,124 @@ function SetupPanel({
         </div>
       )}
 
-      {activeTab === "paused" && !isEditingActiveMatch ? (
-        <div className="setup-body paused-matches-section">
+      {!isEditingActiveMatch && activeTab === "paused" ? (
+        <div className="paused-matches-section">
           {pausedMatches.length === 0 ? (
             <div className="paused-matches-empty">
               <div className="empty-icon">⏸</div>
               <h3>No Paused Matches Found</h3>
-              <p>When you pause any ongoing match during live scoring, it will be automatically saved here so you can continue it anytime in the future.</p>
+              <p>When you pause an ongoing match from the scoring screen, it will be saved here so you can resume it anytime.</p>
               <button className="lime" onClick={() => setActiveTab("guided")}>
-                Start New Match Setup →
+                Start New Guided Setup →
               </button>
             </div>
           ) : (
             <div className="paused-matches-grid">
-              {pausedMatches.map((session) => {
-                const teamAObj = teamByName(session.teamA, teams)
-                const teamBObj = teamByName(session.teamB, teams)
-                const isSecondInnings = session.innings === 2 || (session.state && session.state.innings === 2)
-                return (
-                  <div key={session.id} className="paused-match-card">
-                    <div className="paused-match-card-top">
-                      <span className="paused-card-badge">
-                        {isSecondInnings ? "INNINGS 2" : "INNINGS 1"}
-                        {session.target ? ` · TARGET: ${session.target}` : ""}
-                      </span>
-                      <small className="paused-card-time">
-                        Last saved {new Date(session.updatedAt).toLocaleDateString([], { month: "short", day: "numeric" })} · {new Date(session.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </small>
+              {pausedMatches.map((session) => (
+                <div key={session.id} className="paused-match-card">
+                  <div className="paused-match-card-top">
+                    <span className="paused-card-badge">
+                      {session.state.innings === 2 ? `INNINGS 2 · TARGET ${session.state.target}` : "INNINGS 1"}
+                    </span>
+                    <span className="paused-card-time">
+                      Saved {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="paused-match-teams">
+                    <div className="paused-team-row">
+                      <TeamBadge team={teamByName(session.state.batting, teams)} />
+                      <strong>{session.state.batting}</strong>
                     </div>
-
-                    <div className="paused-match-teams">
-                      <div className="paused-team-row">
-                        <TeamBadge team={teamAObj} />
-                        <strong>{session.teamA}</strong>
-                      </div>
-                      <span className="paused-vs">vs</span>
-                      <div className="paused-team-row">
-                        <TeamBadge team={teamBObj} />
-                        <strong>{session.teamB}</strong>
-                      </div>
+                    <span className="paused-vs">vs</span>
+                    <div className="paused-team-row">
+                      <TeamBadge team={teamByName(session.state.bowling, teams)} />
+                      <strong>{session.state.bowling}</strong>
                     </div>
-
-                    <div className="paused-match-score-row">
-                      <div>
-                        <span className="score-label">CURRENT INNINGS & SCORE</span>
-                        <strong className="paused-score-num">
-                          {session.batting}: {session.runs}/{session.wickets}
-                        </strong>
-                      </div>
-                      <div className="paused-overs-box">
-                        <span>{oversText(session.balls)} / {session.overs} OV</span>
-                      </div>
+                  </div>
+                  <div className="paused-match-score-row">
+                    <div>
+                      <span className="score-label">CURRENT SCORE</span>
+                      <strong className="paused-score-num">{session.state.runs}/{session.state.wickets}</strong>
                     </div>
-
-                    <div className="paused-match-players-preview">
-                      <div><small>STRIKER:</small> <b>{session.striker || "—"}</b></div>
-                      <div><small>NON-STRIKER:</small> <b>{session.nonStriker || "—"}</b></div>
-                      <div><small>BOWLER:</small> <b>{session.bowler || "—"}</b></div>
+                    <div className="paused-overs-box">
+                      <span className="score-label">OVERS</span>
+                      <span>{oversText(session.state.balls)} / {session.overs} ov</span>
                     </div>
-
-                    <div className="paused-card-actions">
+                  </div>
+                  <div className="paused-match-players-preview">
+                    <div>
+                      <small>STRIKER</small>
+                      <b>{session.state.striker || "—"}</b>
+                    </div>
+                    <div>
+                      <small>NON-STRIKER</small>
+                      <b>{session.state.nonStriker || "—"}</b>
+                    </div>
+                    <div>
+                      <small>BOWLER</small>
+                      <b>{session.state.bowler || "—"}</b>
+                    </div>
+                  </div>
+                  <div className="paused-card-actions">
+                    {onDeletePausedMatch && (
                       <button
-                        className="report-btn report-btn-secondary"
-                        onClick={() => onDeletePausedMatch && onDeletePausedMatch(session.id)}
-                        title="Delete this saved match"
+                        type="button"
+                        className="subtle delete-fixture"
+                        style={{ height: "32px", fontSize: "11px", padding: "0 10px" }}
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to discard this paused match?")) {
+                            onDeletePausedMatch(session.id)
+                          }
+                        }}
                       >
                         🗑 Discard
                       </button>
+                    )}
+                    {onResumeSession && (
                       <button
-                        className="report-btn report-btn-primary"
-                        onClick={() => onResumeSession && onResumeSession(session)}
+                        type="button"
+                        className="lime"
+                        style={{ height: "32px", fontSize: "11px", padding: "0 14px" }}
+                        onClick={() => onResumeSession(session)}
                       >
                         ▶ Resume Match →
                       </button>
-                    </div>
+                    )}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
       ) : (
         <>
           <div className="steps">
-            {["Match", "Teams", "Settings", isEditingActiveMatch ? "Players" : "Openers", "Confirm"].map((label, index) => (
-              <button
-                className={
-                  step === index + 1 ? "on" : step > index + 1 ? "done" : ""
-                }
-                onClick={() => setStep(index + 1)}
-                key={label}
-              >
-                <i>{index + 1}</i>
-                <span>{label}</span>
-              </button>
-            ))}
+            <button className={step === 1 ? "on" : step > 1 ? "done" : ""}>
+              <i>1</i> Format
+            </button>
+            <button className={step === 2 ? "on" : step > 2 ? "done" : ""}>
+              <i>2</i> Rosters
+            </button>
+            <button className={step === 3 ? "on" : step > 3 ? "done" : ""}>
+              <i>3</i> Toss
+            </button>
+            <button className={step === 4 ? "on" : step > 4 ? "done" : ""}>
+              <i>4</i> Players
+            </button>
+            <button className={step === 5 ? "on" : ""}>
+              <i>5</i> Ready
+            </button>
           </div>
           {step === 1 && (
             <div className="setup-body">
               <label>
                 Tournament / Series
-                <input value="Diamond Premier League 6" readOnly />
+                <input defaultValue="Diamond Premier League 6" />
               </label>
               <div className="form-grid">
                 <label>
                   Team A
-                  <select
-                    value={teamA}
-                    onChange={(e) => {
-                      setTeamA(e.target.value)
-                      if (teamB === e.target.value)
-                        setTeamB(teams.find((t) => t.name !== e.target.value)!.name)
-                    }}
-                  >
+                  <select value={teamA} onChange={(e) => setTeamA(e.target.value)}>
                     {teams.map((t) => (
                       <option key={t.name}>{t.name}</option>
                     ))}
@@ -765,16 +770,38 @@ function SetupPanel({
             ) : (
               <button
                 className="lime"
-                disabled={!rostersReady || !striker || !nonStriker || !openingBowler}
-                onClick={() => onStart({ teamA, teamB, overs: parsedOvers, toss, decision, striker, nonStriker, bowler: openingBowler })}
+                disabled={!rostersReady}
+                onClick={() =>
+                  onStart({
+                    teamA,
+                    teamB,
+                    overs: parsedOvers,
+                    toss,
+                    decision,
+                    striker,
+                    nonStriker,
+                    bowler: openingBowler,
+                  })
+                }
               >
-                {rostersReady ? "Start scoring →" : "Add squad names first"}
+                Start Match →
               </button>
             )}
           </div>
         </>
       )}
     </section>
+  )
+}
+
+function TeamBadge({ team }: { team: Team }) {
+  return (
+    <span
+      className="team-badge"
+      style={{ "--team": team.color } as React.CSSProperties}
+    >
+      {team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : team.code}
+    </span>
   )
 }
 
@@ -795,14 +822,207 @@ function Roster({ team, keeper }: { team: Team; keeper: string }) {
   )
 }
 
-function TeamBadge({ team }: { team: Team }) {
+function SecondInningsModal({
+  pending,
+  overs,
+  onConfirm,
+}: {
+  pending: {
+    first: InningsSummary
+    target: number
+    chasingTeam: Team
+    defendingTeam: Team
+  }
+  overs: number
+  onConfirm: (setup: {
+    striker: string
+    nonStriker: string
+    openingBowler: string
+  }) => void
+}) {
+  const { first, target, chasingTeam, defendingTeam } = pending
+  const [striker, setStriker] = useState(chasingTeam.players[0] || "")
+  const [nonStriker, setNonStriker] = useState(
+    chasingTeam.players.find((p) => p !== (chasingTeam.players[0] || "")) || chasingTeam.players[1] || ""
+  )
+  const [openingBowler, setOpeningBowler] = useState(defendingTeam.players[0] || "")
+
+  const [customStriker, setCustomStriker] = useState("")
+  const [customNonStriker, setCustomNonStriker] = useState("")
+  const [customBowler, setCustomBowler] = useState("")
+
+  const [useCustomStriker, setUseCustomStriker] = useState(false)
+  const [useCustomNonStriker, setUseCustomNonStriker] = useState(false)
+  const [useCustomBowler, setUseCustomBowler] = useState(false)
+
+  const activeStriker = (useCustomStriker ? customStriker.trim() : striker) || "Striker"
+  const activeNonStriker = (useCustomNonStriker ? customNonStriker.trim() : nonStriker) || "Non-Striker"
+  const activeBowler = (useCustomBowler ? customBowler.trim() : openingBowler) || "Bowler"
+
+  const isValid = Boolean(activeStriker && activeNonStriker && activeBowler && activeStriker !== activeNonStriker)
+  const rrr = ((target) / Math.max(1, overs)).toFixed(2)
+
   return (
-    <span
-      className="team-badge"
-      style={{ "--team": team.color } as React.CSSProperties}
-    >
-      {team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : team.code}
-    </span>
+    <div className="modal-backdrop second-innings-backdrop">
+      <div className="choice-modal second-innings-dialog">
+        <div className="sheet-handle" />
+        <div className="panel-title second-innings-title">
+          <div>
+            <span>INNINGS BREAK</span>
+            <h2>START 2ND INNINGS</h2>
+          </div>
+          <div className="target-pill">
+            TARGET: <strong>{target}</strong> ({overs} ov)
+          </div>
+        </div>
+
+        <div className="innings-summary-card">
+          <div className="summary-team-line">
+            <TeamBadge team={defendingTeam} />
+            <div>
+              <strong>{first.team}</strong>
+              <span>1st Innings: {first.runs}/{first.wickets} in {oversText(first.balls)} ov</span>
+            </div>
+          </div>
+          <div className="summary-target-note">
+            🎯 <strong>{chasingTeam.name}</strong> needs <strong>{target} runs</strong> to win from {overs} overs (Req. RR: <strong>{rrr}</strong>).
+          </div>
+        </div>
+
+        <div className="second-innings-setup-grid">
+          {/* Batting Team Opening Pair */}
+          <div className="setup-group">
+            <div className="group-label">
+              <span>CHASING TEAM (BATTING)</span>
+              <strong>{chasingTeam.name}</strong>
+            </div>
+
+            <label>
+              <div className="label-row">
+                <span>Opening Striker</span>
+                <button
+                  type="button"
+                  className="toggle-custom-link"
+                  onClick={() => setUseCustomStriker((v) => !v)}
+                >
+                  {useCustomStriker ? "Choose from squad" : "+ Custom Name"}
+                </button>
+              </div>
+              {useCustomStriker ? (
+                <input
+                  type="text"
+                  placeholder="Enter striker name..."
+                  value={customStriker}
+                  onChange={(e) => setCustomStriker(e.target.value)}
+                  autoFocus
+                />
+              ) : (
+                <select
+                  value={striker}
+                  onChange={(e) => {
+                    setStriker(e.target.value)
+                    if (e.target.value === nonStriker) {
+                      setNonStriker(chasingTeam.players.find((p) => p !== e.target.value) || "")
+                    }
+                  }}
+                >
+                  {chasingTeam.players.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              )}
+            </label>
+
+            <label>
+              <div className="label-row">
+                <span>Opening Non-Striker</span>
+                <button
+                  type="button"
+                  className="toggle-custom-link"
+                  onClick={() => setUseCustomNonStriker((v) => !v)}
+                >
+                  {useCustomNonStriker ? "Choose from squad" : "+ Custom Name"}
+                </button>
+              </div>
+              {useCustomNonStriker ? (
+                <input
+                  type="text"
+                  placeholder="Enter non-striker name..."
+                  value={customNonStriker}
+                  onChange={(e) => setCustomNonStriker(e.target.value)}
+                />
+              ) : (
+                <select
+                  value={nonStriker}
+                  onChange={(e) => setNonStriker(e.target.value)}
+                >
+                  {chasingTeam.players
+                    .filter((p) => p !== striker)
+                    .map((p) => (
+                      <option key={p}>{p}</option>
+                    ))}
+                </select>
+              )}
+            </label>
+          </div>
+
+          {/* Bowling Team Opening Bowler */}
+          <div className="setup-group">
+            <div className="group-label">
+              <span>DEFENDING TEAM (BOWLING)</span>
+              <strong>{defendingTeam.name}</strong>
+            </div>
+
+            <label>
+              <div className="label-row">
+                <span>Opening Bowler</span>
+                <button
+                  type="button"
+                  className="toggle-custom-link"
+                  onClick={() => setUseCustomBowler((v) => !v)}
+                >
+                  {useCustomBowler ? "Choose from squad" : "+ Custom Name"}
+                </button>
+              </div>
+              {useCustomBowler ? (
+                <input
+                  type="text"
+                  placeholder="Enter opening bowler name..."
+                  value={customBowler}
+                  onChange={(e) => setCustomBowler(e.target.value)}
+                />
+              ) : (
+                <select
+                  value={openingBowler}
+                  onChange={(e) => setOpeningBowler(e.target.value)}
+                >
+                  {defendingTeam.players.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              )}
+            </label>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="lime wide second-innings-confirm-btn"
+          disabled={!isValid}
+          onClick={() => {
+            if (isValid) {
+              onConfirm({
+                striker: activeStriker,
+                nonStriker: activeNonStriker,
+                openingBowler: activeBowler,
+              })
+            }
+          }}
+        >
+          ▶ Start 2nd Innings & Resume Scoring →
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -810,12 +1030,10 @@ function ScoreHeader({
   state,
   overs,
   teams,
-  onOpenReport,
 }: {
   state: ScoreState
   overs: number
   teams: Team[]
-  onOpenReport?: () => void
 }) {
   const batting = teamByName(state.batting, teams),
     bowling = teamByName(state.bowling, teams)
@@ -828,21 +1046,8 @@ function ScoreHeader({
     <section className="score-head">
       <div className="live-row">
         <span>
-          <i /> LIVE
+          <i /> LIVE · INNINGS {state.innings}
         </span>
-        <div>
-          {onOpenReport && (
-            <button
-              className="report-btn report-btn-primary"
-              style={{ height: "24px", fontSize: "9px", padding: "0 8px", borderRadius: "4px" }}
-              onClick={onOpenReport}
-            >
-              📄 Share Report
-            </button>
-          )}
-          <button>▣</button>
-          <button>•••</button>
-        </div>
       </div>
       <div className="score-line">
         <div>
@@ -2431,7 +2636,99 @@ export default function App() {
   const [matchReady, setMatchReady] = useState(
     () => localStorage.getItem("cricvault-match-ready") === "true",
   )
-  const [state, setState] = useState<ScoreState>(INITIAL)
+  const [pendingSecondInnings, setPendingSecondInnings] = useState<{
+    first: InningsSummary
+    target: number
+    chasingTeam: Team
+    defendingTeam: Team
+  } | null>(null)
+
+  const handleConfirmSecondInnings = ({
+    striker,
+    nonStriker,
+    openingBowler,
+  }: {
+    striker: string
+    nonStriker: string
+    openingBowler: string
+  }) => {
+    if (!pendingSecondInnings) return
+    const { first, target, chasingTeam, defendingTeam } = pendingSecondInnings
+
+    setHistory((current) => [...current.slice(-39), clone(state)])
+    setState((prev) => {
+      const next = clone(prev)
+      next.innings = 2
+      next.batting = chasingTeam.name
+      next.bowling = defendingTeam.name
+      next.target = target
+      next.runs = 0
+      next.wickets = 0
+      next.balls = 0
+      next.freeHit = false
+      next.partnershipRuns = 0
+      next.partnershipBalls = 0
+      next.extras = { wd: 0, nb: 0, b: 0, lb: 0 }
+      next.fall = []
+      next.overMarks = []
+      next.summaries = [first]
+      next.result = ""
+      next.needsBowler = false
+
+      next.batters = freshBatters(chasingTeam)
+      next.bowlers = freshBowlers(defendingTeam)
+
+      if (!next.batters[striker]) {
+        next.batters[striker] = {
+          name: striker,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          sixes: 0,
+          out: false,
+          dismissal: "",
+        }
+      }
+      next.striker = striker
+
+      if (!next.batters[nonStriker]) {
+        next.batters[nonStriker] = {
+          name: nonStriker,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          sixes: 0,
+          out: false,
+          dismissal: "",
+        }
+      }
+      next.nonStriker = nonStriker
+
+      if (!next.bowlers[openingBowler]) {
+        next.bowlers[openingBowler] = {
+          name: openingBowler,
+          balls: 0,
+          runs: 0,
+          wickets: 0,
+          maidens: 0,
+        }
+      }
+      next.bowler = openingBowler
+
+      addEvent(
+        next,
+        "INN 2",
+        "green",
+        `2nd Innings started: ${chasingTeam.name} chasing ${target} runs (${overs} ov). ${striker} & ${nonStriker} opening batting; ${openingBowler} bowling.`,
+        false,
+        0,
+      )
+
+      return next
+    })
+
+    setPendingSecondInnings(null)
+  }
   const [history, setHistory] = useState<ScoreState[]>([])
   const [inningsResultOpen, setInningsResultOpen] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
@@ -2944,28 +3241,19 @@ export default function App() {
         draft.runs >= draft.target)
     if (inningsOver) {
       if (draft.innings === 1) {
-        draft.summaries.push(inningsSnapshot(draft))
-        const oldBatting = draft.batting
-        draft.innings = 2
-        draft.batting = draft.bowling
-        draft.bowling = oldBatting
-        draft.target = draft.runs + 1
-        draft.runs = 0
-        draft.wickets = 0
-        draft.balls = 0
-        draft.freeHit = false
-        draft.partnershipRuns = 0
-        draft.partnershipBalls = 0
-        draft.extras = { wd: 0, nb: 0, b: 0, lb: 0 }
-        draft.fall = []
-        draft.overMarks = []
-        const battingTeam = teamByName(draft.batting, scoringTeams),
-          bowlingTeam = teamByName(draft.bowling, scoringTeams)
-        draft.batters = freshBatters(battingTeam)
-        draft.bowlers = freshBowlers(bowlingTeam)
-        draft.striker = battingTeam.players[0]
-        draft.nonStriker = battingTeam.players[1]
-        draft.bowler = bowlingTeam.players[0]
+        const first = inningsSnapshot(draft)
+        const target = draft.runs + 1
+        draft.summaries = [first]
+        draft.target = target
+        const chasingTeam = teamByName(draft.bowling, scoringTeams)
+        const defendingTeam = teamByName(draft.batting, scoringTeams)
+        setPendingSecondInnings({
+          first,
+          target,
+          chasingTeam,
+          defendingTeam,
+        })
+        return
       } else {
         const first = draft.summaries[0]
         if (draft.runs >= (draft.target || 0))
@@ -3146,8 +3434,25 @@ export default function App() {
     })
   }
 
-  const changeBowler = (name: string) =>
-    setState((prev) => ({ ...prev, bowler: name, needsBowler: false }))
+  const changeBowler = (name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    setState((prev) => {
+      const next = clone(prev)
+      if (!next.bowlers[trimmed]) {
+        next.bowlers[trimmed] = {
+          name: trimmed,
+          balls: 0,
+          runs: 0,
+          wickets: 0,
+          maidens: 0,
+        }
+      }
+      next.bowler = trimmed
+      next.needsBowler = false
+      return next
+    })
+  }
   const bowlerOptions = Object.values(state.bowlers).filter(
     (b) => b.name !== state.bowler && b.balls < (overs / 5) * 6,
   )
@@ -3396,21 +3701,14 @@ export default function App() {
                     style={{ height: "28px", fontSize: "11px", padding: "0 12px" }}
                     onClick={() => setIsReportModalOpen(true)}
                   >
-                    📄 Share Match Report
+                    📄 Match Report
                   </button>
-                  <button onClick={() => {
-                    if (window.confirm("Pause current match and start a new match setup?")) {
-                      handlePauseMatch()
-                    }
-                  }}>New match setup</button>
-                  <button className="end-match-button" onClick={endMatch} disabled={!!state.result}>End match</button>
                 </div>
               </div>
               <ScoreHeader
                 state={state}
                 overs={overs}
                 teams={scoringTeams}
-                onOpenReport={() => setIsReportModalOpen(true)}
               />
               <ScoringControls
                 state={state}
@@ -3451,42 +3749,13 @@ export default function App() {
           </footer>
         </>
       )}
-      {screen === "scoring" && admin && inningsResultOpen && state.summaries[0] && (() => {
-        const summary = state.summaries[0]
-        const inningsTeam = teamByName(summary.team, scoringTeams)
-        const runRate = summary.balls ? (summary.runs / (summary.balls / 6)).toFixed(2) : "0.00"
-        return <div className="innings-result-backdrop" onClick={(e) => {
-          if (e.target === e.currentTarget) setInningsResultOpen(false)
-        }}>
-          <section className="innings-result-modal" role="dialog" aria-modal="true" aria-label="First innings result" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            <button className="innings-result-close" onClick={() => setInningsResultOpen(false)} aria-label="Close first innings result">×</button>
-            <div className="innings-result-kicker"><i /> FIRST INNINGS COMPLETE</div>
-            <div className="innings-result-team">
-              <span>{inningsTeam.logo ? <img src={inningsTeam.logo} alt={`${summary.team} logo`} /> : inningsTeam.code}</span>
-              <div><small>DPL 6 INNINGS REPORT</small><h2>{summary.team}</h2></div>
-            </div>
-            <div className="innings-result-score"><strong>{summary.runs}<em>/{summary.wickets}</em></strong><span>{oversText(summary.balls)} OVERS</span></div>
-            <div className="innings-result-stats">
-              <article><small>RUN RATE</small><b>{runRate}</b></article>
-              <article><small>WICKETS</small><b>{summary.wickets}</b></article>
-              <article><small>DELIVERIES</small><b>{summary.balls}</b></article>
-              <article><small>CHASE TARGET</small><b>{state.target || summary.runs + 1}</b></article>
-            </div>
-            <div className="innings-result-chase"><span>{state.batting}</span><strong>need {state.target || summary.runs + 1} runs to win</strong></div>
-            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
-              <button
-                className="report-btn report-btn-secondary"
-                style={{ flex: 1, height: "44px", fontSize: "12px", justifyContent: "center" }}
-                onClick={() => setIsReportModalOpen(true)}
-              >
-                📄 Share PDF Match Report
-              </button>
-              <button className="continue-chase-button" style={{ flex: 1 }} onClick={() => setInningsResultOpen(false)}>Continue to second innings →</button>
-            </div>
-          </section>
-        </div>
-      })()}
+      {pendingSecondInnings && (
+        <SecondInningsModal
+          pending={pendingSecondInnings}
+          overs={overs}
+          onConfirm={handleConfirmSecondInnings}
+        />
+      )}
       <MatchReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}

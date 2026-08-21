@@ -357,3 +357,57 @@
   font-weight: 800;
 }
 
+/* Bowler selection enhancements */
+.bowler-section-label {
+  font-family: Rajdhani, sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  color: #7b9098;
+  letter-spacing: 0.1em;
+  padding: 4px 6px;
+}
+
+.add-custom-bowler-trigger {
+  border: 1px dashed rgba(145, 229, 33, 0.45) !important;
+  background: rgba(145, 229, 33, 0.06) !important;
+  color: var(--lime, #91e521) !important;
+  font-weight: 800 !important;
+}
+
+.add-custom-bowler-trigger:hover {
+  background: rgba(145, 229, 33, 0.14) !important;
+  border-color: var(--lime, #91e521) !important;
+  color: #fff !important;
+}
+
+.custom-bowler-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(4, 16, 23, 0.8);
+  border: 1px solid rgba(145, 229, 33, 0.35);
+  border-radius: 8px;
+}
+
+.custom-bowler-form input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line2, #24434e);
+  border-radius: 6px;
+  background: #06141c;
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+.custom-bowler-form input:focus {
+  border-color: var(--lime, #91e521);
+}
+
+.custom-bowler-form-actions {
+  display: flex;
+  gap: 6px;
+}
+
+

@@ -1145,15 +1145,21 @@
 @media(display-mode:standalone){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}.scoring-app{min-height:100dvh}}
 
 /* Setup Tabs, Active Match Editing & Paused Matches Section */
-.setup-panel-title{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.setup-header-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.setup-panel-header{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:rgba(6,20,28,.95)}
+.setup-panel-top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+.setup-panel-top-row h2{margin:0;text-transform:uppercase;font:800 16px Rajdhani;letter-spacing:.04em;color:#fff}
+.setup-panel-top-row span{font-size:7.5px;color:var(--lime);font-weight:800;letter-spacing:.1em}
 .setup-theme-btn{height:30px;padding:0 10px;font:800 8px Rajdhani;letter-spacing:.08em;background:#091d26;color:#e7eff1;border:1px solid var(--line2);border-radius:6px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .setup-theme-btn:hover{border-color:var(--lime);color:#fff}
-.setup-tabs-header{display:flex;gap:4px;background:rgba(4,16,23,.75);padding:3px;border-radius:8px;border:1px solid var(--line2)}
-.setup-tab-nav{height:30px;padding:0 10px;border:1px solid transparent;border-radius:6px;background:transparent;color:#8da0a7;font:700 8px Rajdhani;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s ease;white-space:nowrap}
-.setup-tab-nav:hover{color:#fff;background:rgba(145,229,33,.06)}
-.setup-tab-nav.active{background:rgba(145,229,33,.16);border-color:rgba(145,229,33,.4);color:var(--lime)}
+.setup-tabs-header{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(4,16,23,.9);padding:4px;border-radius:8px;border:1px solid var(--line2);width:100%}
+.setup-tab-nav{height:34px;padding:0 10px;border:1px solid transparent;border-radius:6px;background:transparent;color:#8da0a7;font:800 9px Rajdhani;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .2s ease;white-space:nowrap}
+.setup-tab-nav:hover{color:#fff;background:rgba(145,229,33,.08)}
+.setup-tab-nav.active{background:rgba(145,229,33,.18);border-color:rgba(145,229,33,.45);color:var(--lime)}
 .tab-counter{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--lime);color:#041017;font-size:7px;font-weight:800}
+
+.setup-panel .steps{min-height:54px;height:auto;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%}
+.setup-panel .steps::-webkit-scrollbar{display:none}
+.setup-panel .steps button{flex:1 0 auto;min-width:58px;padding:6px 4px;display:flex;align-items:center;justify-content:center;gap:6px;font-family:Rajdhani,sans-serif;font-weight:700}
 
 .setup-edit-banner{margin:12px 14px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(255,180,0,.15),rgba(8,24,32,.96));border:1px solid rgba(255,180,0,.45);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .setup-edit-badge{color:#ffc107;font:800 7px Rajdhani;letter-spacing:.12em;padding:3px 8px;border-radius:4px;background:rgba(255,193,7,.15);border:1px solid rgba(255,193,7,.3);white-space:nowrap}
@@ -1186,18 +1192,33 @@
 .paused-match-players-preview div b{display:block;color:#e4edf0;font:700 8px Rajdhani;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .paused-card-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;width:100%}
 
+/* Second Innings Transition Pop-Up */
+.second-innings-dialog{width:min(540px,calc(100vw - 24px))!important;max-width:540px!important;padding:0 20px 20px!important}
+.second-innings-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.second-innings-title span{color:var(--lime);font:800 7px Rajdhani;letter-spacing:.15em}
+.target-pill{padding:4px 10px;border-radius:6px;background:rgba(145,229,33,.14);border:1px solid rgba(145,229,33,.4);color:var(--lime);font:800 10px Rajdhani}
+.innings-summary-card{margin-bottom:14px;padding:12px;border-radius:10px;border:1px solid var(--line2);background:rgba(4,16,23,.85);display:flex;flex-direction:column;gap:8px}
+.summary-team-line{display:flex;align-items:center;gap:10px}
+.summary-team-line strong{display:block;font:700 13px Rajdhani;color:#fff}
+.summary-team-line span{display:block;font-size:8px;color:#8fa2a9}
+.summary-target-note{font-size:9px;color:#c9dbdf;padding:6px 8px;background:rgba(145,229,33,.08);border-radius:6px;border-left:3px solid var(--lime)}
+.second-innings-setup-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+.setup-group{padding:12px;border-radius:8px;border:1px solid var(--line);background:rgba(8,24,32,.6);display:flex;flex-direction:column;gap:10px}
+.group-label span{display:block;font:800 6.5px Rajdhani;color:#728790;letter-spacing:.1em}
+.group-label strong{display:block;font:700 12px Rajdhani;color:#fff}
+.label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.toggle-custom-link{border:0;background:transparent;color:var(--lime);font:700 7.5px Rajdhani;cursor:pointer;padding:0;text-decoration:underline}
+.second-innings-confirm-btn{height:44px;font-size:13px;font-weight:800;letter-spacing:.04em}
+
 @media(max-width:680px){
-  .setup-panel-title{flex-direction:column;align-items:stretch;gap:10px}
-  .setup-header-controls{width:100%;flex-direction:column;align-items:stretch}
-  .setup-theme-btn{width:100%;justify-content:center}
-  .setup-tabs-header{width:100%;display:grid;grid-template-columns:1fr 1fr}
-  .setup-tab-nav{justify-content:center}
-  .guided-flow-page .steps{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:4px;padding-bottom:4px;width:100%}
-  .guided-flow-page .steps::-webkit-scrollbar{display:none}
-  .guided-flow-page .steps button{flex:1 0 auto;min-width:58px;padding:6px 4px}
+  .setup-panel-header{padding:12px}
+  .setup-tabs-header{grid-template-columns:1fr 1fr}
   .paused-match-players-preview{grid-template-columns:1fr;gap:4px}
   .paused-card-actions button{flex:1 1 calc(50% - 4px);height:36px;justify-content:center;font-size:7.5px}
   .setup-edit-banner{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:480px){
+  .paused-card-actions button{flex:1 1 100%}
 }
 @media(max-width:480px){
   .paused-card-actions button{flex:1 1 100%}

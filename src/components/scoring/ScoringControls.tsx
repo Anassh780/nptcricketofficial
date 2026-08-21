@@ -126,9 +126,23 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
   const [nextBatter, setNextBatter] = useState<string>("")
   const [runOutBatter, setRunOutBatter] = useState<"striker" | "nonStriker">("striker")
   const [runOutCompletedRuns, setRunOutCompletedRuns] = useState<number>(0)
-  const [selectedShot, setSelectedShot] = useState<string>("Cover Drive")
+  const [customBowlerInput, setCustomBowlerInput] = useState("")
+  const [showCustomBowlerInput, setShowCustomBowlerInput] = useState(false)
 
-  // Auto-open Bowler selection popover when an over ends (state.needsBowler)
+  // Get all potential bowlers from the bowling team
+  const bowlingTeamPlayers = teamByName(state.bowling, scoringTeams).players.filter(
+    (p) => p !== state.bowler,
+  )
+
+  const handleSelectBowler = (name: string) => {
+    if (!name.trim()) return
+    onChangeBowler(name.trim())
+    setCustomBowlerInput("")
+    setShowCustomBowlerInput(false)
+    closePopover()
+  }
+
+  const isScoringDisabled = Boolean(state.result || state.needsBowler)
   React.useEffect(() => {
     if (state.needsBowler) {
       const target = overStripRef.current || (document.querySelector(".scoring-controls") as HTMLElement)
@@ -242,8 +256,6 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
     }
     return null
   }
-
-  const isScoringDisabled = Boolean(state.result || state.needsBowler)
 
   return (
     <section className="panel scoring-controls">
@@ -520,23 +532,91 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 
         {activePopover?.type === "bowler" && (
           <div className="bowler-list">
-            {(bowlerOptions.length > 0
-              ? bowlerOptions
-              : Object.values(state.bowlers).filter((b) => b.name !== state.bowler)
-            ).map((b) => (
+            <div className="bowler-section-label">SELECT BOWLER FOR NEXT OVER</div>
+            {/* Active/previous bowlers */}
+            {Object.values(state.bowlers)
+              .filter((b) => b.name !== state.bowler)
+              .map((b) => (
+                <button
+                  key={b.name}
+                  onClick={() => handleSelectBowler(b.name)}
+                >
+                  <span>{b.name}</span>
+                  <small>
+                    {oversText(b.balls)} overs · {b.runs} runs · {b.wickets} wkt
+                  </small>
+                </button>
+              ))}
+
+            {/* Other roster players from bowling team who haven't bowled yet */}
+            {bowlingTeamPlayers
+              .filter((name) => !state.bowlers[name])
+              .map((name) => (
+                <button
+                  key={name}
+                  onClick={() => handleSelectBowler(name)}
+                >
+                  <span>{name}</span>
+                  <small style={{ color: "var(--lime)" }}>New Bowler</small>
+                </button>
+              ))}
+
+            {/* Custom Bowler Input Option for Admin */}
+            {!showCustomBowlerInput ? (
               <button
-                key={b.name}
-                onClick={() => {
-                  onChangeBowler(b.name)
-                  closePopover()
-                }}
+                type="button"
+                className="add-custom-bowler-trigger"
+                onClick={() => setShowCustomBowlerInput(true)}
               >
-                <span>{b.name}</span>
-                <small>
-                  {oversText(b.balls)} overs · {b.runs} runs · {b.wickets} wickets
-                </small>
+                <span>➕ Add Custom Bowler</span>
+                <small>Type name</small>
               </button>
-            ))}
+            ) : (
+              <div className="custom-bowler-form">
+                <input
+                  type="text"
+                  placeholder="Enter bowler name..."
+                  value={customBowlerInput}
+                  onChange={(e) => setCustomBowlerInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && customBowlerInput.trim()) {
+                      handleSelectBowler(customBowlerInput)
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="custom-bowler-form-actions">
+                  <button
+                    type="button"
+                    className="popover-confirm-btn"
+                    style={{ height: "32px", fontSize: "11px", flex: 1 }}
+                    onClick={() => handleSelectBowler(customBowlerInput)}
+                    disabled={!customBowlerInput.trim()}
+                  >
+                    Add & Bowl
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      height: "32px",
+                      padding: "0 10px",
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "6px",
+                      color: "#9cafb5",
+                      cursor: "pointer",
+                      fontSize: "11px",
+                    }}
+                    onClick={() => {
+                      setShowCustomBowlerInput(false)
+                      setCustomBowlerInput("")
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </ScoringPopover>
