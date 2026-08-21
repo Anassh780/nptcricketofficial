@@ -3013,11 +3013,10 @@ export default function App() {
       if (!draft.bowlers[updated.bowler]) {
         draft.bowlers[updated.bowler] = {
           name: updated.bowler,
-          overs: 0,
+          balls: 0,
           maidens: 0,
           runs: 0,
           wickets: 0,
-          balls: 0,
         }
       }
       return draft
