@@ -1087,17 +1087,40 @@ function ScoreHeader({
     </section>
   )
 }
+
 function PlayerCards({ state, teams }: { state: ScoreState; teams: Team[] }) {
-  const striker = state.batters[state.striker],
-    non = state.batters[state.nonStriker],
-    bowler = state.bowlers[state.bowler]
+  const striker = state.batters?.[state.striker] || {
+    name: state.striker || "Striker",
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    sixes: 0,
+    out: false,
+    dismissal: "",
+  }
+  const non = state.batters?.[state.nonStriker] || {
+    name: state.nonStriker || "Non-Striker",
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    sixes: 0,
+    out: false,
+    dismissal: "",
+  }
+  const bowler = state.bowlers?.[state.bowler] || {
+    name: state.bowler || "Bowler",
+    balls: 0,
+    runs: 0,
+    wickets: 0,
+    maidens: 0,
+  }
   const playerPhoto = (name: string) =>
-    teams.find((team) => team.players.includes(name))?.playerPhotos?.[name]
+    name ? teams.find((team) => team.players?.includes(name))?.playerPhotos?.[name] : undefined
   const avatar = (name: string) =>
     playerPhoto(name) ? (
       <span className="avatar"><img src={playerPhoto(name)} alt={`${name} profile`} /></span>
     ) : (
-      <span className="avatar">{name[0]}</span>
+      <span className="avatar">{(name && name[0]) || "?"}</span>
     )
   const batCard = (b: Batter, label: string, active = false) => (
     <article className={`player-card ${active ? "active-batter" : ""}`}>
@@ -1109,10 +1132,10 @@ function PlayerCards({ state, teams }: { state: ScoreState; teams: Team[] }) {
         <i />
       </h3>
       <div className="stat-row">
-        <Metric label="RUNS" value={b.runs} />
-        <Metric label="BALLS" value={b.balls} />
-        <Metric label="4s" value={b.fours} />
-        <Metric label="6s" value={b.sixes} />
+        <Metric label="RUNS" value={b.runs || 0} />
+        <Metric label="BALLS" value={b.balls || 0} />
+        <Metric label="4s" value={b.fours || 0} />
+        <Metric label="6s" value={b.sixes || 0} />
         <Metric
           label="SR"
           value={b.balls ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0"}
@@ -1132,9 +1155,9 @@ function PlayerCards({ state, teams }: { state: ScoreState; teams: Team[] }) {
           <i />
         </h3>
         <div className="stat-row">
-          <Metric label="OVERS" value={oversText(bowler.balls)} />
-          <Metric label="RUNS" value={bowler.runs} />
-          <Metric label="WKTS" value={bowler.wickets} />
+          <Metric label="OVERS" value={oversText(bowler.balls || 0)} />
+          <Metric label="RUNS" value={bowler.runs || 0} />
+          <Metric label="WKTS" value={bowler.wickets || 0} />
           <Metric
             label="ECON"
             value={
@@ -1159,13 +1182,14 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 }
 
 function InsightRow({ state }: { state: ScoreState }) {
-  const last = state.fall.at(-1) || "—"
+  const last = (state.fall && state.fall.at(-1)) || "—"
+  const extras = state.extras || { wd: 0, nb: 0, b: 0, lb: 0 }
   return (
     <div className="insight-row">
       <div>
         <span>PARTNERSHIP</span>
         <strong>
-          {state.partnershipRuns} <small>({state.partnershipBalls})</small>
+          {state.partnershipRuns || 0} <small>({state.partnershipBalls || 0})</small>
         </strong>
       </div>
       <div>
@@ -1175,18 +1199,18 @@ function InsightRow({ state }: { state: ScoreState }) {
       <div>
         <span>FALL OF WICKETS</span>
         <strong>
-          {state.fall.length ? state.fall.slice(-4).join(" · ") : "—"}
+          {state.fall && state.fall.length ? state.fall.slice(-4).join(" · ") : "—"}
         </strong>
       </div>
       <div>
         <span>EXTRAS</span>
         <strong>
-          {Object.values(state.extras).reduce((a, b) => a + b, 0)}
+          {Object.values(extras).reduce((a, b) => a + b, 0)}
         </strong>
         <small>
           {" "}
-          WD {state.extras.wd} · NB {state.extras.nb} · B {state.extras.b} · LB{" "}
-          {state.extras.lb}
+          WD {extras.wd || 0} · NB {extras.nb || 0} · B {extras.b || 0} · LB{" "}
+          {extras.lb || 0}
         </small>
       </div>
     </div>
@@ -1195,13 +1219,16 @@ function InsightRow({ state }: { state: ScoreState }) {
 
 function ScoreTables({ state, teams }: { state: ScoreState; teams: Team[] }) {
   const playerPhoto = (name: string) =>
-    teams.find((team) => team.players.includes(name))?.playerPhotos?.[name]
+    name ? teams.find((team) => team.players?.includes(name))?.playerPhotos?.[name] : undefined
   const playerName = (name: string) => (
     <span className="table-player-name">
       {playerPhoto(name) && <img src={playerPhoto(name)} alt="" />}
       <span>{name}</span>
     </span>
   )
+  const battersList = Object.values(state.batters || {})
+  const bowlersList = Object.values(state.bowlers || {})
+
   return (
     <div className="tables-grid">
       <section className="panel data-table">
@@ -1223,7 +1250,7 @@ function ScoreTables({ state, teams }: { state: ScoreState; teams: Team[] }) {
             </tr>
           </thead>
           <tbody>
-            {Object.values(state.batters).map((b, i) => (
+            {battersList.map((b, i) => (
               <tr
                 className={
                   b.name === state.striker
@@ -1243,10 +1270,10 @@ function ScoreTables({ state, teams }: { state: ScoreState; teams: Team[] }) {
                       ? "not out"
                       : "yet to bat"}
                 </td>
-                <td>{b.runs}</td>
-                <td>{b.balls}</td>
-                <td>{b.fours}</td>
-                <td>{b.sixes}</td>
+                <td>{b.runs || 0}</td>
+                <td>{b.balls || 0}</td>
+                <td>{b.fours || 0}</td>
+                <td>{b.sixes || 0}</td>
                 <td>{b.balls ? ((b.runs / b.balls) * 100).toFixed(1) : "—"}</td>
               </tr>
             ))}
@@ -1270,20 +1297,21 @@ function ScoreTables({ state, teams }: { state: ScoreState; teams: Team[] }) {
             </tr>
           </thead>
           <tbody>
-            {Object.values(state.bowlers)
-              .filter((b) => b.balls || b.name === state.bowler)
-              .map((b, i) => (
-                <tr key={b.name}>
-                  <td>{i + 1}</td>
-                  <td>{playerName(b.name)}</td>
-                  <td>{oversText(b.balls)}</td>
-                  <td>{b.runs}</td>
-                  <td>{b.wickets}</td>
-                  <td>
-                    {b.balls ? (b.runs / (b.balls / 6)).toFixed(2) : "0.00"}
-                  </td>
-                </tr>
-              ))}
+            {bowlersList.map((b, i) => (
+              <tr
+                className={b.name === state.bowler ? "bowling-row" : ""}
+                key={b.name}
+              >
+                <td>{i + 1}</td>
+                <td>{playerName(b.name)}</td>
+                <td>{oversText(b.balls || 0)}</td>
+                <td>{b.runs || 0}</td>
+                <td>{b.wickets || 0}</td>
+                <td>
+                  {b.balls ? (b.runs / (b.balls / 6)).toFixed(2) : "0.00"}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </section>
@@ -1292,11 +1320,12 @@ function ScoreTables({ state, teams }: { state: ScoreState; teams: Team[] }) {
 }
 
 function RightRail({ state, overs }: { state: ScoreState; overs: number }) {
+  const eventsList = state.events || []
   return (
     <aside className="right-rail focused-rail">
       <section className="panel compact">
         <div className="panel-label"><span>Match status</span></div>
-        <p><i /> Live <b>Innings {state.innings}</b></p>
+        <p><i /> Live <b>Innings {state.innings || 1}</b></p>
         <p><i /> Overs limit <b>{overs}</b></p>
         <p><i /> Free hit <b>{state.freeHit ? "Active" : "No"}</b></p>
       </section>
@@ -1305,14 +1334,14 @@ function RightRail({ state, overs }: { state: ScoreState; overs: number }) {
           <span>Recent deliveries</span>
           <small>Latest first</small>
         </div>
-        {state.events.slice(0, 10).map((ball) => (
+        {eventsList.slice(0, 10).map((ball) => (
           <div key={ball.id}>
             <span>{ball.over}</span>
             <i className={ball.tone}>{ball.mark}</i>
             <p>{ball.text}</p>
           </div>
         ))}
-        {!state.events.length && <div className="empty">Score the first ball to begin.</div>}
+        {!eventsList.length && <div className="empty">Score the first ball to begin.</div>}
       </section>
     </aside>
   )
@@ -2738,10 +2767,7 @@ export default function App() {
   const liveScoreReady = Boolean(
     state.striker &&
     state.nonStriker &&
-    state.bowler &&
-    state.batters?.[state.striker] &&
-    state.batters?.[state.nonStriker] &&
-    state.bowlers?.[state.bowler],
+    state.bowler,
   )
 
   useEffect(() => observeFirebaseUser((nextUser) => {
@@ -3194,12 +3220,55 @@ export default function App() {
     [state],
   )
 
+  const ensureRosterIntegrity = (draft: ScoreState) => {
+    if (!draft.batters) draft.batters = {}
+    if (!draft.bowlers) draft.bowlers = {}
+    if (!draft.events) draft.events = []
+    if (!draft.overMarks) draft.overMarks = []
+    if (!draft.fall) draft.fall = []
+    if (!draft.extras) draft.extras = { wd: 0, nb: 0, b: 0, lb: 0 }
+
+    if (draft.striker && !draft.batters[draft.striker]) {
+      draft.batters[draft.striker] = {
+        name: draft.striker,
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        sixes: 0,
+        out: false,
+        dismissal: "",
+      }
+    }
+    if (draft.nonStriker && !draft.batters[draft.nonStriker]) {
+      draft.batters[draft.nonStriker] = {
+        name: draft.nonStriker,
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        sixes: 0,
+        out: false,
+        dismissal: "",
+      }
+    }
+    if (draft.bowler && !draft.bowlers[draft.bowler]) {
+      draft.bowlers[draft.bowler] = {
+        name: draft.bowler,
+        balls: 0,
+        runs: 0,
+        wickets: 0,
+        maidens: 0,
+      }
+    }
+  }
+
   const commit = (mutate: (draft: ScoreState) => void) => {
     if (state.result || state.needsBowler) return
     setHistory((h) => [...h.slice(-39), clone(state)])
     setState((prev) => {
       const draft = clone(prev)
+      ensureRosterIntegrity(draft)
       mutate(draft)
+      ensureRosterIntegrity(draft)
       finishDelivery(draft)
       return draft
     })
@@ -3247,12 +3316,14 @@ export default function App() {
         draft.target = target
         const chasingTeam = teamByName(draft.bowling, scoringTeams)
         const defendingTeam = teamByName(draft.batting, scoringTeams)
-        setPendingSecondInnings({
-          first,
-          target,
-          chasingTeam,
-          defendingTeam,
-        })
+        setTimeout(() => {
+          setPendingSecondInnings({
+            first,
+            target,
+            chasingTeam,
+            defendingTeam,
+          })
+        }, 0)
         return
       } else {
         const first = draft.summaries[0]
@@ -3419,6 +3490,17 @@ export default function App() {
       draft.partnershipBalls = 0
 
       if (draft.wickets < 10 && nextBatterName) {
+        if (!draft.batters[nextBatterName]) {
+          draft.batters[nextBatterName] = {
+            name: nextBatterName,
+            runs: 0,
+            balls: 0,
+            fours: 0,
+            sixes: 0,
+            out: false,
+            dismissal: "",
+          }
+        }
         if (isNonStrikerOut) {
           draft.nonStriker = nextBatterName
           if (runsCompleted % 2 === 1) {

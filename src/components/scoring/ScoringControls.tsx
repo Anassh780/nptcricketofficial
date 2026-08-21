@@ -131,13 +131,15 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
   const [selectedShot, setSelectedShot] = useState<string>("Straight")
 
   // Get all potential bowlers from the bowling team
-  const bowlingTeamPlayers = teamByName(state.bowling, scoringTeams).players.filter(
+  const bowlingTeam = teamByName ? teamByName(state.bowling, scoringTeams) : undefined
+  const bowlingTeamPlayers = (bowlingTeam?.players || []).filter(
     (p) => p !== state.bowler,
   )
 
   const handleSelectBowler = (name: string) => {
-    if (!name.trim()) return
-    onChangeBowler(name.trim())
+    const trimmed = name.trim()
+    if (!trimmed) return
+    onChangeBowler(trimmed)
     setCustomBowlerInput("")
     setShowCustomBowlerInput(false)
     closePopover()
@@ -327,9 +329,9 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 
       {/* Over summary strip */}
       <div className="over-strip" ref={overStripRef}>
-        <span>OVER {Math.floor(state.balls / 6) + 1}</span>
+        <span>OVER {Math.floor((state.balls || 0) / 6) + 1}</span>
         <div>
-          {state.overMarks.length ? (
+          {(state.overMarks || []).length ? (
             state.overMarks.map((mark, i) => (
               <i
                 className={
@@ -350,7 +352,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
         </div>
         <b>
           This over:{" "}
-          {state.overMarks.reduce(
+          {(state.overMarks || []).reduce(
             (sum, mark) => sum + (Number.parseInt(mark) || 0),
             0,
           )}{" "}
@@ -469,7 +471,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
                   onChange={(e) => setFielder(e.target.value)}
                 >
                   <option value="">Select fielder</option>
-                  {teamByName(state.bowling, scoringTeams).players.map((p) => (
+                  {(bowlingTeam?.players || []).map((p) => (
                     <option key={p}>{p}</option>
                   ))}
                 </select>
@@ -483,7 +485,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
                   value={nextBatter}
                   onChange={(e) => setNextBatter(e.target.value)}
                 >
-                  {remainingBatters.map((b) => (
+                  {(remainingBatters || []).map((b) => (
                     <option key={b.name}>{b.name}</option>
                   ))}
                 </select>
@@ -535,8 +537,8 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
           <div className="bowler-list">
             <div className="bowler-section-label">SELECT BOWLER FOR NEXT OVER</div>
             {/* Active/previous bowlers */}
-            {Object.values(state.bowlers)
-              .filter((b) => b.name !== state.bowler)
+            {Object.values(state.bowlers || {})
+              .filter((b) => b && b.name !== state.bowler)
               .map((b) => (
                 <button
                   key={b.name}
@@ -544,14 +546,14 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
                 >
                   <span>{b.name}</span>
                   <small>
-                    {oversText(b.balls)} overs · {b.runs} runs · {b.wickets} wkt
+                    {oversText(b.balls || 0)} overs · {b.runs || 0} runs · {b.wickets || 0} wkt
                   </small>
                 </button>
               ))}
 
             {/* Other roster players from bowling team who haven't bowled yet */}
-            {bowlingTeamPlayers
-              .filter((name) => !state.bowlers[name])
+            {(bowlingTeamPlayers || [])
+              .filter((name) => !state.bowlers?.[name])
               .map((name) => (
                 <button
                   key={name}
