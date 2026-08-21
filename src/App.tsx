@@ -3321,6 +3321,18 @@ export default function App() {
       return
     }
     if (draft.balls > 0 && draft.balls % 6 === 0) {
+      // Check maiden over for bowler
+      const bowler = draft.bowlers?.[draft.bowler]
+      const marks = draft.overMarks || []
+      const isMaiden =
+        marks.length >= 6 &&
+        marks.every(
+          (m) => m === "0" || m === "W" || m.startsWith("B") || m.startsWith("LB"),
+        )
+      if (isMaiden && bowler) {
+        bowler.maidens++
+      }
+
       swap(draft)
       draft.needsBowler = true
       draft.overMarks = []
@@ -3365,38 +3377,64 @@ export default function App() {
       ensureRosterIntegrity(draft)
       const bowler = draft.bowlers[draft.bowler]
       const batter = draft.batters[draft.striker]
-      const isIllegal = type === "wd" || type === "nb"
-      const total = isIllegal ? amount + 1 : amount
-      draft.runs += total
-      draft.extras[type] += total
-      draft.partnershipRuns += total
-      if (bowler && (type === "wd" || type === "nb")) bowler.runs += total
-      if (!isIllegal) {
-        draft.balls++
-        if (bowler) bowler.balls++
-        if (batter) batter.balls++
-        draft.partnershipBalls++
-      }
-      if (type === "nb") {
+
+      if (type === "wd") {
+        const total = 1 + amount
+        draft.runs += total
+        draft.extras.wd += total
+        draft.partnershipRuns += total
+        if (bowler) bowler.runs += total
+        addEvent(
+          draft,
+          amount > 0 ? `WD+${amount}` : "WD",
+          "amber",
+          `${draft.bowler} to ${draft.striker}, WIDE (${total} run${total > 1 ? "s" : ""}).`,
+          false,
+          total,
+        )
+        if (amount % 2 === 1) swap(draft)
+      } else if (type === "nb") {
+        const total = 1 + amount
+        draft.runs += total
+        draft.extras.nb += 1
+        draft.partnershipRuns += total
+        if (bowler) bowler.runs += total
         if (batter) {
+          batter.balls++
           batter.runs += amount
           if (amount === 4) batter.fours++
           if (amount === 6) batter.sixes++
         }
         draft.freeHit = true
-      } else if (!isIllegal) draft.freeHit = false
-      addEvent(
-        draft,
-        `${type.toUpperCase()}${total}`,
-        "amber",
-        `${draft.bowler} to ${draft.striker}, ${total} ${type.toUpperCase()} extra${
-          total === 1 ? "" : "s"
-        }.`,
-        !isIllegal,
-        total,
-      )
-      const runningRuns = isIllegal ? amount : total
-      if (runningRuns % 2 === 1) swap(draft)
+        addEvent(
+          draft,
+          amount > 0 ? `NB+${amount}` : "NB",
+          "amber",
+          `${draft.bowler} to ${draft.striker}, NO BALL — ${amount > 0 ? `${amount} off bat, ` : ""}FREE HIT awarded!`,
+          false,
+          total,
+        )
+        if (amount % 2 === 1) swap(draft)
+      } else if (type === "b" || type === "lb") {
+        const total = amount
+        draft.runs += total
+        draft.extras[type] += total
+        draft.partnershipRuns += total
+        draft.balls++
+        draft.partnershipBalls++
+        if (bowler) bowler.balls++
+        if (batter) batter.balls++
+        draft.freeHit = false
+        addEvent(
+          draft,
+          `${type.toUpperCase()}${total}`,
+          "neutral",
+          `${draft.bowler} to ${draft.striker}, ${total} ${type === "b" ? "BYE" : "LEG BYE"} run${total > 1 ? "s" : ""}.`,
+          true,
+          total,
+        )
+        if (total % 2 === 1) swap(draft)
+      }
     })
   }
 

@@ -434,28 +434,69 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
         {activePopover?.type === "extra" && (
           <div>
             <div className="popover-runs-grid">
-              {[0, 1, 2, 3, 4, 6]
-                .filter(
-                  (n) =>
-                    !(
-                      activePopover.extraType === "b" ||
-                      activePopover.extraType === "lb"
-                    ) || n > 0,
-                )
-                .map((n) => (
-                  <button
-                    key={n}
-                    className="popover-run-chip"
-                    onClick={() => handleScoreExtraOption(n)}
-                  >
-                    +{n}
+              {activePopover.extraType === "wd" && (
+                <>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(0)}>
+                    Wide (1)
                   </button>
-                ))}
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(1)}>
+                    +1 Run (2)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(2)}>
+                    +2 Runs (3)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(3)}>
+                    +3 Runs (4)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(4)}>
+                    +4 Four (5)
+                  </button>
+                </>
+              )}
+              {activePopover.extraType === "nb" && (
+                <>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(0)}>
+                    NB Only (1)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(1)}>
+                    +1 Bat (2)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(2)}>
+                    +2 Bat (3)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(3)}>
+                    +3 Bat (4)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(4)}>
+                    +4 Four (5)
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(6)}>
+                    +6 Six (7)
+                  </button>
+                </>
+              )}
+              {(activePopover.extraType === "b" || activePopover.extraType === "lb") && (
+                <>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(1)}>
+                    1 {activePopover.extraType === "b" ? "Bye" : "Leg Bye"}
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(2)}>
+                    2 {activePopover.extraType === "b" ? "Byes" : "Leg Byes"}
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(3)}>
+                    3 {activePopover.extraType === "b" ? "Byes" : "Leg Byes"}
+                  </button>
+                  <button className="popover-run-chip" onClick={() => handleScoreExtraOption(4)}>
+                    4 {activePopover.extraType === "b" ? "Byes" : "Leg Byes"}
+                  </button>
+                </>
+              )}
             </div>
             <p className="popover-help-text">
-              {activePopover.extraType === "wd" || activePopover.extraType === "nb"
-                ? "Includes standard +1 run penalty. Does not increment legal ball count."
-                : "Extra runs scored without bat contact."}
+              {activePopover.extraType === "wd" && "1 penalty run + any runs ran. Does not count as a legal ball."}
+              {activePopover.extraType === "nb" && "1 penalty run + runs off bat. Grants FREE HIT on next ball."}
+              {activePopover.extraType === "b" && "Runs without bat contact. Counts as legal ball; not charged to bowler."}
+              {activePopover.extraType === "lb" && "Runs off body/pad. Counts as legal ball; not charged to bowler."}
             </p>
           </div>
         )}
