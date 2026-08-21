@@ -1102,3 +1102,43 @@
 @media(max-width:980px){.screen-scoring .scoring-focus-dashboard{display:flex;flex-direction:column;width:100%;min-width:0;padding:0 10px 60px;overflow-x:hidden}.screen-scoring .scoring-main,.screen-scoring .scorecards-left,.screen-scoring .right-rail{width:100%;min-width:0;max-width:100%}.screen-scoring .scoring-main{order:1}.screen-scoring .scorecards-left{order:2}.screen-scoring .right-rail{order:3}.screen-scoring .tables-grid{grid-template-columns:1fr}.screen-scoring .data-table{width:100%;max-width:100%;overflow-x:auto}.screen-scoring .score-head,.screen-scoring .panel,.screen-scoring .scoring-focus-toolbar{max-width:100%}}
 @media(max-width:600px){.screen-scoring .scoring-focus-dashboard{padding-inline:6px}.screen-scoring .scoring-main{gap:6px}.screen-scoring .score-head{padding:7px 9px 0}.screen-scoring .score-line{height:60px;grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:4px}.screen-scoring .score-line>div:first-child,.screen-scoring .opponent{min-width:0;gap:5px}.screen-scoring .score-line strong{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.screen-scoring .big-score b{font-size:30px}.screen-scoring .team-badge{width:26px;height:26px;flex:0 0 26px}.screen-scoring .scoring-controls{padding:8px}.screen-scoring .run-buttons{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.screen-scoring .run-buttons button{height:42px}.screen-scoring .extra-buttons{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.screen-scoring .player-grid{grid-template-columns:1fr}.screen-scoring .player-card{width:100%}.screen-scoring .over-strip{height:auto;min-height:42px;grid-template-columns:64px minmax(0,1fr) 70px;padding:5px 7px}.screen-scoring .over-strip>div{min-width:0;overflow-x:auto}.screen-scoring .insight-row{grid-template-columns:1fr 1fr}.screen-scoring .insight-row>div:nth-child(2){border-right:0}.screen-scoring .insight-row>div:nth-child(n+3){border-top:1px solid var(--line);padding-top:7px}.screen-scoring .scorecards-left{padding:8px}.screen-scoring .scorecards-left .data-table{max-height:290px}.screen-scoring .data-table table{min-width:520px}.screen-scoring .focused-rail .event-log{min-height:180px}.screen-scoring .scoring-toolbar-actions{flex-wrap:wrap;justify-content:flex-end}.screen-scoring .scoring-focus-toolbar{align-items:flex-start;gap:6px;padding:7px;height:auto}.screen-scoring .rate-line{font-size:7px}}
 @media(display-mode:standalone){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}.scoring-app{min-height:100dvh}}
+
+/* Setup Tabs, Active Match Editing & Paused Matches Section */
+.setup-tabs-header{display:flex;gap:6px;background:rgba(4,16,23,.75);padding:4px;border-radius:8px;border:1px solid var(--line2)}
+.setup-tab-nav{height:30px;padding:0 12px;border:1px solid transparent;border-radius:6px;background:transparent;color:#8da0a7;font:700 8px Rajdhani;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s ease}
+.setup-tab-nav:hover{color:#fff;background:rgba(145,229,33,.06)}
+.setup-tab-nav.active{background:rgba(145,229,33,.16);border-color:rgba(145,229,33,.4);color:var(--lime)}
+.tab-counter{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--lime);color:#041017;font-size:7px;font-weight:800}
+
+.setup-edit-banner{margin:12px 14px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(255,180,0,.15),rgba(8,24,32,.96));border:1px solid rgba(255,180,0,.45);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.setup-edit-badge{color:#ffc107;font:800 7px Rajdhani;letter-spacing:.12em;padding:3px 8px;border-radius:4px;background:rgba(255,193,7,.15);border:1px solid rgba(255,193,7,.3);white-space:nowrap}
+.setup-edit-info strong{display:block;color:#ffffff;font:700 12px Rajdhani;margin-bottom:2px}
+.setup-edit-info span{display:block;color:#9cafb5;font-size:7px;line-height:1.4}
+.setup-cancel-btn{height:32px;padding:0 12px;border:1px solid rgba(255,95,95,.4);border-radius:6px;background:rgba(90,15,20,.5);color:#ffaaa6;font:700 8px Rajdhani;cursor:pointer;white-space:nowrap;transition:all .2s}
+.setup-cancel-btn:hover{background:rgba(140,25,35,.7);color:#fff}
+
+.paused-matches-section{min-height:360px;padding:18px 14px}
+.paused-matches-empty{text-align:center;padding:44px 20px}
+.paused-matches-empty .empty-icon{font-size:34px;color:#738890;margin-bottom:12px}
+.paused-matches-empty h3{font:800 18px Rajdhani;color:#e7eff1;margin-bottom:8px}
+.paused-matches-empty p{color:#7f929a;max-width:440px;margin:0 auto 20px;font-size:8px;line-height:1.6}
+.paused-matches-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.paused-match-card{padding:16px;border-radius:10px;border:1px solid var(--line2);background:linear-gradient(145deg,#071922,#041017);display:flex;flex-direction:column;gap:12px;transition:border-color .2s,box-shadow .2s}
+.paused-match-card:hover{border-color:rgba(145,229,33,.35);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.paused-match-card-top{display:flex;align-items:center;justify-content:space-between}
+.paused-card-badge{font:800 6px Rajdhani;letter-spacing:.12em;padding:2px 8px;border-radius:4px;background:rgba(145,229,33,.12);border:1px solid rgba(145,229,33,.35);color:var(--lime)}
+.paused-card-time{color:#728790;font:600 7px Rajdhani}
+.paused-match-teams{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.paused-team-row{display:flex;align-items:center;gap:8px}
+.paused-team-row strong{font:700 13px Rajdhani;color:#fff}
+.paused-vs{color:var(--lime);font:700 8px Rajdhani}
+.paused-match-score-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:6px;background:#030d13;border:1px solid var(--line)}
+.score-label{display:block;font:700 6px Rajdhani;letter-spacing:.1em;color:#738890}
+.paused-score-num{font:800 16px Rajdhani;color:var(--lime)}
+.paused-overs-box span{font:700 10px Rajdhani;color:#b7c8ce}
+.paused-match-players-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 10px;border-radius:6px;background:rgba(6,21,28,.6);border:1px solid rgba(255,255,255,.04)}
+.paused-match-players-preview div small{display:block;color:#6c8088;font:700 5px Rajdhani;letter-spacing:.08em}
+.paused-match-players-preview div b{display:block;color:#e4edf0;font:700 8px Rajdhani;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.paused-card-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:600px){.setup-tabs-header{width:100%;justify-content:center}.paused-match-players-preview{grid-template-columns:1fr}.setup-edit-banner{flex-direction:column;align-items:flex-start}}
+

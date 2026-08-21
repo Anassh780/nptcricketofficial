@@ -233,10 +233,89 @@ const INITIAL: ScoreState = {
   table: INITIAL_TABLE,
 }
 
+export interface PausedMatchSession {
+  id: string
+  matchId?: string
+  teamA: string
+  teamB: string
+  batting: string
+  bowling: string
+  runs: number
+  wickets: number
+  balls: number
+  overs: number
+  innings: number
+  target: number | null
+  striker: string
+  nonStriker: string
+  bowler: string
+  state: ScoreState
+  history: ScoreState[]
+  updatedAt: number
+}
+
+const PAUSED_MATCHES_KEY = "cricvault-paused-matches"
+
+function loadPausedMatches(): PausedMatchSession[] {
+  try {
+    const raw = localStorage.getItem(PAUSED_MATCHES_KEY)
+    let list: PausedMatchSession[] = raw ? JSON.parse(raw) : []
+    const legacyRaw = localStorage.getItem("cricvault-active-session")
+    if (legacyRaw) {
+      try {
+        const legacy = JSON.parse(legacyRaw)
+        if (legacy?.state && !legacy.state.result) {
+          const matchId = legacy.state.matchId || "legacy-session"
+          if (!list.some((m) => m.id === matchId || m.matchId === matchId)) {
+            list.unshift({
+              id: matchId,
+              matchId: legacy.state.matchId,
+              teamA: legacy.state.batting || "Team A",
+              teamB: legacy.state.bowling || "Team B",
+              batting: legacy.state.batting || "Team A",
+              bowling: legacy.state.bowling || "Team B",
+              runs: legacy.state.runs || 0,
+              wickets: legacy.state.wickets || 0,
+              balls: legacy.state.balls || 0,
+              overs: legacy.overs || 20,
+              innings: legacy.state.innings || 1,
+              target: legacy.state.target ?? null,
+              striker: legacy.state.striker || "",
+              nonStriker: legacy.state.nonStriker || "",
+              bowler: legacy.state.bowler || "",
+              state: legacy.state,
+              history: Array.isArray(legacy.history) ? legacy.history : [],
+              updatedAt: legacy.updatedAt || Date.now(),
+            })
+          }
+        }
+      } catch {}
+    }
+    return list
+  } catch {
+    return []
+  }
+}
+
+function savePausedMatches(list: PausedMatchSession[]) {
+  try {
+    localStorage.setItem(PAUSED_MATCHES_KEY, JSON.stringify(list))
+  } catch (err) {
+    console.error("Failed to save paused matches:", err)
+  }
+}
+
 function SetupPanel({
   onStart,
   teams,
-  onResumeMatch,
+  pausedMatches = [],
+  onResumeSession,
+  onDeletePausedMatch,
+  isEditingActiveMatch = false,
+  activeMatchState = null,
+  activeMatchOvers = 20,
+  onUpdateActiveMatch,
+  onCancelEdit,
 }: {
   teams: Team[]
   onStart: (setup: {
@@ -249,283 +328,434 @@ function SetupPanel({
     nonStriker: string
     bowler: string
   }) => void
-  onResumeMatch?: () => void
+  pausedMatches?: PausedMatchSession[]
+  onResumeSession?: (session: PausedMatchSession) => void
+  onDeletePausedMatch?: (id: string) => void
+  isEditingActiveMatch?: boolean
+  activeMatchState?: ScoreState | null
+  activeMatchOvers?: number
+  onUpdateActiveMatch?: (updated: {
+    striker: string
+    nonStriker: string
+    bowler: string
+    overs: number
+  }) => void
+  onCancelEdit?: () => void
 }) {
-  const [step, setStep] = useState(1)
-  const [teamA, setTeamA] = useState(teams[0].name)
-  const [teamB, setTeamB] = useState(teams[1].name)
-  const [overs, setOvers] = useState(20)
-  const [toss, setToss] = useState(teams[0].name)
-  const [decision, setDecision] = useState("Bat")
+  const [activeTab, setActiveTab] = useState<"guided" | "paused">("guided")
+  const [step, setStep] = useState(isEditingActiveMatch ? 4 : 1)
 
-  const savedSessionRaw = localStorage.getItem("cricvault-active-session")
-  const savedSession = useMemo(() => {
-    if (!savedSessionRaw) return null
-    try {
-      const parsed = JSON.parse(savedSessionRaw)
-      if (parsed?.state && !parsed.state.result && parsed.matchReady) return parsed
-    } catch {
-      return null
+  const defaultTeamA = useMemo(() => {
+    if (isEditingActiveMatch && activeMatchState?.batting) {
+      return activeMatchState.batting
     }
-    return null
-  }, [savedSessionRaw])
+    return teams[0]?.name || ""
+  }, [isEditingActiveMatch, activeMatchState, teams])
+
+  const defaultTeamB = useMemo(() => {
+    if (isEditingActiveMatch && activeMatchState?.bowling) {
+      return activeMatchState.bowling
+    }
+    return teams.find((t) => t.name !== defaultTeamA)?.name || teams[1]?.name || ""
+  }, [isEditingActiveMatch, activeMatchState, teams, defaultTeamA])
+
+  const [teamA, setTeamA] = useState(defaultTeamA)
+  const [teamB, setTeamB] = useState(defaultTeamB)
+  const [oversInput, setOversInput] = useState<string>(
+    String(isEditingActiveMatch && activeMatchOvers ? activeMatchOvers : 20)
+  )
+  const [toss, setToss] = useState(defaultTeamA)
+  const [decision, setDecision] = useState("Bat")
 
   const a = teamByName(teamA, teams)
   const b = teamByName(teamB, teams)
-  const battingName = decision === "Bat" ? toss : toss === teamA ? teamB : teamA
-  const bowlingName = battingName === teamA ? teamB : teamA
+  const battingName = isEditingActiveMatch && activeMatchState?.batting
+    ? activeMatchState.batting
+    : decision === "Bat"
+      ? toss
+      : toss === teamA
+        ? teamB
+        : teamA
+  const bowlingName = isEditingActiveMatch && activeMatchState?.bowling
+    ? activeMatchState.bowling
+    : battingName === teamA
+      ? teamB
+      : teamA
   const battingTeam = teamByName(battingName, teams)
   const bowlingTeam = teamByName(bowlingName, teams)
-  const [striker, setStriker] = useState(teams[0].players[0] || "")
-  const [nonStriker, setNonStriker] = useState(teams[0].players[1] || "")
-  const [openingBowler, setOpeningBowler] = useState(teams[1].players[0] || "")
+
+  const [striker, setStriker] = useState(
+    isEditingActiveMatch && activeMatchState?.striker
+      ? activeMatchState.striker
+      : battingTeam.players[0] || ""
+  )
+  const [nonStriker, setNonStriker] = useState(
+    isEditingActiveMatch && activeMatchState?.nonStriker
+      ? activeMatchState.nonStriker
+      : battingTeam.players[1] || ""
+  )
+  const [openingBowler, setOpeningBowler] = useState(
+    isEditingActiveMatch && activeMatchState?.bowler
+      ? activeMatchState.bowler
+      : bowlingTeam.players[0] || ""
+  )
+
   useEffect(() => {
-    setStriker(battingTeam.players[0] || "")
-    setNonStriker(battingTeam.players[1] || "")
-    setOpeningBowler(bowlingTeam.players[0] || "")
-  }, [battingName, bowlingName])
+    if (!isEditingActiveMatch) {
+      setStriker(battingTeam.players[0] || "")
+      setNonStriker(battingTeam.players[1] || "")
+      setOpeningBowler(bowlingTeam.players[0] || "")
+    }
+  }, [battingName, bowlingName, isEditingActiveMatch])
+
   const rostersReady = battingTeam.players.length >= 2 && bowlingTeam.players.length >= 1
+  const parsedOvers = Math.max(1, parseInt(oversInput, 10) || 20)
   const next = () => setStep((value) => Math.min(5, value + 1))
+
   return (
     <section className="panel setup-panel">
-      <div className="panel-title">
-        <h2>Match setup</h2>
-        <span>GUIDED FLOW</span>
-      </div>
-
-      {savedSession && onResumeMatch && (
-        <div style={{
-          margin: "12px 14px 0",
-          padding: "14px 16px",
-          background: "linear-gradient(135deg, rgba(145, 229, 33, 0.16), rgba(8, 24, 32, 0.95))",
-          border: "1px solid rgba(145, 229, 33, 0.4)",
-          borderRadius: "10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
-        }}>
-          <div>
-            <div style={{ fontSize: "10px", color: "#91e521", fontWeight: 700, letterSpacing: "0.1em" }}>
-              ⚡ UNFINISHED MATCH IN PROGRESS
-            </div>
-            <strong style={{ fontSize: "14px", color: "#ffffff", display: "block", marginTop: "2px" }}>
-              {savedSession.state.batting} vs {savedSession.state.bowling} ({savedSession.state.runs}/{savedSession.state.wickets})
-            </strong>
-            <small style={{ fontSize: "10px", color: "#8da0a7" }}>
-              Stopped at {oversText(savedSession.state.balls)} overs · Last saved {new Date(savedSession.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </small>
-          </div>
-          <div style={{ display: "flex", gap: "8px" }}>
+      <div className="panel-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+        <div>
+          <h2>Match setup</h2>
+          <span>{isEditingActiveMatch ? "EDITING ONGOING MATCH" : "GUIDED FLOW"}</span>
+        </div>
+        {!isEditingActiveMatch && (
+          <div className="setup-tabs-header">
             <button
-              className="report-btn report-btn-secondary"
-              style={{ height: "36px", padding: "0 12px", fontSize: "11px" }}
-              onClick={() => {
-                if (window.confirm("Discard the saved unfinished match session?")) {
-                  localStorage.removeItem("cricvault-active-session")
-                  window.location.reload()
-                }
-              }}
+              className={`setup-tab-nav ${activeTab === "guided" ? "active" : ""}`}
+              onClick={() => setActiveTab("guided")}
             >
-              Discard
+              ⚡ Guided Setup
             </button>
             <button
-              className="report-btn report-btn-primary"
-              style={{ height: "36px", padding: "0 16px", fontSize: "12px", whiteSpace: "nowrap" }}
-              onClick={onResumeMatch}
+              className={`setup-tab-nav ${activeTab === "paused" ? "active" : ""}`}
+              onClick={() => setActiveTab("paused")}
             >
-              Resume Match →
+              ⏸ Paused Matches {pausedMatches.length > 0 && <span className="tab-counter">{pausedMatches.length}</span>}
             </button>
           </div>
-        </div>
-      )}
-      <div className="steps">
-        {["Match", "Teams", "Settings", "Openers", "Confirm"].map((label, index) => (
-          <button
-            className={
-              step === index + 1 ? "on" : step > index + 1 ? "done" : ""
-            }
-            onClick={() => setStep(index + 1)}
-            key={label}
-          >
-            <i>{index + 1}</i>
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
-      {step === 1 && (
-        <div className="setup-body">
-          <label>
-            Tournament / Series
-            <input value="Diamond Premier League 6" readOnly />
-          </label>
-          <div className="form-grid">
-            <label>
-              Team A
-              <select
-                value={teamA}
-                onChange={(e) => {
-                  setTeamA(e.target.value)
-                  if (teamB === e.target.value)
-                    setTeamB(teams.find((t) => t.name !== e.target.value)!.name)
-                }}
-              >
-                {teams.map((t) => (
-                  <option key={t.name}>{t.name}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Team B
-              <select value={teamB} onChange={(e) => setTeamB(e.target.value)}>
-                {teams.filter((t) => t.name !== teamA).map((t) => (
-                  <option key={t.name}>{t.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label>
-            Venue
-            <input defaultValue="Aurora Cricket Stadium, New Dawn" />
-          </label>
-        </div>
-      )}
-      {step === 2 && (
-        <div className="setup-body roster-step">
-          <p className="helper">
-            Playing XI is ready. Opening selections can be changed after the
-            toss.
-          </p>
-          <div className="roster-grid">
-            <Roster team={a} keeper={a.players[3]} />
-            <Roster team={b} keeper={b.players[1]} />
-          </div>
-        </div>
-      )}
-      {step === 3 && (
-        <div className="setup-body">
-          <div className="format-row">
-            <button
-              className={overs === 20 ? "selected" : ""}
-              onClick={() => setOvers(20)}
-            >
-              T20 · 20 overs
-            </button>
-            <button
-              className={overs === 50 ? "selected" : ""}
-              onClick={() => setOvers(50)}
-            >
-              ODI · 50 overs
-            </button>
-            <button
-              className={![20, 50].includes(overs) ? "selected" : ""}
-              onClick={() => setOvers(10)}
-            >
-              Custom
-            </button>
-          </div>
-          <label>
-            Overs per innings
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={overs}
-              onChange={(e) => setOvers(Math.max(1, Number(e.target.value)))}
-            />
-          </label>
-          <div className="form-grid">
-            <label>
-              Toss winner
-              <select value={toss} onChange={(e) => setToss(e.target.value)}>
-                <option>{teamA}</option>
-                <option>{teamB}</option>
-              </select>
-            </label>
-            <label>
-              Toss decision
-              <select
-                value={decision}
-                onChange={(e) => setDecision(e.target.value)}
-              >
-                <option>Bat</option>
-                <option>Bowl</option>
-              </select>
-            </label>
-          </div>
-        </div>
-      )}
-      {step === 4 && (
-        <div className="setup-body opening-players-step">
-          <div className="opening-team-note">
-            <span>BATTING</span><strong>{battingName}</strong>
-            <i>vs</i>
-            <span>BOWLING</span><strong>{bowlingName}</strong>
-          </div>
-          <div className="form-grid">
-            <label>
-              Opening striker
-              <select value={striker} onChange={(e) => {
-                setStriker(e.target.value)
-                if (e.target.value === nonStriker) setNonStriker(battingTeam.players.find((name) => name !== e.target.value) || "")
-              }}>
-                {battingTeam.players.map((name) => <option key={name}>{name}</option>)}
-              </select>
-            </label>
-            <label>
-              Opening non-striker
-              <select value={nonStriker} onChange={(e) => setNonStriker(e.target.value)}>
-                {battingTeam.players.filter((name) => name !== striker).map((name) => <option key={name}>{name}</option>)}
-              </select>
-            </label>
-          </div>
-          <label>
-            Opening bowler
-            <select value={openingBowler} onChange={(e) => setOpeningBowler(e.target.value)}>
-              {bowlingTeam.players.map((name) => <option key={name}>{name}</option>)}
-            </select>
-          </label>
-          <p className="helper">These players will be active immediately when the scorer opens.</p>
-          {!rostersReady && <div className="setup-roster-alert"><strong>Squad names required</strong><span>Add at least two named players to the batting team and one named player to the bowling team in Team Center.</span></div>}
-        </div>
-      )}
-      {step === 5 && (
-        <div className="setup-body confirm-card">
-          <span className="mini-label">READY TO SCORE</span>
-          <h3>
-            {teamA} <em>vs</em> {teamB}
-          </h3>
-          <p>
-            {overs} overs · {toss} won the toss and chose to{" "}
-            {decision.toLowerCase()}.
-          </p>
-          <p>
-            {striker} and {nonStriker} will open the batting. {openingBowler} will bowl first.
-          </p>
-        </div>
-      )}
-      <div className="setup-actions">
-        <button
-          className="subtle"
-          onClick={() => setStep(Math.max(1, step - 1))}
-          disabled={step === 1}
-        >
-          Back
-        </button>
-        {step < 5 ? (
-          <button className="lime" onClick={next}>
-            Continue →
-          </button>
-        ) : (
-          <button
-            className="lime"
-            disabled={!rostersReady || !striker || !nonStriker || !openingBowler}
-            onClick={() => onStart({ teamA, teamB, overs, toss, decision, striker, nonStriker, bowler: openingBowler })}
-          >
-            {rostersReady ? "Start scoring →" : "Add squad names first"}
-          </button>
         )}
       </div>
+
+      {isEditingActiveMatch && activeMatchState && (
+        <div className="setup-edit-banner">
+          <div className="setup-edit-badge">⚙️ EDITING ONGOING MATCH</div>
+          <div className="setup-edit-info">
+            <strong>{battingName} vs {bowlingName} ({activeMatchState.runs}/{activeMatchState.wickets} in {oversText(activeMatchState.balls)} ov)</strong>
+            <span>Update striker, non-striker, bowler or match overs. Your live match score and ball history will continue where you left off.</span>
+          </div>
+          {onCancelEdit && (
+            <button className="setup-cancel-btn" onClick={onCancelEdit}>
+              ✕ Back to Match
+            </button>
+          )}
+        </div>
+      )}
+
+      {activeTab === "paused" && !isEditingActiveMatch ? (
+        <div className="setup-body paused-matches-section">
+          {pausedMatches.length === 0 ? (
+            <div className="paused-matches-empty">
+              <div className="empty-icon">⏸</div>
+              <h3>No Paused Matches Found</h3>
+              <p>When you pause any ongoing match during live scoring, it will be automatically saved here so you can continue it anytime in the future.</p>
+              <button className="lime" onClick={() => setActiveTab("guided")}>
+                Start New Match Setup →
+              </button>
+            </div>
+          ) : (
+            <div className="paused-matches-grid">
+              {pausedMatches.map((session) => {
+                const teamAObj = teamByName(session.teamA, teams)
+                const teamBObj = teamByName(session.teamB, teams)
+                const isSecondInnings = session.innings === 2 || (session.state && session.state.innings === 2)
+                return (
+                  <div key={session.id} className="paused-match-card">
+                    <div className="paused-match-card-top">
+                      <span className="paused-card-badge">
+                        {isSecondInnings ? "INNINGS 2" : "INNINGS 1"}
+                        {session.target ? ` · TARGET: ${session.target}` : ""}
+                      </span>
+                      <small className="paused-card-time">
+                        Last saved {new Date(session.updatedAt).toLocaleDateString([], { month: "short", day: "numeric" })} · {new Date(session.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </small>
+                    </div>
+
+                    <div className="paused-match-teams">
+                      <div className="paused-team-row">
+                        <TeamBadge team={teamAObj} />
+                        <strong>{session.teamA}</strong>
+                      </div>
+                      <span className="paused-vs">vs</span>
+                      <div className="paused-team-row">
+                        <TeamBadge team={teamBObj} />
+                        <strong>{session.teamB}</strong>
+                      </div>
+                    </div>
+
+                    <div className="paused-match-score-row">
+                      <div>
+                        <span className="score-label">CURRENT INNINGS & SCORE</span>
+                        <strong className="paused-score-num">
+                          {session.batting}: {session.runs}/{session.wickets}
+                        </strong>
+                      </div>
+                      <div className="paused-overs-box">
+                        <span>{oversText(session.balls)} / {session.overs} OV</span>
+                      </div>
+                    </div>
+
+                    <div className="paused-match-players-preview">
+                      <div><small>STRIKER:</small> <b>{session.striker || "—"}</b></div>
+                      <div><small>NON-STRIKER:</small> <b>{session.nonStriker || "—"}</b></div>
+                      <div><small>BOWLER:</small> <b>{session.bowler || "—"}</b></div>
+                    </div>
+
+                    <div className="paused-card-actions">
+                      <button
+                        className="report-btn report-btn-secondary"
+                        onClick={() => onDeletePausedMatch && onDeletePausedMatch(session.id)}
+                        title="Delete this saved match"
+                      >
+                        🗑 Discard
+                      </button>
+                      <button
+                        className="report-btn report-btn-primary"
+                        onClick={() => onResumeSession && onResumeSession(session)}
+                      >
+                        ▶ Resume Match →
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="steps">
+            {["Match", "Teams", "Settings", isEditingActiveMatch ? "Players" : "Openers", "Confirm"].map((label, index) => (
+              <button
+                className={
+                  step === index + 1 ? "on" : step > index + 1 ? "done" : ""
+                }
+                onClick={() => setStep(index + 1)}
+                key={label}
+              >
+                <i>{index + 1}</i>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+          {step === 1 && (
+            <div className="setup-body">
+              <label>
+                Tournament / Series
+                <input value="Diamond Premier League 6" readOnly />
+              </label>
+              <div className="form-grid">
+                <label>
+                  Team A
+                  <select
+                    value={teamA}
+                    onChange={(e) => {
+                      setTeamA(e.target.value)
+                      if (teamB === e.target.value)
+                        setTeamB(teams.find((t) => t.name !== e.target.value)!.name)
+                    }}
+                  >
+                    {teams.map((t) => (
+                      <option key={t.name}>{t.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Team B
+                  <select value={teamB} onChange={(e) => setTeamB(e.target.value)}>
+                    {teams.filter((t) => t.name !== teamA).map((t) => (
+                      <option key={t.name}>{t.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label>
+                Venue
+                <input defaultValue="Aurora Cricket Stadium, New Dawn" />
+              </label>
+            </div>
+          )}
+          {step === 2 && (
+            <div className="setup-body roster-step">
+              <p className="helper">
+                Playing XI is ready. Opening selections can be changed after the
+                toss.
+              </p>
+              <div className="roster-grid">
+                <Roster team={a} keeper={a.players[3]} />
+                <Roster team={b} keeper={b.players[1]} />
+              </div>
+            </div>
+          )}
+          {step === 3 && (
+            <div className="setup-body">
+              <div className="format-row">
+                <button
+                  className={oversInput === "20" ? "selected" : ""}
+                  onClick={() => setOversInput("20")}
+                >
+                  T20 · 20 overs
+                </button>
+                <button
+                  className={oversInput === "50" ? "selected" : ""}
+                  onClick={() => setOversInput("50")}
+                >
+                  ODI · 50 overs
+                </button>
+                <button
+                  className={!["20", "50"].includes(oversInput) ? "selected" : ""}
+                  onClick={() => {
+                    if (["20", "50"].includes(oversInput)) setOversInput("10")
+                  }}
+                >
+                  Custom
+                </button>
+              </div>
+              <label>
+                Overs per innings
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={oversInput}
+                  placeholder="0"
+                  onChange={(e) => {
+                    setOversInput(e.target.value)
+                  }}
+                />
+              </label>
+              <div className="form-grid">
+                <label>
+                  Toss winner
+                  <select value={toss} onChange={(e) => setToss(e.target.value)}>
+                    <option>{teamA}</option>
+                    <option>{teamB}</option>
+                  </select>
+                </label>
+                <label>
+                  Toss decision
+                  <select
+                    value={decision}
+                    onChange={(e) => setDecision(e.target.value)}
+                  >
+                    <option>Bat</option>
+                    <option>Bowl</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          )}
+          {step === 4 && (
+            <div className="setup-body opening-players-step">
+              <div className="opening-team-note">
+                <span>BATTING</span><strong>{battingName}</strong>
+                <i>vs</i>
+                <span>BOWLING</span><strong>{bowlingName}</strong>
+              </div>
+              <div className="form-grid">
+                <label>
+                  {isEditingActiveMatch ? "Active striker" : "Opening striker"}
+                  <select value={striker} onChange={(e) => {
+                    setStriker(e.target.value)
+                    if (e.target.value === nonStriker) setNonStriker(battingTeam.players.find((name) => name !== e.target.value) || "")
+                  }}>
+                    {battingTeam.players.map((name) => <option key={name}>{name}</option>)}
+                  </select>
+                </label>
+                <label>
+                  {isEditingActiveMatch ? "Active non-striker" : "Opening non-striker"}
+                  <select value={nonStriker} onChange={(e) => setNonStriker(e.target.value)}>
+                    {battingTeam.players.filter((name) => name !== striker).map((name) => <option key={name}>{name}</option>)}
+                  </select>
+                </label>
+              </div>
+              <label>
+                {isEditingActiveMatch ? "Active bowler" : "Opening bowler"}
+                <select value={openingBowler} onChange={(e) => setOpeningBowler(e.target.value)}>
+                  {bowlingTeam.players.map((name) => <option key={name}>{name}</option>)}
+                </select>
+              </label>
+              <p className="helper">
+                {isEditingActiveMatch
+                  ? "These players will be active immediately on pitch when continuing live scoring."
+                  : "These players will be active immediately when the scorer opens."}
+              </p>
+              {!rostersReady && <div className="setup-roster-alert"><strong>Squad names required</strong><span>Add at least two named players to the batting team and one named player to the bowling team in Team Center.</span></div>}
+            </div>
+          )}
+          {step === 5 && (
+            <div className="setup-body confirm-card">
+              <span className="mini-label">
+                {isEditingActiveMatch ? "UPDATE MATCH SETUP" : "READY TO SCORE"}
+              </span>
+              <h3>
+                {teamA} <em>vs</em> {teamB}
+              </h3>
+              <p>
+                {parsedOvers} overs · {toss} won the toss and chose to{" "}
+                {decision.toLowerCase()}.
+              </p>
+              <p>
+                {striker} and {nonStriker} are active batting. {openingBowler} is bowling.
+              </p>
+            </div>
+          )}
+          <div className="setup-actions">
+            <button
+              className="subtle"
+              onClick={() => setStep(Math.max(1, step - 1))}
+              disabled={step === 1}
+            >
+              Back
+            </button>
+            {isEditingActiveMatch && onCancelEdit && (
+              <button className="subtle" onClick={onCancelEdit}>
+                Cancel
+              </button>
+            )}
+            {step < 5 ? (
+              <button className="lime" onClick={next}>
+                Continue →
+              </button>
+            ) : isEditingActiveMatch ? (
+              <button
+                className="lime"
+                disabled={!rostersReady || !striker || !nonStriker || !openingBowler}
+                onClick={() => {
+                  if (onUpdateActiveMatch) {
+                    onUpdateActiveMatch({
+                      striker,
+                      nonStriker,
+                      bowler: openingBowler,
+                      overs: parsedOvers,
+                    })
+                  }
+                }}
+              >
+                Update & Continue Match →
+              </button>
+            ) : (
+              <button
+                className="lime"
+                disabled={!rostersReady || !striker || !nonStriker || !openingBowler}
+                onClick={() => onStart({ teamA, teamB, overs: parsedOvers, toss, decision, striker, nonStriker, bowler: openingBowler })}
+              >
+                {rostersReady ? "Start scoring →" : "Add squad names first"}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </section>
   )
 }
@@ -2108,6 +2338,10 @@ export default function App() {
   }, [])
   const admin = useMemo(() => isLeagueAdmin(user), [user, adminRevision])
   const [overs, setOvers] = useState(20)
+  const [isEditingActiveMatch, setIsEditingActiveMatch] = useState(false)
+  const [pausedMatches, setPausedMatches] = useState<PausedMatchSession[]>(() =>
+    loadPausedMatches(),
+  )
   const [teamProfiles, setTeamProfiles] = useState<SharedTeamProfile[]>(() =>
     loadTeamProfiles(DEFAULT_TEAM_PROFILES),
   )
@@ -2270,6 +2504,27 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("cricvault-score", JSON.stringify(state))
     if (matchReady && liveScoreReady && !state.result) {
+      const activeMatchId = state.matchId || "live-match"
+      const sessionObj: PausedMatchSession = {
+        id: activeMatchId,
+        matchId: state.matchId,
+        teamA: state.batting,
+        teamB: state.bowling,
+        batting: state.batting,
+        bowling: state.bowling,
+        runs: state.runs,
+        wickets: state.wickets,
+        balls: state.balls,
+        overs,
+        innings: state.innings,
+        target: state.target,
+        striker: state.striker,
+        nonStriker: state.nonStriker,
+        bowler: state.bowler,
+        state,
+        history,
+        updatedAt: Date.now(),
+      }
       localStorage.setItem(
         "cricvault-active-session",
         JSON.stringify({
@@ -2280,10 +2535,159 @@ export default function App() {
           updatedAt: Date.now(),
         }),
       )
+      const currentList = loadPausedMatches()
+      const idx = currentList.findIndex(
+        (m) => m.id === activeMatchId || m.matchId === activeMatchId,
+      )
+      if (idx >= 0) {
+        currentList[idx] = sessionObj
+      } else {
+        currentList.unshift(sessionObj)
+      }
+      savePausedMatches(currentList)
+      setPausedMatches(currentList)
     } else if (state.result) {
       localStorage.removeItem("cricvault-active-session")
+      if (state.matchId) {
+        const currentList = loadPausedMatches().filter(
+          (m) => m.id !== state.matchId && m.matchId !== state.matchId,
+        )
+        savePausedMatches(currentList)
+        setPausedMatches(currentList)
+      }
     }
   }, [state, history, matchReady, overs, liveScoreReady])
+
+  const handlePauseMatch = () => {
+    const activeMatchId = state.matchId || String(Date.now())
+    const sessionObj: PausedMatchSession = {
+      id: activeMatchId,
+      matchId: state.matchId,
+      teamA: state.batting,
+      teamB: state.bowling,
+      batting: state.batting,
+      bowling: state.bowling,
+      runs: state.runs,
+      wickets: state.wickets,
+      balls: state.balls,
+      overs,
+      innings: state.innings,
+      target: state.target,
+      striker: state.striker,
+      nonStriker: state.nonStriker,
+      bowler: state.bowler,
+      state,
+      history,
+      updatedAt: Date.now(),
+    }
+    const currentList = loadPausedMatches().filter(
+      (m) => m.id !== activeMatchId && m.matchId !== activeMatchId,
+    )
+    currentList.unshift(sessionObj)
+    savePausedMatches(currentList)
+    setPausedMatches(currentList)
+    localStorage.setItem(
+      "cricvault-active-session",
+      JSON.stringify({
+        state,
+        history,
+        matchReady: true,
+        overs,
+        updatedAt: Date.now(),
+      }),
+    )
+    alert("Match paused & saved to Paused Matches list! You can resume it or any other match anytime.")
+    setMatchReady(false)
+    setIsEditingActiveMatch(false)
+  }
+
+  const handleResumeSession = (session: PausedMatchSession) => {
+    if (session.state) {
+      setState(session.state)
+      setHistory(Array.isArray(session.history) ? session.history : [])
+      setOvers(session.overs || 20)
+      setMatchReady(true)
+      setIsEditingActiveMatch(false)
+      void saveCloudData("liveScore", {
+        ...session.state,
+        matchOvers: session.overs || 20,
+        updatedAt: Date.now(),
+      }).catch(() => undefined)
+    }
+  }
+
+  const handleDeletePausedMatch = (id: string) => {
+    if (window.confirm("Discard and delete this paused match?")) {
+      const nextList = loadPausedMatches().filter((m) => m.id !== id && m.matchId !== id)
+      savePausedMatches(nextList)
+      setPausedMatches(nextList)
+      try {
+        const activeRaw = localStorage.getItem("cricvault-active-session")
+        if (activeRaw) {
+          const parsed = JSON.parse(activeRaw)
+          if (parsed?.state?.matchId === id) {
+            localStorage.removeItem("cricvault-active-session")
+          }
+        }
+      } catch {}
+    }
+  }
+
+  const handleStartEditActiveMatch = () => {
+    setIsEditingActiveMatch(true)
+  }
+
+  const handleUpdateActiveMatch = (updated: {
+    striker: string
+    nonStriker: string
+    bowler: string
+    overs: number
+  }) => {
+    setState((prev) => {
+      const draft = clone(prev)
+      draft.striker = updated.striker
+      draft.nonStriker = updated.nonStriker
+      draft.bowler = updated.bowler
+      if (!draft.batters[updated.striker]) {
+        draft.batters[updated.striker] = {
+          name: updated.striker,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          sixes: 0,
+          out: false,
+          dismissal: "not out",
+        }
+      }
+      if (!draft.batters[updated.nonStriker]) {
+        draft.batters[updated.nonStriker] = {
+          name: updated.nonStriker,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          sixes: 0,
+          out: false,
+          dismissal: "not out",
+        }
+      }
+      if (!draft.bowlers[updated.bowler]) {
+        draft.bowlers[updated.bowler] = {
+          name: updated.bowler,
+          overs: 0,
+          maidens: 0,
+          runs: 0,
+          wickets: 0,
+          balls: 0,
+        }
+      }
+      return draft
+    })
+    if (updated.overs) {
+      setOvers(updated.overs)
+    }
+    setIsEditingActiveMatch(false)
+    setMatchReady(true)
+  }
 
   const handleResumeMatch = () => {
     try {
@@ -2295,6 +2699,7 @@ export default function App() {
         if (Array.isArray(session.history)) setHistory(session.history)
         if (session.overs) setOvers(session.overs)
         setMatchReady(true)
+        setIsEditingActiveMatch(false)
         void saveCloudData("liveScore", {
           ...session.state,
           matchOvers: session.overs || 20,
@@ -2698,6 +3103,7 @@ export default function App() {
     })
     setState(next)
     setHistory([])
+    setIsEditingActiveMatch(false)
     setMatchReady(true)
   }
 
@@ -2816,17 +3222,35 @@ export default function App() {
           </section>
         </main>
       )}
-      {screen === "scoring" && admin && scoringTeams.length >= 2 && (!matchReady || !liveScoreReady) && (
+      {screen === "scoring" && admin && scoringTeams.length >= 2 && (!matchReady || !liveScoreReady || isEditingActiveMatch) && (
         <main className="guided-flow-page">
           <section className="guided-intro">
-            <span>GUIDED MATCH SETUP</span>
-            <h1>Prepare the match first.</h1>
-            <p>Complete the guided flow. The live scoring workspace will open only after setup succeeds.</p>
+            <span>{isEditingActiveMatch ? "EDIT ONGOING MATCH" : "GUIDED MATCH SETUP"}</span>
+            <h1>{isEditingActiveMatch ? "Edit Match & Players" : "Prepare the match first."}</h1>
+            <p>
+              {isEditingActiveMatch
+                ? "Update active striker, non-striker, bowler or match settings and resume scoring directly from where you left off."
+                : "Complete the guided flow or manage paused matches to continue live scoring."}
+            </p>
           </section>
-          <SetupPanel onStart={startMatch} teams={scoringTeams} onResumeMatch={handleResumeMatch} />
+          <SetupPanel
+            onStart={startMatch}
+            teams={scoringTeams}
+            pausedMatches={pausedMatches}
+            onResumeSession={handleResumeSession}
+            onDeletePausedMatch={handleDeletePausedMatch}
+            isEditingActiveMatch={isEditingActiveMatch}
+            activeMatchState={state}
+            activeMatchOvers={overs}
+            onUpdateActiveMatch={handleUpdateActiveMatch}
+            onCancelEdit={() => {
+              setIsEditingActiveMatch(false)
+              setMatchReady(true)
+            }}
+          />
         </main>
       )}
-      {screen === "scoring" && admin && scoringTeams.length >= 2 && matchReady && liveScoreReady && (
+      {screen === "scoring" && admin && scoringTeams.length >= 2 && matchReady && liveScoreReady && !isEditingActiveMatch && (
         <>
           <main className="dashboard scoring-focus-dashboard">
             <aside className="scorecards-left">
@@ -2843,23 +3267,29 @@ export default function App() {
                   <button
                     className="report-btn report-btn-secondary"
                     style={{ height: "28px", fontSize: "11px", padding: "0 10px" }}
-                    onClick={() => {
-                      localStorage.setItem(
-                        "cricvault-active-session",
-                        JSON.stringify({
-                          state,
-                          history,
-                          matchReady: true,
-                          overs,
-                          updatedAt: Date.now(),
-                        }),
-                      )
-                      alert("Match paused & saved! You can resume it anytime from setup.")
-                      setMatchReady(false)
-                    }}
+                    onClick={handlePauseMatch}
+                    title="Pause and save match to Paused Matches list"
                   >
                     ⏸ Pause Match
                   </button>
+                  <button
+                    className="report-btn report-btn-secondary"
+                    style={{ height: "28px", fontSize: "11px", padding: "0 10px", borderColor: "rgba(145, 229, 33, 0.4)" }}
+                    onClick={handleStartEditActiveMatch}
+                    title="Edit active striker, non-striker or bowler in Guided Flow and continue"
+                  >
+                    ✏️ Edit Players
+                  </button>
+                  {pausedMatches.length > 0 && (
+                    <button
+                      className="report-btn report-btn-secondary"
+                      style={{ height: "28px", fontSize: "11px", padding: "0 10px" }}
+                      onClick={handlePauseMatch}
+                      title="View all saved paused matches"
+                    >
+                      ⏸ Paused ({pausedMatches.length})
+                    </button>
+                  )}
                   <button
                     className="report-btn report-btn-primary"
                     style={{ height: "28px", fontSize: "11px", padding: "0 12px" }}
@@ -2868,7 +3298,9 @@ export default function App() {
                     📄 Share Match Report
                   </button>
                   <button onClick={() => {
-                    if (window.confirm("Open guided setup for a new match?")) setMatchReady(false)
+                    if (window.confirm("Pause current match and start a new match setup?")) {
+                      handlePauseMatch()
+                    }
                   }}>New match setup</button>
                   <button className="end-match-button" onClick={endMatch} disabled={!!state.result}>End match</button>
                 </div>
