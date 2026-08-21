@@ -128,6 +128,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
   const [runOutCompletedRuns, setRunOutCompletedRuns] = useState<number>(0)
   const [customBowlerInput, setCustomBowlerInput] = useState("")
   const [showCustomBowlerInput, setShowCustomBowlerInput] = useState(false)
+  const [selectedShot, setSelectedShot] = useState<string>("Straight")
 
   // Get all potential bowlers from the bowling team
   const bowlingTeamPlayers = teamByName(state.bowling, scoringTeams).players.filter(

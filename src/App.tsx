@@ -2636,6 +2636,7 @@ export default function App() {
   const [matchReady, setMatchReady] = useState(
     () => localStorage.getItem("cricvault-match-ready") === "true",
   )
+  const [state, setState] = useState<ScoreState>(INITIAL)
   const [pendingSecondInnings, setPendingSecondInnings] = useState<{
     first: InningsSummary
     target: number
