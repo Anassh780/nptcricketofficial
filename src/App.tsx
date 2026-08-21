@@ -316,6 +316,8 @@ function SetupPanel({
   activeMatchOvers = 20,
   onUpdateActiveMatch,
   onCancelEdit,
+  scoringTheme = "dark",
+  onToggleTheme,
 }: {
   teams: Team[]
   onStart: (setup: {
@@ -341,6 +343,8 @@ function SetupPanel({
     overs: number
   }) => void
   onCancelEdit?: () => void
+  scoringTheme?: "dark" | "sun-light" | "high-contrast-dark"
+  onToggleTheme?: () => void
 }) {
   const [activeTab, setActiveTab] = useState<"guided" | "paused">("guided")
   const [step, setStep] = useState(isEditingActiveMatch ? 4 : 1)
@@ -414,27 +418,41 @@ function SetupPanel({
 
   return (
     <section className="panel setup-panel">
-      <div className="panel-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+      <div className="panel-title setup-panel-title">
         <div>
           <h2>Match setup</h2>
           <span>{isEditingActiveMatch ? "EDITING ONGOING MATCH" : "GUIDED FLOW"}</span>
         </div>
-        {!isEditingActiveMatch && (
-          <div className="setup-tabs-header">
+        <div className="setup-header-controls">
+          {onToggleTheme && (
             <button
-              className={`setup-tab-nav ${activeTab === "guided" ? "active" : ""}`}
-              onClick={() => setActiveTab("guided")}
+              type="button"
+              className="report-btn setup-theme-btn"
+              onClick={onToggleTheme}
+              title="Toggle high contrast screen mode"
             >
-              ⚡ Guided Setup
+              {scoringTheme === "sun-light" ? "☀️ Sun (B&W)" : scoringTheme === "high-contrast-dark" ? "⚫ High Contrast" : "🌙 Dark"}
             </button>
-            <button
-              className={`setup-tab-nav ${activeTab === "paused" ? "active" : ""}`}
-              onClick={() => setActiveTab("paused")}
-            >
-              ⏸ Paused Matches {pausedMatches.length > 0 && <span className="tab-counter">{pausedMatches.length}</span>}
-            </button>
-          </div>
-        )}
+          )}
+          {!isEditingActiveMatch && (
+            <div className="setup-tabs-header">
+              <button
+                type="button"
+                className={`setup-tab-nav ${activeTab === "guided" ? "active" : ""}`}
+                onClick={() => setActiveTab("guided")}
+              >
+                ⚡ Guided Setup
+              </button>
+              <button
+                type="button"
+                className={`setup-tab-nav ${activeTab === "paused" ? "active" : ""}`}
+                onClick={() => setActiveTab("paused")}
+              >
+                ⏸ Paused Matches {pausedMatches.length > 0 && <span className="tab-counter">{pausedMatches.length}</span>}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {isEditingActiveMatch && activeMatchState && (
@@ -2338,6 +2356,30 @@ export default function App() {
   }, [])
   const admin = useMemo(() => isLeagueAdmin(user), [user, adminRevision])
   const [overs, setOvers] = useState(20)
+  const [scoringTheme, setScoringTheme] = useState<"dark" | "sun-light" | "high-contrast-dark">(() => {
+    try {
+      const saved = localStorage.getItem("cricvault-scoring-theme")
+      return saved === "sun-light" || saved === "high-contrast-dark" ? saved : "dark"
+    } catch {
+      return "dark"
+    }
+  })
+
+  const cycleScoringTheme = () => {
+    setScoringTheme((current) => {
+      const next =
+        current === "dark"
+          ? "sun-light"
+          : current === "sun-light"
+            ? "high-contrast-dark"
+            : "dark"
+      try {
+        localStorage.setItem("cricvault-scoring-theme", next)
+      } catch {}
+      return next
+    })
+  }
+
   const [isEditingActiveMatch, setIsEditingActiveMatch] = useState(false)
   const [pausedMatches, setPausedMatches] = useState<PausedMatchSession[]>(() =>
     loadPausedMatches(),
@@ -3023,6 +3065,7 @@ export default function App() {
     wType: string,
     fielderName: string,
     nextBatterName: string,
+    runOutOptions?: { runOutBatter: "striker" | "nonStriker"; runsCompleted: number },
   ) => {
     if (
       (!nextBatterName && state.wickets < 9) ||
@@ -3030,33 +3073,76 @@ export default function App() {
     )
       return
     commit((draft) => {
-      const dismissed = draft.batters[draft.striker],
-        bowler = draft.bowlers[draft.bowler]
+      const isRunOut = wType === "Run out"
+      const runsCompleted = isRunOut && runOutOptions ? runOutOptions.runsCompleted || 0 : 0
+      const isNonStrikerOut = isRunOut && runOutOptions?.runOutBatter === "nonStriker"
+
+      const dismissedName = isNonStrikerOut ? draft.nonStriker : draft.striker
+      const dismissed = draft.batters[dismissedName]
+      const bowler = draft.bowlers[draft.bowler]
+      const strikerBatter = draft.batters[draft.striker]
+
       const assisted =
         ["Caught", "Run out", "Stumped"].includes(wType) && fielderName
           ? `${wType} (${fielderName})`
           : wType
-      dismissed.out = true
-      dismissed.dismissal = assisted
-      dismissed.balls++
+
+      // Credit completed runs on delivery if any
+      if (runsCompleted > 0) {
+        draft.runs += runsCompleted
+        draft.partnershipRuns += runsCompleted
+        if (strikerBatter) {
+          strikerBatter.runs += runsCompleted
+          if (runsCompleted === 4) strikerBatter.fours++
+        }
+        if (bowler) bowler.runs += runsCompleted
+      }
+
+      if (dismissed) {
+        dismissed.out = true
+        dismissed.dismissal = assisted
+      }
+      if (strikerBatter) {
+        strikerBatter.balls++
+      }
+
       draft.balls++
       draft.wickets++
       draft.partnershipBalls++
-      bowler.balls++
-      if (wType !== "Run out") bowler.wickets++
+      if (bowler) {
+        bowler.balls++
+        if (!isRunOut) bowler.wickets++
+      }
       draft.fall.push(`${draft.wickets}-${draft.runs}`)
+
+      const eventMark = runsCompleted > 0 ? `W+${runsCompleted}` : "W"
+      const runDesc = runsCompleted > 0 ? ` (${runsCompleted} run${runsCompleted === 1 ? "" : "s"} completed)` : ""
       addEvent(
         draft,
-        "W",
+        eventMark,
         "red",
-        `${draft.bowler} to ${draft.striker}, OUT — ${assisted}.`,
+        `${draft.bowler} to ${draft.striker}, OUT — ${dismissedName} ${assisted}${runDesc}.`,
         true,
-        0,
+        runsCompleted,
       )
+
       draft.freeHit = false
       draft.partnershipRuns = 0
       draft.partnershipBalls = 0
-      if (draft.wickets < 10) draft.striker = nextBatterName
+
+      if (draft.wickets < 10 && nextBatterName) {
+        if (isNonStrikerOut) {
+          draft.nonStriker = nextBatterName
+          if (runsCompleted % 2 === 1) {
+            swap(draft)
+          }
+        } else {
+          draft.striker = nextBatterName
+          if (runsCompleted % 2 === 1) {
+            swap(draft)
+          }
+        }
+      }
     })
   }
 
@@ -3177,7 +3263,7 @@ export default function App() {
     }
   }
   return (
-    <div className={`scoring-app screen-${screen}`}>
+    <div className={`scoring-app screen-${screen} ${screen === "scoring" ? `scoring-theme-${scoringTheme}` : ""}`}>
       <Navbar screen={screen} onNavigate={navigate} user={user} isAdmin={admin} onLogin={handleGoogleLogin} onLogout={() => void logoutFirebase()} />
       <div key={screen} className={`route-stage ${routeLeaving ? "route-leaving" : ""}`}>
       {screen === "home" && <HomeScreen onNavigate={navigate} isAdmin={admin} />}
@@ -3247,6 +3333,8 @@ export default function App() {
               setIsEditingActiveMatch(false)
               setMatchReady(true)
             }}
+            scoringTheme={scoringTheme}
+            onToggleTheme={cycleScoringTheme}
           />
         </main>
       )}
@@ -3264,6 +3352,19 @@ export default function App() {
               <div className="scoring-focus-toolbar">
                 <div><i /> MATCH IN PROGRESS</div>
                 <div className="scoring-toolbar-actions">
+                  <button
+                    className={`report-btn theme-toggle-btn theme-${scoringTheme}`}
+                    style={{
+                      height: "28px",
+                      fontSize: "11px",
+                      padding: "0 10px",
+                      fontWeight: 800,
+                    }}
+                    onClick={cycleScoringTheme}
+                    title="Toggle high contrast screen mode for outdoor sunlight visibility"
+                  >
+                    {scoringTheme === "sun-light" ? "☀️ Sun Mode (B&W)" : scoringTheme === "high-contrast-dark" ? "⚫ High Contrast (Dark)" : "🌙 Dark Mode"}
+                  </button>
                   <button
                     className="report-btn report-btn-secondary"
                     style={{ height: "28px", fontSize: "11px", padding: "0 10px" }}

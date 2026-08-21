@@ -277,3 +277,83 @@
   color: var(--lime, #91e521);
   background: rgba(145, 229, 33, 0.1);
 }
+
+/* Run Out Details Box */
+.runout-details-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(4, 16, 23, 0.85);
+  border: 1px solid rgba(255, 180, 0, 0.35);
+  border-radius: 10px;
+}
+
+.runout-batter-select {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.runout-choice-btn {
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--line2, #24434e);
+  border-radius: 6px;
+  background: rgba(10, 32, 42, 0.85);
+  color: #9cafb5;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.15s ease;
+}
+
+.runout-choice-btn:hover {
+  border-color: #ffc107;
+  color: #fff;
+}
+
+.runout-choice-btn.selected {
+  border-color: #ffc107;
+  background: rgba(255, 193, 7, 0.22);
+  color: #ffc107;
+  font-weight: 800;
+}
+
+.runout-runs-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.runout-run-btn {
+  flex: 1;
+  height: 32px;
+  border: 1px solid var(--line2, #24434e);
+  border-radius: 6px;
+  background: rgba(10, 32, 42, 0.85);
+  color: #9cafb5;
+  font-family: Rajdhani, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.runout-run-btn:hover {
+  border-color: var(--lime, #91e521);
+  color: #fff;
+}
+
+.runout-run-btn.selected {
+  border-color: var(--lime, #91e521);
+  background: rgba(145, 229, 33, 0.25);
+  color: var(--lime, #91e521);
+  font-weight: 800;
+}
+

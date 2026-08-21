@@ -75,7 +75,12 @@ export interface ScoringControlsProps {
   state: ScoreState
   onRuns: (runs: number) => void
   onExtra: (type: "wd" | "nb" | "b" | "lb", amount: number) => void
-  onWicket: (type: string, fielder: string, nextBatter: string) => void
+  onWicket: (
+    type: string,
+    fielder: string,
+    nextBatter: string,
+    runOutOptions?: { runOutBatter: "striker" | "nonStriker"; runsCompleted: number },
+  ) => void
   onSwapBatters: () => void
   undo: () => void
   endOver: () => void
@@ -119,6 +124,8 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
   const [wicketType, setWicketType] = useState<string>("Bowled")
   const [fielder, setFielder] = useState<string>("")
   const [nextBatter, setNextBatter] = useState<string>("")
+  const [runOutBatter, setRunOutBatter] = useState<"striker" | "nonStriker">("striker")
+  const [runOutCompletedRuns, setRunOutCompletedRuns] = useState<number>(0)
   const [selectedShot, setSelectedShot] = useState<string>("Cover Drive")
 
   // Auto-open Bowler selection popover when an over ends (state.needsBowler)
@@ -162,6 +169,8 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
     setWicketType(initialWicketType)
     setFielder("")
     setNextBatter(remainingBatters[0]?.name || "")
+    setRunOutBatter("striker")
+    setRunOutCompletedRuns(0)
     setAnchorEl(e.currentTarget)
     setActivePopover({ type: "wicket" })
   }
@@ -185,7 +194,10 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
 
   // Confirm Wicket
   const handleConfirmWicket = () => {
-    onWicket(wicketType, fielder, nextBatter)
+    onWicket(wicketType, fielder, nextBatter, {
+      runOutBatter,
+      runsCompleted: runOutCompletedRuns,
+    })
     closePopover()
   }
 
@@ -308,7 +320,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
             state.overMarks.map((mark, i) => (
               <i
                 className={
-                  mark === "W"
+                  mark === "W" || mark.startsWith("W+")
                     ? "red"
                     : mark.includes("4") || mark.includes("6")
                       ? "green"
@@ -396,6 +408,46 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
               </select>
             </label>
 
+            {wicketType === "Run out" && (
+              <div className="runout-details-box">
+                <label>
+                  <span>Batter Run Out</span>
+                  <div className="runout-batter-select">
+                    <button
+                      type="button"
+                      className={`runout-choice-btn ${runOutBatter === "striker" ? "selected" : ""}`}
+                      onClick={() => setRunOutBatter("striker")}
+                    >
+                      Striker ({state.striker})
+                    </button>
+                    <button
+                      type="button"
+                      className={`runout-choice-btn ${runOutBatter === "nonStriker" ? "selected" : ""}`}
+                      onClick={() => setRunOutBatter("nonStriker")}
+                    >
+                      Non-Striker ({state.nonStriker})
+                    </button>
+                  </div>
+                </label>
+
+                <label>
+                  <span>Completed Runs</span>
+                  <div className="runout-runs-row">
+                    {[0, 1, 2, 3, 4].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        className={`runout-run-btn ${runOutCompletedRuns === r ? "selected" : ""}`}
+                        onClick={() => setRunOutCompletedRuns(r)}
+                      >
+                        {r === 0 ? "0 runs" : `+${r}`}
+                      </button>
+                    ))}
+                  </div>
+                </label>
+              </div>
+            )}
+
             {["Caught", "Run out", "Stumped"].includes(wicketType) && (
               <label>
                 Fielder Involved
@@ -433,7 +485,7 @@ export const ScoringControls: React.FC<ScoringControlsProps> = ({
                 (["Caught", "Run out", "Stumped"].includes(wicketType) && !fielder)
               }
             >
-              Confirm Wicket
+              Confirm Wicket {runOutCompletedRuns > 0 && `(+${runOutCompletedRuns} Runs)`}
             </button>
           </div>
         )}

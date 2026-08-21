@@ -1098,47 +1098,210 @@
 .google-login.admin-authenticated{border-color:rgba(145,229,33,.65)!important;box-shadow:0 0 18px rgba(145,229,33,.12)}.admin-access-page{min-height:calc(100vh - 92px);display:grid;place-items:center;padding:30px;background:radial-gradient(circle at 50% 18%,rgba(145,229,33,.09),transparent 30%),#030d13}.admin-access-page section{width:min(560px,100%);padding:44px;border:1px solid #24434e;border-radius:18px;background:linear-gradient(145deg,#0a2029,#05131a);text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.4)}.admin-access-page span{color:var(--lime);font:800 8px Rajdhani;letter-spacing:.18em}.admin-access-page h1{margin:10px 0;font:800 38px Rajdhani;text-transform:uppercase}.admin-access-page p{color:#8498a1;line-height:1.7}.admin-access-page button{height:42px;margin-top:15px;padding:0 20px;border:0;border-radius:7px;background:var(--lime);color:#071006;font-weight:800;cursor:pointer}.tb-admin-actions{display:flex;gap:7px}.tb-group-title{position:relative}.tb-group-title button{position:absolute;right:10px;width:24px;height:24px;border:1px solid rgba(255,100,100,.45);border-radius:50%;background:rgba(90,15,20,.7);color:#ffaaa7;cursor:pointer}.tb-select:disabled,.tb-row-select:disabled{cursor:default;opacity:1}.standing-editor{width:64px;height:30px;border:1px solid rgba(145,229,33,.55);border-radius:5px;background:#071b53;color:#fff;text-align:center}.imported-row.editing{outline:1px solid rgba(145,229,33,.25)}.team-delete-action,.delete-gallery-item,.delete-fixture{border:1px solid rgba(255,95,95,.42);border-radius:5px;background:rgba(91,18,22,.65);color:#ffaaa6;font:700 7px Rajdhani;cursor:pointer}.team-delete-action{height:26px;padding:0 8px}.delete-gallery-item{margin-top:9px;padding:6px 8px}.delete-fixture{padding:5px 8px}.team-name-editor:disabled,.team-player-row>input:disabled{cursor:default;opacity:1}.player-photo-control.read-only{cursor:default}
 .tb-remove-team{width:32px;flex:0 0 32px;border:0;border-left:1px solid rgba(90,15,20,.35);background:#7b1820;color:#fff;font:800 15px Rajdhani;cursor:pointer}.tb-remove-team:hover{background:#b0232d}.tb-add-team{height:34px;margin:0 10px 10px;border:1px dashed rgba(145,229,33,.5);border-radius:5px;background:rgba(145,229,33,.06);color:#baf66c;font:800 8px Rajdhani;letter-spacing:.08em;cursor:pointer}.tb-add-team:hover{background:rgba(145,229,33,.14);color:#fff}
 
-/* Android scoring workspace */
-@media(max-width:980px){.screen-scoring .scoring-focus-dashboard{display:flex;flex-direction:column;width:100%;min-width:0;padding:0 10px 60px;overflow-x:hidden}.screen-scoring .scoring-main,.screen-scoring .scorecards-left,.screen-scoring .right-rail{width:100%;min-width:0;max-width:100%}.screen-scoring .scoring-main{order:1}.screen-scoring .scorecards-left{order:2}.screen-scoring .right-rail{order:3}.screen-scoring .tables-grid{grid-template-columns:1fr}.screen-scoring .data-table{width:100%;max-width:100%;overflow-x:auto}.screen-scoring .score-head,.screen-scoring .panel,.screen-scoring .scoring-focus-toolbar{max-width:100%}}
-@media(max-width:600px){.screen-scoring .scoring-focus-dashboard{padding-inline:6px}.screen-scoring .scoring-main{gap:6px}.screen-scoring .score-head{padding:7px 9px 0}.screen-scoring .score-line{height:60px;grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:4px}.screen-scoring .score-line>div:first-child,.screen-scoring .opponent{min-width:0;gap:5px}.screen-scoring .score-line strong{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.screen-scoring .big-score b{font-size:30px}.screen-scoring .team-badge{width:26px;height:26px;flex:0 0 26px}.screen-scoring .scoring-controls{padding:8px}.screen-scoring .run-buttons{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.screen-scoring .run-buttons button{height:42px}.screen-scoring .extra-buttons{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.screen-scoring .player-grid{grid-template-columns:1fr}.screen-scoring .player-card{width:100%}.screen-scoring .over-strip{height:auto;min-height:42px;grid-template-columns:64px minmax(0,1fr) 70px;padding:5px 7px}.screen-scoring .over-strip>div{min-width:0;overflow-x:auto}.screen-scoring .insight-row{grid-template-columns:1fr 1fr}.screen-scoring .insight-row>div:nth-child(2){border-right:0}.screen-scoring .insight-row>div:nth-child(n+3){border-top:1px solid var(--line);padding-top:7px}.screen-scoring .scorecards-left{padding:8px}.screen-scoring .scorecards-left .data-table{max-height:290px}.screen-scoring .data-table table{min-width:520px}.screen-scoring .focused-rail .event-log{min-height:180px}.screen-scoring .scoring-toolbar-actions{flex-wrap:wrap;justify-content:flex-end}.screen-scoring .scoring-focus-toolbar{align-items:flex-start;gap:6px;padding:7px;height:auto}.screen-scoring .rate-line{font-size:7px}}
+/* Android & Mobile scoring workspace fixes */
+@media(max-width:980px){
+  .screen-scoring .scoring-focus-dashboard{display:flex;flex-direction:column;width:100%;min-width:0;padding:0 8px 60px;overflow-x:hidden}
+  .screen-scoring .scoring-main,.screen-scoring .scorecards-left,.screen-scoring .right-rail{width:100%;min-width:0;max-width:100%}
+  .screen-scoring .scoring-main{order:1}
+  .screen-scoring .scorecards-left{order:2}
+  .screen-scoring .right-rail{order:3}
+  .screen-scoring .tables-grid{grid-template-columns:1fr}
+  .screen-scoring .data-table{width:100%;max-width:100%;overflow-x:auto}
+  .screen-scoring .score-head,.screen-scoring .panel,.screen-scoring .scoring-focus-toolbar{max-width:100%}
+}
+@media(max-width:600px){
+  .guided-flow-page{padding:16px 8px 60px;width:100%}
+  .guided-intro{text-align:left;margin-bottom:14px}
+  .guided-intro h1{font-size:26px}
+  .guided-intro p{margin:0;font-size:7.5px}
+  .guided-flow-page>.setup-panel{width:100%;max-width:100%}
+  .screen-scoring .scoring-focus-dashboard{padding-inline:4px}
+  .screen-scoring .scoring-main{gap:6px}
+  .screen-scoring .score-head{padding:7px 9px 0}
+  .screen-scoring .score-line{height:60px;grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);gap:4px}
+  .screen-scoring .score-line>div:first-child,.screen-scoring .opponent{min-width:0;gap:5px}
+  .screen-scoring .score-line strong{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}
+  .screen-scoring .big-score b{font-size:30px}
+  .screen-scoring .team-badge{width:26px;height:26px;flex:0 0 26px}
+  .screen-scoring .scoring-controls{padding:8px}
+  .screen-scoring .run-buttons{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .screen-scoring .run-buttons button{height:42px}
+  .screen-scoring .extra-buttons{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .screen-scoring .player-grid{grid-template-columns:1fr}
+  .screen-scoring .player-card{width:100%}
+  .screen-scoring .over-strip{height:auto;min-height:42px;grid-template-columns:64px minmax(0,1fr) 70px;padding:5px 7px}
+  .screen-scoring .over-strip>div{min-width:0;overflow-x:auto}
+  .screen-scoring .insight-row{grid-template-columns:1fr 1fr}
+  .screen-scoring .insight-row>div:nth-child(2){border-right:0}
+  .screen-scoring .insight-row>div:nth-child(n+3){border-top:1px solid var(--line);padding-top:7px}
+  .screen-scoring .scorecards-left{padding:8px}
+  .screen-scoring .scorecards-left .data-table{max-height:290px}
+  .screen-scoring .data-table table{min-width:520px}
+  .screen-scoring .focused-rail .event-log{min-height:180px}
+  .screen-scoring .scoring-toolbar-actions{flex-wrap:wrap;justify-content:flex-start;gap:5px;width:100%}
+  .screen-scoring .scoring-focus-toolbar{flex-direction:column;align-items:stretch;gap:8px;padding:8px;height:auto}
+  .screen-scoring .rate-line{font-size:7px}
+}
 @media(display-mode:standalone){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}.scoring-app{min-height:100dvh}}
 
 /* Setup Tabs, Active Match Editing & Paused Matches Section */
-.setup-tabs-header{display:flex;gap:6px;background:rgba(4,16,23,.75);padding:4px;border-radius:8px;border:1px solid var(--line2)}
-.setup-tab-nav{height:30px;padding:0 12px;border:1px solid transparent;border-radius:6px;background:transparent;color:#8da0a7;font:700 8px Rajdhani;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s ease}
+.setup-panel-title{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.setup-header-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.setup-theme-btn{height:30px;padding:0 10px;font:800 8px Rajdhani;letter-spacing:.08em;background:#091d26;color:#e7eff1;border:1px solid var(--line2);border-radius:6px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.setup-theme-btn:hover{border-color:var(--lime);color:#fff}
+.setup-tabs-header{display:flex;gap:4px;background:rgba(4,16,23,.75);padding:3px;border-radius:8px;border:1px solid var(--line2)}
+.setup-tab-nav{height:30px;padding:0 10px;border:1px solid transparent;border-radius:6px;background:transparent;color:#8da0a7;font:700 8px Rajdhani;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s ease;white-space:nowrap}
 .setup-tab-nav:hover{color:#fff;background:rgba(145,229,33,.06)}
 .setup-tab-nav.active{background:rgba(145,229,33,.16);border-color:rgba(145,229,33,.4);color:var(--lime)}
 .tab-counter{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--lime);color:#041017;font-size:7px;font-weight:800}
 
-.setup-edit-banner{margin:12px 14px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(255,180,0,.15),rgba(8,24,32,.96));border:1px solid rgba(255,180,0,.45);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.setup-edit-banner{margin:12px 14px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(255,180,0,.15),rgba(8,24,32,.96));border:1px solid rgba(255,180,0,.45);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .setup-edit-badge{color:#ffc107;font:800 7px Rajdhani;letter-spacing:.12em;padding:3px 8px;border-radius:4px;background:rgba(255,193,7,.15);border:1px solid rgba(255,193,7,.3);white-space:nowrap}
 .setup-edit-info strong{display:block;color:#ffffff;font:700 12px Rajdhani;margin-bottom:2px}
 .setup-edit-info span{display:block;color:#9cafb5;font-size:7px;line-height:1.4}
 .setup-cancel-btn{height:32px;padding:0 12px;border:1px solid rgba(255,95,95,.4);border-radius:6px;background:rgba(90,15,20,.5);color:#ffaaa6;font:700 8px Rajdhani;cursor:pointer;white-space:nowrap;transition:all .2s}
 .setup-cancel-btn:hover{background:rgba(140,25,35,.7);color:#fff}
 
-.paused-matches-section{min-height:360px;padding:18px 14px}
-.paused-matches-empty{text-align:center;padding:44px 20px}
+.paused-matches-section{min-height:360px;padding:14px;width:100%;box-sizing:border-box}
+.paused-matches-empty{text-align:center;padding:44px 16px}
 .paused-matches-empty .empty-icon{font-size:34px;color:#738890;margin-bottom:12px}
 .paused-matches-empty h3{font:800 18px Rajdhani;color:#e7eff1;margin-bottom:8px}
 .paused-matches-empty p{color:#7f929a;max-width:440px;margin:0 auto 20px;font-size:8px;line-height:1.6}
-.paused-matches-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.paused-match-card{padding:16px;border-radius:10px;border:1px solid var(--line2);background:linear-gradient(145deg,#071922,#041017);display:flex;flex-direction:column;gap:12px;transition:border-color .2s,box-shadow .2s}
+.paused-matches-grid{display:grid;grid-template-columns:1fr;gap:12px;width:100%}
+.paused-match-card{padding:14px;border-radius:10px;border:1px solid var(--line2);background:linear-gradient(145deg,#071922,#041017);display:flex;flex-direction:column;gap:10px;transition:border-color .2s,box-shadow .2s;width:100%;box-sizing:border-box}
 .paused-match-card:hover{border-color:rgba(145,229,33,.35);box-shadow:0 4px 20px rgba(0,0,0,.3)}
-.paused-match-card-top{display:flex;align-items:center;justify-content:space-between}
+.paused-match-card-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .paused-card-badge{font:800 6px Rajdhani;letter-spacing:.12em;padding:2px 8px;border-radius:4px;background:rgba(145,229,33,.12);border:1px solid rgba(145,229,33,.35);color:var(--lime)}
 .paused-card-time{color:#728790;font:600 7px Rajdhani}
 .paused-match-teams{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .paused-team-row{display:flex;align-items:center;gap:8px}
 .paused-team-row strong{font:700 13px Rajdhani;color:#fff}
 .paused-vs{color:var(--lime);font:700 8px Rajdhani}
-.paused-match-score-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:6px;background:#030d13;border:1px solid var(--line)}
+.paused-match-score-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:6px;background:#030d13;border:1px solid var(--line);flex-wrap:wrap;gap:6px}
 .score-label{display:block;font:700 6px Rajdhani;letter-spacing:.1em;color:#738890}
 .paused-score-num{font:800 16px Rajdhani;color:var(--lime)}
 .paused-overs-box span{font:700 10px Rajdhani;color:#b7c8ce}
 .paused-match-players-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 10px;border-radius:6px;background:rgba(6,21,28,.6);border:1px solid rgba(255,255,255,.04)}
 .paused-match-players-preview div small{display:block;color:#6c8088;font:700 5px Rajdhani;letter-spacing:.08em}
 .paused-match-players-preview div b{display:block;color:#e4edf0;font:700 8px Rajdhani;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.paused-card-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-@media(max-width:600px){.setup-tabs-header{width:100%;justify-content:center}.paused-match-players-preview{grid-template-columns:1fr}.setup-edit-banner{flex-direction:column;align-items:flex-start}}
+.paused-card-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;width:100%}
+
+@media(max-width:680px){
+  .setup-panel-title{flex-direction:column;align-items:stretch;gap:10px}
+  .setup-header-controls{width:100%;flex-direction:column;align-items:stretch}
+  .setup-theme-btn{width:100%;justify-content:center}
+  .setup-tabs-header{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .setup-tab-nav{justify-content:center}
+  .guided-flow-page .steps{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:4px;padding-bottom:4px;width:100%}
+  .guided-flow-page .steps::-webkit-scrollbar{display:none}
+  .guided-flow-page .steps button{flex:1 0 auto;min-width:58px;padding:6px 4px}
+  .paused-match-players-preview{grid-template-columns:1fr;gap:4px}
+  .paused-card-actions button{flex:1 1 calc(50% - 4px);height:36px;justify-content:center;font-size:7.5px}
+  .setup-edit-banner{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:480px){
+  .paused-card-actions button{flex:1 1 100%}
+}
+
+/* ========================================================= */
+/* Sun Mode (High Contrast Pure Black & White for outdoor sunlight) */
+/* ========================================================= */
+.scoring-theme-sun-light{background:#ffffff!important;color:#000000!important}
+.scoring-theme-sun-light .guided-flow-page,
+.scoring-theme-sun-light .screen-scoring,
+.scoring-theme-sun-light .scoring-focus-dashboard{background:#ffffff!important;color:#000000!important}
+.scoring-theme-sun-light .panel,
+.scoring-theme-sun-light .setup-panel,
+.scoring-theme-sun-light .score-head,
+.scoring-theme-sun-light .scoring-controls,
+.scoring-theme-sun-light .player-card,
+.scoring-theme-sun-light .data-table,
+.scoring-theme-sun-light .scorecards-left-head,
+.scoring-theme-sun-light .scoring-focus-toolbar,
+.scoring-theme-sun-light .paused-match-card,
+.scoring-theme-sun-light .event-log,
+.scoring-theme-sun-light .over-strip{background:#ffffff!important;border:2px solid #000000!important;color:#000000!important;box-shadow:none!important}
+.scoring-theme-sun-light h1,
+.scoring-theme-sun-light h2,
+.scoring-theme-sun-light h3,
+.scoring-theme-sun-light h4,
+.scoring-theme-sun-light strong,
+.scoring-theme-sun-light b,
+.scoring-theme-sun-light .big-score b,
+.scoring-theme-sun-light .score-title,
+.scoring-theme-sun-light .paused-score-num,
+.scoring-theme-sun-light .score-line strong{color:#000000!important;font-weight:900!important}
+.scoring-theme-sun-light p,
+.scoring-theme-sun-light span,
+.scoring-theme-sun-light small,
+.scoring-theme-sun-light .helper,
+.scoring-theme-sun-light label{color:#111111!important;font-weight:700!important}
+.scoring-theme-sun-light input,
+.scoring-theme-sun-light select{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important;font-weight:800!important}
+.scoring-theme-sun-light .run-buttons button{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important;font-weight:900!important}
+.scoring-theme-sun-light .run-buttons button.boundary{background:#91e521!important;color:#000000!important;border:2.5px solid #000000!important}
+.scoring-theme-sun-light .run-buttons button.wicket{background:#dc2626!important;color:#ffffff!important;border:2.5px solid #000000!important}
+.scoring-theme-sun-light .extra-buttons button{background:#ffffff!important;color:#000000!important;border:1.5px solid #000000!important;font-weight:800!important}
+.scoring-theme-sun-light .extra-buttons .swap-batters{background:#ddffc4!important;color:#000000!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .report-btn-secondary,
+.scoring-theme-sun-light .setup-theme-btn,
+.scoring-theme-sun-light .scoring-focus-toolbar button{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important;font-weight:800!important}
+.scoring-theme-sun-light .report-btn-primary,
+.scoring-theme-sun-light button.lime{background:#000000!important;color:#ffffff!important;border:2px solid #000000!important;font-weight:900!important}
+.scoring-theme-sun-light .data-table table th{background:#000000!important;color:#ffffff!important;border-bottom:2px solid #000000!important}
+.scoring-theme-sun-light .data-table table td{background:#ffffff!important;color:#000000!important;border-bottom:1.5px solid #000000!important;font-weight:700!important}
+.scoring-theme-sun-light .striker-row td{background:#e2f8cc!important;color:#000000!important;box-shadow:inset 4px 0 #000000!important}
+.scoring-theme-sun-light .scoring-popover-container{background:#ffffff!important;color:#000000!important;border:3px solid #000000!important;box-shadow:0 12px 36px rgba(0,0,0,.4)!important}
+.scoring-theme-sun-light .scoring-popover-container select,
+.scoring-theme-sun-light .scoring-popover-container input{background:#ffffff!important;color:#000000!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .popover-header h4{color:#000000!important}
+.scoring-theme-sun-light .runout-details-box{background:#f1f5f9!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .runout-choice-btn,
+.scoring-theme-sun-light .runout-run-btn{background:#ffffff!important;color:#000000!important;border:1.5px solid #000000!important}
+.scoring-theme-sun-light .runout-choice-btn.selected,
+.scoring-theme-sun-light .runout-run-btn.selected{background:#000000!important;color:#ffffff!important}
+.scoring-theme-sun-light .setup-tabs-header{background:#eeeeee!important;border:2px solid #000000!important}
+.scoring-theme-sun-light .setup-tab-nav{color:#000000!important}
+.scoring-theme-sun-light .setup-tab-nav.active{background:#000000!important;color:#ffffff!important}
+.scoring-theme-sun-light .tab-counter{background:#000000!important;color:#ffffff!important}
+.scoring-theme-sun-light .steps button{background:#ffffff!important;border:1.5px solid #000000!important;color:#000000!important}
+.scoring-theme-sun-light .steps button.on{background:#000000!important;color:#ffffff!important}
+.scoring-theme-sun-light .steps button.done{background:#e2f8cc!important;color:#000000!important}
+.scoring-theme-sun-light .paused-match-score-row,
+.scoring-theme-sun-light .paused-match-players-preview{background:#ffffff!important;border:1.5px solid #000000!important}
+
+/* ========================================================= */
+/* High Contrast Dark Mode */
+/* ========================================================= */
+.scoring-theme-high-contrast-dark{background:#000000!important;color:#ffffff!important}
+.scoring-theme-high-contrast-dark .guided-flow-page,
+.scoring-theme-high-contrast-dark .screen-scoring,
+.scoring-theme-high-contrast-dark .scoring-focus-dashboard{background:#000000!important;color:#ffffff!important}
+.scoring-theme-high-contrast-dark .panel,
+.scoring-theme-high-contrast-dark .setup-panel,
+.scoring-theme-high-contrast-dark .score-head,
+.scoring-theme-high-contrast-dark .scoring-controls,
+.scoring-theme-high-contrast-dark .player-card,
+.scoring-theme-high-contrast-dark .data-table,
+.scoring-theme-high-contrast-dark .scorecards-left-head,
+.scoring-theme-high-contrast-dark .scoring-focus-toolbar,
+.scoring-theme-high-contrast-dark .paused-match-card,
+.scoring-theme-high-contrast-dark .event-log,
+.scoring-theme-high-contrast-dark .over-strip{background:#050505!important;border:2px solid #ffffff!important;color:#ffffff!important;box-shadow:none!important}
+.scoring-theme-high-contrast-dark h1,
+.scoring-theme-high-contrast-dark h2,
+.scoring-theme-high-contrast-dark h3,
+.scoring-theme-high-contrast-dark h4,
+.scoring-theme-high-contrast-dark strong,
+.scoring-theme-high-contrast-dark b,
+.scoring-theme-high-contrast-dark .big-score b,
+.scoring-theme-high-contrast-dark .score-title,
+.scoring-theme-high-contrast-dark .paused-score-num{color:#ffffff!important}
+.scoring-theme-high-contrast-dark .run-buttons button{background:#000000!important;color:#ffffff!important;border:2px solid #ffffff!important}
+.scoring-theme-high-contrast-dark .run-buttons button.boundary{background:#91e521!important;color:#000000!important;border:2px solid #ffffff!important}
+.scoring-theme-high-contrast-dark .run-buttons button.wicket{background:#dc2626!important;color:#ffffff!important;border:2px solid #ffffff!important}
+.scoring-theme-high-contrast-dark .extra-buttons button{background:#000000!important;color:#ffffff!important;border:1.5px solid #ffffff!important}
+.scoring-theme-high-contrast-dark .steps button{background:#000000!important;border:1.5px solid #ffffff!important;color:#ffffff!important}
+.scoring-theme-high-contrast-dark .steps button.on{background:#ffffff!important;color:#000000!important}
+
 
